@@ -1,0 +1,26 @@
+# Phi+ (fork): checks that the open-source build still compiles.
+name: Phi+ build
+
+on:
+  push:
+    branches: [phi-plus]
+  pull_request:
+    branches: [phi-plus]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Phi Framework
+        run: ./scripts/download_phi_framework.sh --version 2.17.0
+      - name: Build PhiBrowser-OpenSource
+        run: |
+          xcodebuild build \
+            -project Phi.xcodeproj \
+            -scheme PhiBrowser-OpenSource \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/DerivedData-OpenSource \
+            CODE_SIGNING_ALLOWED=NO

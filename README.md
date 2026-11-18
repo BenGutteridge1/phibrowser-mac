@@ -1,3 +1,8 @@
+> [!NOTE]
+> **This is Phi+, a personal, unofficial fork of Phi Browser.** It is not made, endorsed or
+> supported by Phinomenon. See [FORK.md](FORK.md) for what it adds and how to build it.
+> The rest of this README is upstream's.
+
 ![Phi Browser](docs/assets/phibrowser_github_2000.png)
 
 # Phi Browser
