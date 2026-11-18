@@ -119,8 +119,9 @@ final class SpacesStripWheelTracker {
     private var accumulated: CGFloat = 0
     /// Scroll travel per pip for precise deltas — one strip item plus its gap,
     /// so the row tracks the gesture roughly 1:1.
-    private static let stepDistance: CGFloat =
+    private static var stepDistance: CGFloat {
         SpacesStripView.stripItemWidth + SpacesStripView.stripSpacing
+    }
 
     /// Routes one wheel event. Returns true when the event was consumed (the
     /// caller must not forward it to super), false when it should continue up
@@ -297,6 +298,9 @@ struct SpacesStripView: View {
     /// only this count re-renders the row: a sidebar divider drag changes the
     /// width every frame while the count changes a handful of times.
     @State private var fittedPipCount = 0
+    /// Observed only so the strip re-renders when the fork's dot style flips;
+    /// the metrics read `ForkSettings` directly.
+    @AppStorage(ForkSettings.Key.spaceSwitcherUsesDots) private var usesDotsSetting = false
 
     /// Index of the first pip inside the strip's sliding viewport. The row
     /// slides to keep the active Space's pip centered in the visible window,
@@ -424,9 +428,18 @@ struct SpacesStripView: View {
     /// the "…" overflow affordance, and the add button — and the gap between
     /// them. Drives the fit arithmetic in `visiblePipCount` and the wheel
     /// tracker's per-pip scroll distance (hence fileprivate).
-    fileprivate static let stripItemWidth: CGFloat = 24
+    ///
+    /// In the fork's dot style (`ForkSettings.spaceSwitcherUsesDots`) pips are
+    /// narrower and closer together; the "+" / "…" slot keeps its own width.
+    fileprivate static var stripItemWidth: CGFloat { usesDots ? 14 : 24 }
     fileprivate static let stripItemHeight: CGFloat = 24
-    fileprivate static let stripSpacing: CGFloat = 4
+    fileprivate static var stripSpacing: CGFloat { usesDots ? 2 : 4 }
+    /// Width of the trailing "+" / "…" slot, independent of the pip style.
+    fileprivate static let trailingButtonWidth: CGFloat = 24
+    /// Fork: draw each Space as a dot instead of its icon.
+    static var usesDots: Bool { ForkSettings.spaceSwitcherUsesDots }
+    private static let activeDotSize: CGFloat = 7
+    private static let inactiveDotSize: CGFloat = 6
     /// How long a pip must stay hovered before its card appears, so brushing
     /// the cursor across the strip doesn't flash cards.
     private static let hoverCardDelay: TimeInterval = 0.3
@@ -763,6 +776,13 @@ struct SpacesStripView: View {
         .onReceive(stripGeometry.revealed) { _ in
             reanchorViewport(animated: false)
         }
+        .onChange(of: usesDotsSetting) { _ in
+            let count = visiblePipCount(availableWidth: measuredRowWidth)
+            if count != fittedPipCount {
+                fittedPipCount = count
+            }
+            reanchorViewport(animated: false)
+        }
         .onReceive(wheelStepPublisher) { step in
             guard stripGeometry.rowWidth > 0 else { return }
             stepViewport(by: step, availableWidth: stripGeometry.rowWidth)
@@ -964,6 +984,10 @@ struct SpacesStripView: View {
                     guard let space = spaces.first(where: { $0.spaceId == id }) else {
                         return AnyView(EmptyView())
                     }
+                    if Self.usesDots, agentSpaceManager.tasksBySpaceId[space.spaceId] == nil {
+                        return AnyView(spaceDot(isActive: true, isHovered: false)
+                            .frame(width: Self.stripItemWidth, height: Self.stripItemHeight))
+                    }
                     return AnyView(pipIcon(for: space)
                         .frame(width: Self.stripItemWidth, height: Self.stripItemHeight))
                 }
@@ -984,6 +1008,7 @@ struct SpacesStripView: View {
             // stand-in. Hidden while creating: the dashed placeholder marks
             // the pending Space instead of the source Space's selection chip.
             if !stripGeometry.isChipConcealed,
+               !Self.usesDots,
                !isCreating,
                let activeId = stripSelectedSpaceId,
                spaces.contains(where: { $0.spaceId == activeId }) {
@@ -1196,7 +1221,7 @@ struct SpacesStripView: View {
             items <= 0 ? 0 : CGFloat(items) * item + CGFloat(items - 1) * spacing
         }
         // Room left of the trailing slot (which keeps a small gap before it).
-        let budget = availableWidth - item - spacing
+        let budget = availableWidth - Self.trailingButtonWidth - spacing
         if Self.allPipsFit(count: total, availableWidth: availableWidth) { return total }
         // Overflowing: the "…" takes the trailing slot, and BOTH edge peeks
         // are reserved regardless of the window's position, so the whole-pip
@@ -1207,11 +1232,22 @@ struct SpacesStripView: View {
         return count
     }
 
+    /// Fork: the sidebar row's natural width for `pipCount` pips (padding, pips,
+    /// the minimum gap and the trailing slot) and the x of the pips' centre
+    /// from the row's leading edge. The bottom bar uses these to size the
+    /// strip to its content and centre it on the pips.
+    static func sidebarRowMetrics(pipCount: Int) -> (width: CGFloat, pipsCenterX: CGFloat) {
+        let pips = pipCount <= 0 ? 0 : CGFloat(pipCount) * stripItemWidth + CGFloat(pipCount - 1) * stripSpacing
+        // pips, gap, Spacer(minLength: 4), gap, trailing slot; +1 absorbs rounding.
+        let width = 2 * horizontalPadding + pips + 2 * stripSpacing + 4 + trailingButtonWidth + 1
+        return (width, horizontalPadding + pips / 2)
+    }
+
     /// Whether `count` pips all fit in a row `availableWidth` wide, with the
     /// "+" trailing — the row then shows every pip and never slides.
     static func allPipsFit(count: Int, availableWidth: CGFloat) -> Bool {
         let width = count <= 0 ? 0 : CGFloat(count) * stripItemWidth + CGFloat(count - 1) * stripSpacing
-        return width <= availableWidth - stripItemWidth - stripSpacing
+        return width <= availableWidth - trailingButtonWidth - stripSpacing
     }
 
     /// Pips in drag order: the local `stripOrderedIds` snapshot (rearranged live
@@ -1275,6 +1311,18 @@ struct SpacesStripView: View {
     /// these icons are never added to the user's icon picker. Falls back to the
     /// stored icon when no task is live (e.g. a persistent agent Space between
     /// rounds).
+    /// Fork dot style: the active Space is a slightly larger, brighter dot;
+    /// inactive dots brighten on hover. Size and opacity animate with the
+    /// row's switch animation.
+    private func spaceDot(isActive: Bool, isHovered: Bool) -> some View {
+        let size = isActive ? Self.activeDotSize : Self.inactiveDotSize
+        let opacity: Double = isActive ? 0.9 : (isHovered ? 0.55 : 0.3)
+        return Circle()
+            .fill(Color.primary.opacity(opacity))
+            .frame(width: size, height: size)
+            .animation(.easeOut(duration: 0.12), value: isHovered)
+    }
+
     @ViewBuilder
     private func pipIcon(for space: Space) -> some View {
         if let task = agentSpaceManager.tasksBySpaceId[space.spaceId] {
@@ -1314,7 +1362,13 @@ struct SpacesStripView: View {
         return Button {
             activatePip(space)
         } label: {
-            pipIcon(for: space)
+            Group {
+                if Self.usesDots, agentSpaceManager.tasksBySpaceId[space.spaceId] == nil {
+                    spaceDot(isActive: isActive, isHovered: highlightedPipId == space.spaceId)
+                } else {
+                    pipIcon(for: space)
+                }
+            }
             .frame(width: Self.stripItemWidth, height: Self.stripItemHeight)
             // Publishes this pip's frame under its spaceId, for the
             // strip-level glass chip to target (see `iconStrip`).
@@ -1331,7 +1385,7 @@ struct SpacesStripView: View {
                 // which stays flat (no shadow). The active pip's liquid-glass
                 // chip is NOT drawn here — it's a single strip-level view
                 // (see `iconStrip`) so a switch slides it between pips.
-                if !isActive, highlightedPipId == space.spaceId {
+                if !isActive, !Self.usesDots, highlightedPipId == space.spaceId {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(Color.sidebarTabHovered)
                 }
@@ -1619,13 +1673,13 @@ struct SpacesStripView: View {
             Image(systemName: "plus")
                 .font(.system(size: Self.iconSize, weight: .semibold))
                 .foregroundStyle(Color.secondary)
-                .frame(width: Self.stripItemWidth, height: Self.stripItemHeight)
+                .frame(width: Self.trailingButtonWidth, height: Self.stripItemHeight)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(isAddButtonHovered ? Color.sidebarTabHovered : Color.clear)
                 )
                 .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .frame(width: Self.stripItemWidth, height: rowHeight)
+                .frame(width: Self.trailingButtonWidth, height: rowHeight)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -1651,13 +1705,13 @@ struct SpacesStripView: View {
             Image(systemName: "ellipsis")
                 .font(.system(size: Self.iconSize, weight: .semibold))
                 .foregroundStyle(Color.secondary)
-                .frame(width: Self.stripItemWidth, height: Self.stripItemHeight)
+                .frame(width: Self.trailingButtonWidth, height: Self.stripItemHeight)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(isMoreButtonHovered ? Color.sidebarTabHovered : Color.clear)
                 )
                 .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .frame(width: Self.stripItemWidth, height: rowHeight)
+                .frame(width: Self.trailingButtonWidth, height: rowHeight)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -2090,7 +2144,7 @@ final class SpacesStripReorderView: NSView {
     /// outside its clip — so a slot is just its index on the row's uniform
     /// grid, with no scroll position to fold in. `visibleRange` is what keeps
     /// the clipped-away slots out of reach.
-    private static let slotStride = SpacesStripView.stripItemWidth + SpacesStripView.stripSpacing
+    private static var slotStride: CGFloat { SpacesStripView.stripItemWidth + SpacesStripView.stripSpacing }
 
     private func slotIndex(atX x: CGFloat) -> Int? {
         guard x >= 0 else { return nil }

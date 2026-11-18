@@ -373,6 +373,24 @@ class SidebarHeaderView: NSView, TitlebarAwareHitTestable {
         updateSpaceSwitchVisibility()
     }
 
+    /// Fork: hands the Space switch to another host (the bottom bar, see
+    /// `ForkSettings.spaceSwitcherPlacement`) and re-pins the address bar to
+    /// the nav row, as when the switch is hidden.
+    func unmountSpaceSwitch() {
+        guard let view = spaceSwitchView else { return }
+        view.snp.removeConstraints()
+        view.removeFromSuperview()
+        spaceSwitchView = nil
+        spaceSwitchVisible = nil
+        spaceSwitchTopConstraint = nil
+        addressView.snp.remakeConstraints { make in
+            make.left.right.equalToSuperview()
+            make.top.equalTo(stackView.snp.bottom).offset(Self.addressViewTopOffset)
+            addressViewHeightConstraint = make.height.equalTo(addressViewHeight).constraint
+        }
+        updateLayoutVisibility(layoutMode: browserState?.layoutMode ?? .performance)
+    }
+
     /// Shows or hides the Spaces-switch row, reclaiming the row's height (and
     /// re-pinning the address bar to the nav row) when it is hidden. The row
     /// shows only when the master Spaces feature flag is on AND more than one

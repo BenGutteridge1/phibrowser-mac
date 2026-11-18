@@ -60,6 +60,19 @@ class SidebarBottomBarState: ObservableObject {
 
     /// Whether the downloads popover is visible.
     @Published var isDownloadPopoverShown: Bool = false
+
+    /// Fork: the free gap between the leading buttons and Chat, in the bar's
+    /// coordinates (x and width only), so a bottom-mounted Space switcher can
+    /// sit inside it. Kept even with no switcher mounted, because the bar
+    /// reports it at its first layout, before any mount. Not published: it
+    /// drives AppKit layout only.
+    var spaceSwitchGap: CGRect = .zero {
+        didSet {
+            guard spaceSwitchGap != oldValue else { return }
+            onSpaceSwitchGapChange?()
+        }
+    }
+    var onSpaceSwitchGapChange: (() -> Void)?
 }
 
 /// SwiftUI implementation of the sidebar bottom bar.
@@ -88,6 +101,7 @@ struct SidebarBottomBarSwiftUI: View {
         GeometryReader { geometry in
             regularLayout(availableWidth: geometry.size.width)
         }
+        .coordinateSpace(name: Self.barSpaceName)
         .frame(height: SidebarBottomBarState.singleRowHeight)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("sidebar.footer")
@@ -137,7 +151,15 @@ struct SidebarBottomBarSwiftUI: View {
 
             cardEntryButton
 
-            Spacer(minLength: 0)
+            // A modified `Spacer` loses its spacer behavior and collapses, so the
+            // fork's gap measurement uses a flexible clear view instead.
+            Color.clear
+                .frame(minWidth: 0, maxWidth: .infinity)
+                .onGeometryChange(for: CGRect.self) { proxy in
+                    proxy.frame(in: .named(Self.barSpaceName))
+                } action: { frame in
+                    state.spaceSwitchGap = frame
+                }
 
             if showsFeedbackButton {
                 FeedbackButtonSwiftUI(action: onFeedbackTap)
@@ -151,6 +173,8 @@ struct SidebarBottomBarSwiftUI: View {
         }
         .padding(.horizontal, WebContentConstant.edgesSpacing)
     }
+
+    private static let barSpaceName = "sidebarBottomBar"
 
     @ViewBuilder
     private var memoryButton: some View {
@@ -571,6 +595,55 @@ class SidebarBottomBarSwiftUIView: NSView {
         hostingView?.isHidden = suppressed
     }
     
+    // MARK: - Fork: bottom-center Space switcher
+
+    /// The Space switcher when `ForkSettings.spaceSwitcherPlacement` is
+    /// `.bottomCenter`. An AppKit sibling above the SwiftUI host, laid out by
+    /// frame in `layout()`.
+    private weak var spaceSwitchView: NSView?
+    /// Pip count of the mounted switcher, supplied by the sidebar.
+    var spaceSwitchPipCount: (() -> Int)?
+
+    func mountSpaceSwitch(_ view: NSView) {
+        view.translatesAutoresizingMaskIntoConstraints = true
+        addSubview(view, positioned: .above, relativeTo: hostingView)
+        spaceSwitchView = view
+        state.onSpaceSwitchGapChange = { [weak self] in
+            self?.needsLayout = true
+        }
+        needsLayout = true
+    }
+
+    func unmountSpaceSwitch() {
+        state.onSpaceSwitchGapChange = nil
+        spaceSwitchView?.removeFromSuperview()
+        spaceSwitchView = nil
+    }
+
+    /// Re-measures after the pip count changes.
+    func invalidateSpaceSwitchLayout() {
+        needsLayout = true
+    }
+
+    override func layout() {
+        super.layout()
+        let gap = state.spaceSwitchGap
+        guard let view = spaceSwitchView, !view.isHidden, gap.width > 0 else { return }
+        let metrics = SpacesStripView.sidebarRowMetrics(pipCount: spaceSwitchPipCount?() ?? 0)
+        let gapMinX = gap.minX
+        let gapMaxX = gap.maxX
+        let width = min(metrics.width, gapMaxX - gapMinX)
+        // Centre the pips (not the whole row, whose trailing "+" only shows
+        // on hover) on the bar, kept inside the gap.
+        let idealX = bounds.midX - metrics.pipsCenterX
+        let x = max(gapMinX, min(idealX, gapMaxX - width))
+        let height = SpacesStripView.sidebarHeight
+        let frame = NSRect(x: x, y: (bounds.height - height) / 2, width: width, height: height).integral
+        if view.frame != frame {
+            view.frame = frame
+        }
+    }
+
     /// Binds the downloads manager for progress display.
     func bindDownloadsManager(_ manager: DownloadsManager) {
         downloadViewModel.bindTo(manager)

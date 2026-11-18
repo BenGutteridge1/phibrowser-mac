@@ -104,7 +104,9 @@ final class SpacesStripHostingView: ThemedHostingView {
                                toSpaceId: String,
                                pipCount: Int,
                                duration: TimeInterval) -> Bool {
-        guard let geometry = stripGeometry, let hostLayer = layer else { return false }
+        // The fork's dot style has no glass chip to fly.
+        guard !SpacesStripView.usesDots,
+              let geometry = stripGeometry, let hostLayer = layer else { return false }
         // Only a row that shows every pip holds still. An overflowing row
         // re-centers on the new pip and slides under the stand-in, which is
         // not part of it; the SwiftUI chip, which rides the row, keeps those
@@ -475,9 +477,46 @@ class SidebarViewController: NSViewController, BrowserThemeContextProviding {
         }
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         spacesStripHostingView = hostingView
-        headerView.mountSpaceSwitch(hostingView)
+        bottomBarSwiftUI.spaceSwitchPipCount = { [weak slot] in
+            guard let slot else { return 0 }
+            return slot.presentedSpaces.count + (slot.isCreatingSpace ? 1 : 0)
+        }
+        applySpaceSwitcherPlacement()
         spacesStripRowView = hostingView
         updateHeaderHeight()
+    }
+
+    // MARK: - Fork: Space switcher placement
+
+    private var appliedSpaceSwitcherPlacement: SpaceSwitcherPlacement?
+
+    /// Mounts the Space switcher in the header or the bottom bar, following
+    /// `ForkSettings.spaceSwitcherPlacement`. Remounts live when it changes;
+    /// otherwise only refreshes the bottom placement's visibility and frame.
+    private func applySpaceSwitcherPlacement() {
+        guard let hostingView = spacesStripHostingView else { return }
+        let placement = ForkSettings.spaceSwitcherPlacement
+        if placement != appliedSpaceSwitcherPlacement {
+            appliedSpaceSwitcherPlacement = placement
+            switch placement {
+            case .top:
+                bottomBarSwiftUI.unmountSpaceSwitch()
+                hostingView.translatesAutoresizingMaskIntoConstraints = false
+                headerView.mountSpaceSwitch(hostingView)
+            case .bottomCenter:
+                headerView.unmountSpaceSwitch()
+                bottomBarSwiftUI.mountSpaceSwitch(hostingView)
+            }
+        }
+        guard placement == .bottomCenter else { return }
+        // Same rule as the header row: shown only with Spaces on and more
+        // than one Space to switch between.
+        let visible = PhiPreferences.GeneralSettings.spacesFeatureEnabled.loadValue()
+            && SpaceManager.shared.spaces.count > 1
+        if hostingView.isHidden == visible {
+            hostingView.isHidden = !visible
+        }
+        bottomBarSwiftUI.invalidateSpaceSwitchLayout()
     }
 
     /// The Spaces strip row's AppKit view, resolved live by the slot's
@@ -750,6 +789,7 @@ class SidebarViewController: NSViewController, BrowserThemeContextProviding {
         // empty 32pt gap below the address bar for a row that isn't shown.
         let spacesEnabled = PhiPreferences.GeneralSettings.spacesFeatureEnabled.loadValue()
             && state.participatesInSpaces
+            && ForkSettings.spaceSwitcherPlacement == .top
             && (SpaceManager.shared.spaces.count > 1 || headerView.forcesSpaceSwitchVisible)
         // Base = nav row (+ address bar in sidebar layouts). The Spaces switch
         // adds its band (see SidebarHeaderView.spaceSwitchBandHeight) only
@@ -793,6 +833,7 @@ class SidebarViewController: NSViewController, BrowserThemeContextProviding {
                 self?.updatePageEdgeShadow()
                 self?.updateChatButtonVisibility()
                 self?.updateMemoryButtonVisibility()
+                self?.applySpaceSwitcherPlacement()
                 self?.headerView.updateSpaceSwitchVisibility()
                 self?.updateHeaderHeight()
             }
@@ -807,6 +848,7 @@ class SidebarViewController: NSViewController, BrowserThemeContextProviding {
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
+                self?.applySpaceSwitcherPlacement()
                 self?.headerView.updateSpaceSwitchVisibility()
                 self?.updateHeaderHeight()
             }
@@ -1594,7 +1636,9 @@ class SidebarViewController: NSViewController, BrowserThemeContextProviding {
         // Pin the overlay below the visible strip. Keep a full-sidebar fallback
         // for hosts that do not participate in Spaces and never mounted it.
         let stripRow = spacesStripRowView
+        // At the bottom (fork placement) the strip is not above the form.
         let anchorsBelowStrip = stripRow?.isHidden == false
+            && ForkSettings.spaceSwitcherPlacement == .top
 
         // Match the current Space's sidebar background (color + opacity) by
         // reusing the sidebar root's visual-effect recipe; the form hosting

@@ -58,6 +58,7 @@ struct SpacesSettingsView: View {
                 SettingsDetailCard {
                     tabSwitcherScopeRow
                 }
+                SettingsDetailCard { ForkSpaceSwitcherSettingsRows() }
                 SettingsDetailCard {
                     Button(action: manageSpacesInLibrary) {
                         SettingsDetailRow(NSLocalizedString("settings.spaces.manageInLibrary", value: "Manage Spaces in Library", comment: "Spaces settings - Opens Library with Spaces selected and closes Settings")) {

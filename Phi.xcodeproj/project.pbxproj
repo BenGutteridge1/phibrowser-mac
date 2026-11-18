@@ -581,6 +581,7 @@
 		CC98F89F2E8BC79B00DAD237 /* AccountSettingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC98F89D2E8BC79B00DAD237 /* AccountSettingViewController.swift */; };
 		CC98F8A22E8BCE0900DAD237 /* AppController+Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC98F8A12E8BCE0900DAD237 /* AppController+Settings.swift */; };
 		CC98F8A82E8BEB4F00DAD237 /* SidebarViewController+UpdateReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC98F8A72E8BEB4F00DAD237 /* SidebarViewController+UpdateReminder.swift */; };
+		CC5218C14EB87FCF6E8BCC0D /* ForkSettingsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD30AC2534E327CA9EA5DC5E /* ForkSettingsViews.swift */; };
 		85D43EE4DEB50D365A4B9967 /* ForkSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A352F21FC679022FFD0E482 /* ForkSettings.swift */; };
 		CC99096D2EBC86940046BC81 /* PhiPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC99096C2EBC86940046BC81 /* PhiPreferences.swift */; };
 		CC99096F3000000000000001 /* PhiPreferences+AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC99096E3000000000000001 /* PhiPreferences+AppLanguage.swift */; };
@@ -1447,6 +1448,7 @@
 		CC98F89D2E8BC79B00DAD237 /* AccountSettingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSettingViewController.swift; sourceTree = "<group>"; };
 		CC98F8A12E8BCE0900DAD237 /* AppController+Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppController+Settings.swift"; sourceTree = "<group>"; };
 		CC98F8A72E8BEB4F00DAD237 /* SidebarViewController+UpdateReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SidebarViewController+UpdateReminder.swift"; sourceTree = "<group>"; };
+		CD30AC2534E327CA9EA5DC5E /* ForkSettingsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkSettingsViews.swift; sourceTree = "<group>"; };
 		1A352F21FC679022FFD0E482 /* ForkSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkSettings.swift; sourceTree = "<group>"; };
 		CC99096C2EBC86940046BC81 /* PhiPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhiPreferences.swift; sourceTree = "<group>"; };
 		CC99096E3000000000000001 /* PhiPreferences+AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PhiPreferences+AppLanguage.swift"; sourceTree = "<group>"; };
@@ -2998,6 +3000,7 @@
 			children = (
 				37686A9B2F10D61E00DC3990 /* UserDefaultsRegistration.swift */,
 				CC98F89B2E8BC71800DAD237 /* Settings.swift */,
+				CD30AC2534E327CA9EA5DC5E /* ForkSettingsViews.swift */,
 				1A352F21FC679022FFD0E482 /* ForkSettings.swift */,
 				CC99096C2EBC86940046BC81 /* PhiPreferences.swift */,
 				CC99096E3000000000000001 /* PhiPreferences+AppLanguage.swift */,
@@ -3958,6 +3961,7 @@
 				54A1000A2FE000000000000A /* TimeMachineRestoreCoordinator.swift in Sources */,
 				54A1000C2FE000000000000C /* TimeMachineInstallerCore.swift in Sources */,
 				54A1000D2FE000000000000D /* TimeMachineMenuPresenter.swift in Sources */,
+				CC5218C14EB87FCF6E8BCC0D /* ForkSettingsViews.swift in Sources */,
 				85D43EE4DEB50D365A4B9967 /* ForkSettings.swift in Sources */,
 				CC99096D2EBC86940046BC81 /* PhiPreferences.swift in Sources */,
 				CC99096F3000000000000001 /* PhiPreferences+AppLanguage.swift in Sources */,
