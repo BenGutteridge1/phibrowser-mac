@@ -400,17 +400,6 @@ private final class ForkHistoryNSPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
     override func cancelOperation(_ sender: Any?) { onCancel?() }
-
-    /// While the panel is key, Show History (⌘Y, or its remapped key) must
-    /// close it here: the panel is not a browser window, so the menu would
-    /// otherwise hand the command to Chromium, which opens a history tab.
-    override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        if ShortcutsKey.eventKeys(for: event)?.matches(Shortcuts.key(for: .IDC_SHOW_HISTORY)) == true {
-            onCancel?()
-            return true
-        }
-        return super.performKeyEquivalent(with: event)
-    }
 }
 
 /// Fork: the floating history panel, a native child window of the browser
@@ -458,6 +447,7 @@ final class ForkHistoryPanelController: NSObject {
     private var model: ForkHistoryPanelModel!
     private var observers: [NSObjectProtocol] = []
     private var refreshSubscription: AnyCancellable?
+    private var keyMonitor: Any?
     private var isClosing = false
 
     private init(parent: NSWindow, session: SpaceSessionController) {
@@ -478,7 +468,9 @@ final class ForkHistoryPanelController: NSObject {
         panel.backgroundColor = .clear
         // The card draws its own shadow, so it slides with the card.
         panel.hasShadow = false
-        panel.level = .floating
+        // An ordinary window attached to the browser window: it stays above
+        // that window only, never over other apps.
+        panel.level = .normal
         panel.hidesOnDeactivate = false
         panel.isMovableByWindowBackground = false
         panel.onCancel = { [weak self] in self?.close() }
@@ -508,6 +500,26 @@ final class ForkHistoryPanelController: NSObject {
         observers.append(center.addObserver(forName: NSWindow.willCloseNotification, object: parent, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.close(animated: false) }
         })
+        // Out of the way while another app is active; back on return.
+        observers.append(center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.setDetached(true) }
+        })
+        observers.append(center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.setDetached(false) }
+        })
+        // While the panel is key, Show History (⌘Y, or its remapped key)
+        // closes it here, before anything else sees the key: the panel is
+        // not a browser window, so the menu would hand the command to
+        // Chromium, which opens a new, empty browser window instead.
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            MainActor.assumeIsolated {
+                guard let self, event.window === self.panel,
+                      ShortcutsKey.eventKeys(for: event)?.matches(Shortcuts.key(for: .IDC_SHOW_HISTORY)) == true
+                else { return event }
+                self.close()
+                return nil
+            }
+        }
 
         // Keep the list live: any tab in this window that commits a
         // navigation or settles its title refreshes it, a beat later.
@@ -524,6 +536,16 @@ final class ForkHistoryPanelController: NSObject {
     }
 
     private var reducesMotion: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+
+    private func setDetached(_ detached: Bool) {
+        guard !isClosing, let parent else { return }
+        if detached {
+            parent.removeChildWindow(panel)
+            panel.orderOut(nil)
+        } else if parent.isVisible, !parent.isMiniaturized {
+            parent.addChildWindow(panel, ordered: .above)
+        }
+    }
 
     private func show() {
         guard let parent else { return }
@@ -572,6 +594,8 @@ final class ForkHistoryPanelController: NSObject {
         observers.forEach(NotificationCenter.default.removeObserver)
         observers.removeAll()
         refreshSubscription = nil
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
         parent?.makeKey()
         let finish = { [self] in
             parent?.removeChildWindow(panel)
