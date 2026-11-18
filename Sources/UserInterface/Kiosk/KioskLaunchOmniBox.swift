@@ -70,6 +70,18 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
         )
     }
 
+    /// Fork: horizontally centered, the box's top a third of the way down
+    /// the screen (Spotlight's place), so suggestions have room below it.
+    static func centeredFrame(onVisibleFrame visibleFrame: NSRect) -> NSRect {
+        let boxTop = visibleFrame.maxY - visibleFrame.height / 3
+        return NSRect(
+            x: (visibleFrame.midX - panelSize.width / 2).rounded(),
+            y: (boxTop + shadowMargin - panelSize.height).rounded(),
+            width: panelSize.width,
+            height: panelSize.height
+        )
+    }
+
     /// The screen of the window the user is working in: Phi's key window
     /// while Phi is active, otherwise the frontmost window of the active app
     /// (the global shortcut pressed in another app).
@@ -182,11 +194,14 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
         panel.delegate = self
     }
 
-    func present(on screen: NSScreen?) {
+    /// `centered` (fork): the address-bar shortcut's placement instead of
+    /// Kiosk's top-right one.
+    func present(on screen: NSScreen?, centered: Bool = false) {
         guard !isFinished, let contentView = panel.contentView else { return }
         if let visibleFrame = (screen ?? NSScreen.main)?.visibleFrame {
             panel.setFrame(
-                Self.frame(onVisibleFrame: visibleFrame),
+                centered ? Self.centeredFrame(onVisibleFrame: visibleFrame)
+                    : Self.frame(onVisibleFrame: visibleFrame),
                 display: false
             )
         }

@@ -55,7 +55,7 @@ extension AppController {
                 }
             }
             ForkAddressBarPanel.current = panel
-            panel.present(on: screen)
+            panel.present(on: screen, centered: true)
         }
     }
 }
