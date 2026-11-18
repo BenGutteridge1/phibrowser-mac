@@ -9,6 +9,21 @@ import SwiftUI
 
 // MARK: - Model
 
+/// Fork: where a history entry opens. `.current` is resolved from the
+/// modifier keys at the click, the way links behave: ⌘ opens a new tab in
+/// the background, ⌘⇧ a new tab in front.
+enum ForkHistoryOpenMode {
+    case current, newBackgroundTab, newForegroundTab
+
+    /// The mode for the keys held now; a plain click or Return keeps `self`
+    /// unless `newTabByDefault`.
+    func resolved(newTabByDefault: Bool = false) -> ForkHistoryOpenMode {
+        let flags = NSEvent.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard flags.contains(.command) else { return newTabByDefault ? .newForegroundTab : self }
+        return flags.contains(.shift) ? .newForegroundTab : .newBackgroundTab
+    }
+}
+
 /// Fork: state of one window's floating history panel.
 @MainActor
 final class ForkHistoryPanelModel: ObservableObject {
@@ -55,12 +70,12 @@ final class ForkHistoryPanelModel: ObservableObject {
     private var limit = pageSize
     private var reachedEnd = false
     private var queryTask: Task<Void, Never>?
-    let onOpen: (ForkHistoryEntry, _ inNewTab: Bool) -> Void
+    let onOpen: (ForkHistoryEntry, ForkHistoryOpenMode) -> Void
     let onShowFullHistory: () -> Void
     let onClose: () -> Void
 
     init(service: ForkHistoryService,
-         onOpen: @escaping (ForkHistoryEntry, Bool) -> Void,
+         onOpen: @escaping (ForkHistoryEntry, ForkHistoryOpenMode) -> Void,
          onShowFullHistory: @escaping () -> Void,
          onClose: @escaping () -> Void) {
         self.service = service
@@ -169,9 +184,9 @@ final class ForkHistoryPanelModel: ObservableObject {
         selectedId = entries[next].id
     }
 
-    func openSelection(inNewTab: Bool) {
+    func openSelection(_ mode: ForkHistoryOpenMode) {
         guard let entry = entries.first(where: { $0.id == selectedId }) ?? entries.first else { return }
-        onOpen(entry, inNewTab)
+        onOpen(entry, mode)
     }
 }
 
@@ -261,7 +276,7 @@ struct ForkHistoryPanelView: View {
                 .onKeyPress(.downArrow) { model.moveSelection(by: 1); return .handled }
                 .onKeyPress(.upArrow) { model.moveSelection(by: -1); return .handled }
                 .onSubmit {
-                    model.openSelection(inNewTab: NSEvent.modifierFlags.contains(.command))
+                    model.openSelection(ForkHistoryOpenMode.current.resolved())
                 }
         }
         .padding(.horizontal, 9)
@@ -356,7 +371,7 @@ private struct ForkHistoryRow: View {
     var body: some View {
         Button {
             model.selectedId = entry.id
-            model.onOpen(entry, NSEvent.modifierFlags.contains(.command))
+            model.onOpen(entry, ForkHistoryOpenMode.current.resolved())
         } label: {
             HStack(spacing: 8) {
                 ZStack {
@@ -471,8 +486,8 @@ final class ForkHistoryPanelController: NSObject {
         super.init()
         model = ForkHistoryPanelModel(
             service: service,
-            onOpen: { [weak self] entry, inNewTab in self?.open(entry.url, inNewTab: inNewTab) },
-            onShowFullHistory: { [weak self] in self?.open("chrome://history/", inNewTab: true) },
+            onOpen: { [weak self] entry, mode in self?.open(entry.url, mode: mode) },
+            onShowFullHistory: { [weak self] in self?.open("chrome://history/", mode: .current.resolved(newTabByDefault: true)) },
             onClose: { [weak self] in self?.close() }
         )
 
@@ -573,14 +588,21 @@ final class ForkHistoryPanelController: NSObject {
         if !isClosing { hosting.frame = container.bounds }
     }
 
-    private func open(_ url: String, inNewTab: Bool) {
+    private func open(_ url: String, mode: ForkHistoryOpenMode) {
         guard let parent,
               let controller = SpaceSessionControllersManager.shared.findControllerWith(window: parent) else { return }
         let state = controller.browserState
-        if !inNewTab, !state.isInPlaceholderMode, let wrapper = state.focusingTab?.webContentWrapper {
-            wrapper.navigate(toURL: url)
-        } else {
+        switch mode {
+        case .current where !state.isInPlaceholderMode:
+            if let wrapper = state.focusingTab?.webContentWrapper {
+                wrapper.navigate(toURL: url)
+            } else {
+                state.createTab(url)
+            }
+        case .current, .newForegroundTab:
             state.createTab(url)
+        case .newBackgroundTab:
+            state.createTab(url, focusAfterCreate: false)
         }
     }
 
