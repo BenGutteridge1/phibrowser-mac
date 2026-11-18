@@ -42,6 +42,7 @@
 		370D03AD2F0E463B0087A1C9 /* ThemedColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370D03A82F0E463B0087A1C9 /* ThemedColor.swift */; };
 		370D03AE2F0E463B0087A1C9 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370D03A22F0E463B0087A1C9 /* Key.swift */; };
 		370D03AF2F0E463B0087A1C9 /* Phi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370D03A42F0E463B0087A1C9 /* Phi.swift */; };
+		62E567B2B04E152AA174AB29 /* ForkThemedColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14D524454530AA533AED8FE8 /* ForkThemedColors.swift */; };
 		370D03B02F0E463B0087A1C9 /* ThemedColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370D03A92F0E463B0087A1C9 /* ThemedColors.swift */; };
 		370D03B12F0E463B0087A1C9 /* Bags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370D03A02F0E463B0087A1C9 /* Bags.swift */; };
 		370D03B22F0E463B0087A1C9 /* Appearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370D039F2F0E463B0087A1C9 /* Appearance.swift */; };
@@ -905,6 +906,7 @@
 		370D03A62F0E463B0087A1C9 /* Phi+SwiftUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Phi+SwiftUI.swift"; sourceTree = "<group>"; };
 		370D03A72F0E463B0087A1C9 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		370D03A82F0E463B0087A1C9 /* ThemedColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemedColor.swift; sourceTree = "<group>"; };
+		14D524454530AA533AED8FE8 /* ForkThemedColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkThemedColors.swift; sourceTree = "<group>"; };
 		370D03A92F0E463B0087A1C9 /* ThemedColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemedColors.swift; sourceTree = "<group>"; };
 		370D03AA2F0E463B0087A1C9 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		370D03B82F0E4BFC0087A1C9 /* ThemeExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeExample.swift; sourceTree = "<group>"; };
@@ -1717,6 +1719,7 @@
 				370D03A72F0E463B0087A1C9 /* Theme.swift */,
 				37604F622F14C52300B9FB37 /* DefaultColors.swift */,
 				370D03A82F0E463B0087A1C9 /* ThemedColor.swift */,
+				14D524454530AA533AED8FE8 /* ForkThemedColors.swift */,
 				370D03A92F0E463B0087A1C9 /* ThemedColors.swift */,
 				370D03AA2F0E463B0087A1C9 /* ThemeManager.swift */,
 				37686A982F10B46800DC3990 /* ThemedImage.swift */,
@@ -4006,6 +4009,7 @@
 				370D03AE2F0E463B0087A1C9 /* Key.swift in Sources */,
 				370D03AF2F0E463B0087A1C9 /* Phi.swift in Sources */,
 				37C76E1A2F8FAD730042FE45 /* SharedAuth0Config.swift in Sources */,
+				62E567B2B04E152AA174AB29 /* ForkThemedColors.swift in Sources */,
 				370D03B02F0E463B0087A1C9 /* ThemedColors.swift in Sources */,
 				370D03B12F0E463B0087A1C9 /* Bags.swift in Sources */,
 				370D03B22F0E463B0087A1C9 /* Appearance.swift in Sources */,

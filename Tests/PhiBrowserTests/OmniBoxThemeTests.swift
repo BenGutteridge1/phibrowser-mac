@@ -20,7 +20,7 @@ final class OmniBoxThemeTests: XCTestCase {
         try await super.tearDown()
     }
 
-    func testOmniBoxKeepsNeutralBackgroundWhileTrackingWindowAppearance() throws {
+    func testOmniBoxFollowsSpaceThemeWhileTrackingWindowAppearance() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         self.directory = directory
@@ -56,12 +56,13 @@ final class OmniBoxThemeTests: XCTestCase {
         XCTAssertTrue(window.themeStateProvider === context)
         XCTAssertTrue(background.themeStateProvider === context)
         XCTAssertEqual(omnibox.view.effectiveAppearance.phiAppearance, .dark)
-        assertBackground(background, NSColor(hex: 0x383838))
+        // Fork: the omnibox takes the Space's theme color, opaque.
+        assertBackground(background, .red)
 
-        // Changing the active Space's theme must preserve the neutral background.
+        // Changing the active Space's theme recolors it.
         context.setTheme(yellow)
         drainThemeUpdates()
-        assertBackground(background, NSColor(hex: 0x383838))
+        assertBackground(background, .yellow)
 
         // Reuse the same views, as the production dismiss/show path does.
         omnibox.view.removeFromSuperview()
@@ -69,16 +70,16 @@ final class OmniBoxThemeTests: XCTestCase {
         drainThemeUpdates()
         host.addSubview(omnibox.view)
         XCTAssertEqual(omnibox.view.effectiveAppearance.phiAppearance, .dark)
-        assertBackground(background, NSColor(hex: 0x383838))
+        assertBackground(background, .red)
 
         context.setUserAppearanceChoice(.light)
         drainThemeUpdates()
         XCTAssertEqual(omnibox.view.effectiveAppearance.phiAppearance, .light)
-        assertBackground(background, .white)
+        assertBackground(background, .red)
         context.setUserAppearanceChoice(.dark)
         drainThemeUpdates()
         XCTAssertEqual(omnibox.view.effectiveAppearance.phiAppearance, .dark)
-        assertBackground(background, NSColor(hex: 0x383838))
+        assertBackground(background, .red)
     }
 
     func testIncognitoOmniBoxUsesLightInputTextWhenAppAppearanceIsLight() throws {

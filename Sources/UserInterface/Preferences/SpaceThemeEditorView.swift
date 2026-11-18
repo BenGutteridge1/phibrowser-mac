@@ -585,7 +585,8 @@ struct SpaceThemeEditorView: View {
 
     // Dusty solids, tonal pairs and balanced accents. These stay inside the
     // dark field's neutral-center branch, avoiding its highly saturated ring.
-    private static let recommendedPalettes: [ThemePalette] = [
+    // Fork: the original 2.12 themes come first (see `forkClassicPresets`).
+    private static let recommendedPalettes: [ThemePalette] = ThemePalette.forkClassicPresets + [
         ThemePalette(hue: 0.595, saturation: 0.25, brightness: 0.86), // Mist blue
         ThemePalette(hue: 0.375, saturation: 0.23, brightness: 0.80), // Sage
         ThemePalette(hue: 0.105, saturation: 0.22, brightness: 0.90), // Champagne
