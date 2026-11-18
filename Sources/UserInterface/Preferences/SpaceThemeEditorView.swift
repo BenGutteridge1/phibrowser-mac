@@ -286,7 +286,8 @@ private final class ThemeEditorPreviewThrottle: NSObject {
 
 /// The existing Space theme editor, with a linked palette and live window updates.
 struct SpaceThemeEditorView: View {
-    static let contentSize = NSSize(width: 260, height: 328)
+    // Fork: +26pt for the saturation slider row.
+    static let contentSize = NSSize(width: 260, height: 354)
 
     let spaceId: String?
     let allowsWindowDragging: Bool
@@ -339,6 +340,16 @@ struct SpaceThemeEditorView: View {
             toolbar
             VStack(spacing: 8) {
                 colorField
+                ForkThemeSaturationSlider(palette: palette, appearance: appearance) { newPalette in
+                    // Mark a drag in progress so syncControls keeps the knob on the pointer.
+                    draggedHandle = -1
+                    edit(newPalette, preview: true)
+                } onEnded: { newPalette in
+                    edit(newPalette)
+                    draggedHandle = nil
+                }
+                .frame(width: 244)
+                .anchorPreference(key: ThemeEditorControlBoundsKey.self, value: .bounds) { [$0] }
                 presetStrip
             }
         }

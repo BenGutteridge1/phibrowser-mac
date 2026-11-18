@@ -9,12 +9,28 @@ import AppKit
 /// merges stay conflict-free.
 public extension ThemedColor {
     /// Fork: the omnibox follows the Space theme instead of upstream's neutral
-    /// `searchPanelBackground`. It is the Space's own sidebar color (the first
-    /// navigation color, stored as `windowOverlayBackground`) made opaque, in
-    /// both appearances, so the panel reads as part of the themed window.
+    /// `searchPanelBackground`, and is always fully opaque. It takes the
+    /// Space palette's hue and brightness at a fixed saturation, so the theme
+    /// editor's saturation slider (and the handle's distance from the field's
+    /// center) never change it. A neutral palette keeps upstream's neutral
+    /// panel color, so the brightness slider never changes it either. Themes
+    /// without a palette use their sidebar color, made opaque.
     static let forkOmniboxBackground = ThemedColor { theme, appearance in
-        theme.color(for: .windowOverlayBackground, appearance: appearance).withAlphaComponent(1)
+        if let palette = theme.navigationPalette {
+            guard palette.saturation > 0 else {
+                return searchPanelBackground.resolve(theme: theme, appearance: appearance)
+            }
+            return ThemePalette(
+                hue: palette.hue,
+                saturation: forkOmniboxPaletteSaturation,
+                brightness: palette.brightness
+            ).colors(for: appearance)[0].withAlphaComponent(1)
+        }
+        return theme.color(for: .windowOverlayBackground, appearance: appearance).withAlphaComponent(1)
     }
+
+    /// The omnibox's fixed palette saturation: the classic presets' value.
+    private static let forkOmniboxPaletteSaturation = 0.6777
 }
 
 extension ThemePalette {

@@ -74728,6 +74728,30 @@
         }
       }
     },
+    "settings.general.spaceSwitcherPlacement.bottomCenterOption" : {
+      "comment" : "Space switcher placement option - centered in the sidebar bottom bar",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bottom center"
+          }
+        }
+      }
+    },
+    "settings.general.spaceSwitcherPlacement.topOption" : {
+      "comment" : "Space switcher placement option - below the navigation buttons",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Top of sidebar"
+          }
+        }
+      }
+    },
     "settings.general.theme.colorTitle" : {
       "comment" : "General settings - Theme color row title",
       "extractionState" : "extracted_with_value",
@@ -101490,6 +101514,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "選取空間以查看其設定。"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.spaceSwitcherDots.description" : {
+      "comment" : "Spaces settings - description under the Space switcher dots toggle",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Draws each Space as a small dot instead of its icon. Hover a dot to see the Space's name."
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.spaceSwitcherDots.title" : {
+      "comment" : "Spaces settings - toggle that draws each Space in the sidebar switcher as a small dot",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Spaces as dots"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.spaceSwitcherPlacement.title" : {
+      "comment" : "Spaces settings - picker for where the sidebar shows the Space switcher",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Space switcher position"
           }
         }
       }
@@ -130116,6 +130176,18 @@
         }
       }
     },
+    "theme.editor.brightnessSlider" : {
+      "comment" : "Theme editor - accessible label of the slider that sets a neutral theme's brightness",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Brightness"
+          }
+        }
+      }
+    },
     "theme.editor.colorHandle" : {
       "comment" : "Theme editor - accessible color handle label; placeholder is the color number, from one to three",
       "extractionState" : "manual",
@@ -130472,6 +130544,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重設"
+          }
+        }
+      }
+    },
+    "theme.editor.saturationSlider" : {
+      "comment" : "Theme editor - accessible label of the slider that sets how saturated the theme color is",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saturation"
           }
         }
       }
