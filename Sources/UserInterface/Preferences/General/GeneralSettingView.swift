@@ -428,6 +428,7 @@ private struct BrowsingSectionView: View {
                     .padding(.vertical, 12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                GeneralContainerView { ForkLastTabEmptyStateRow() }
             }
         }
     }

@@ -33,6 +33,14 @@ enum ForkSettings {
         static let spaceSwitcherPlacement = "fork.spaceSwitcherPlacement"
         static let spaceSwitcherUsesDots = "fork.spaceSwitcherUsesDots"
         static let spaceOverlayOpacities = "fork.spaceOverlayOpacities"
+        static let lastTabShowsEmptyState = "fork.lastTabShowsEmptyState"
+    }
+
+    /// Closing the last tab leaves the window on the native empty state
+    /// (`ForkEmptyStateView`) instead of opening a new tab. On by default.
+    static var lastTabShowsEmptyState: Bool {
+        get { UserDefaults.standard.object(forKey: Key.lastTabShowsEmptyState) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: Key.lastTabShowsEmptyState) }
     }
 
     /// Range of the theme editor's transparency slider, as overlay opacity.

@@ -217,6 +217,15 @@ final class PlaceholderShellViewController: NSViewController {
         }
     }
 
+    /// Fork: fills the page area with the native empty state.
+    @MainActor
+    func showForkEmptyState(themeProvider: ThemeStateProvider) {
+        guard !hostView.subviews.contains(where: { $0 is ForkEmptyStateView }) else { return }
+        let emptyState = ForkEmptyStateView(themeProvider: themeProvider)
+        hostView.addSubview(emptyState)
+        emptyState.snp.makeConstraints { make in make.edges.equalToSuperview() }
+    }
+
     /// Remove all subviews from hostView SYNCHRONOUSLY. Called before
     /// Chromium's placeholder_web_contents_.reset() destroys the underlying
     /// NSView (the AppKit hierarchy must release the dangling pointer

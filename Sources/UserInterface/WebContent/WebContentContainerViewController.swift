@@ -1797,6 +1797,12 @@ class WebContentContainerViewController: NSViewController {
             }
             placeholderShell = shell
         }
+        // Fork: the native empty state instead of chrome://dino, which stays
+        // out of the hierarchy (nothing to detach on exit).
+        if ForkSettings.lastTabShowsEmptyState, let themeContext = browserState?.themeContext {
+            shell.showForkEmptyState(themeProvider: themeContext)
+            return
+        }
         guard browserState?.showsPlaceholderPage == true else {
             AppLogInfo("🦖 [Container] attached placeholder shell, no page")
             return

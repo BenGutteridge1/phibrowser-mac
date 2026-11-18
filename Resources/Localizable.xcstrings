@@ -73108,6 +73108,30 @@
         }
       }
     },
+    "settings.general.fork.lastTabEmptyState.description" : {
+      "comment" : "General settings - description under the empty-after-last-tab toggle",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Shows the Phi mark on your Space's color instead of opening a new tab."
+          }
+        }
+      }
+    },
+    "settings.general.fork.lastTabEmptyState.title" : {
+      "comment" : "General settings - toggle: closing the last tab shows an empty page instead of opening a new tab",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep the window empty after closing the last tab"
+          }
+        }
+      }
+    },
     "settings.general.language.displayLanguageTitle" : {
       "comment" : "General settings - Row title for choosing Phi's native interface language",
       "extractionState" : "extracted_with_value",

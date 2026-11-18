@@ -58,3 +58,32 @@ struct ForkSpaceSwitcherSettingsRows: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+/// Settings → General → Browsing: what closing the last tab leaves behind.
+struct ForkLastTabEmptyStateRow: View {
+    @AppStorage(ForkSettings.Key.lastTabShowsEmptyState) private var showsEmptyState = true
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(NSLocalizedString("settings.general.fork.lastTabEmptyState.title", value: "Keep the window empty after closing the last tab",
+                    comment: "General settings - toggle: closing the last tab shows an empty page instead of opening a new tab"))
+                    .font(.system(size: 13))
+                    .themedForeground(.textPrimary)
+                Text(NSLocalizedString("settings.general.fork.lastTabEmptyState.description", value: "Shows the Phi mark on your Space's color instead of opening a new tab.",
+                    comment: "General settings - description under the empty-after-last-tab toggle"))
+                    .font(.system(size: 11))
+                    .themedForeground(.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 12)
+            Toggle("", isOn: $showsEmptyState)
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+                .themedTint(.themeColor)
+                .labelsHidden()
+        }
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}

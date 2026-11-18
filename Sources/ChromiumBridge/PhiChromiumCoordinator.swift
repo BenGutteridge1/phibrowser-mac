@@ -1941,7 +1941,8 @@ extension PhiChromiumCoordinator: PhiChromiumBridgeDelegate {
     /// it enter placeholder mode instead, and the session controller opens
     /// the omnibox over it (`openOmniBoxForEmptyWindowIfConfigured`).
     func shouldAutoCreateTabInEmptyWindow() -> Bool {
-        PhiPreferences.GeneralSettings.openNewTabPageOnCmdT.loadValue()
+        // Fork: the empty state replaces the refill tab (ForkSettings).
+        PhiPreferences.GeneralSettings.openNewTabPageOnCmdT.loadValue() && !ForkSettings.lastTabShowsEmptyState
     }
 
     func shouldAutoInstallICloudPasswords() -> Bool {
