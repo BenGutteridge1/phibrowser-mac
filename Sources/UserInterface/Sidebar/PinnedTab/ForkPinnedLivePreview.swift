@@ -61,7 +61,7 @@ final class ForkPinnedLivePreview: NSObject {
         return controller
     }
 
-    private static let cardSize = NSSize(width: 340, height: 500)
+    private static let cardSize = NSSize(width: 340, height: 400)
     /// The page lays out this much wider than the card, then is drawn scaled
     /// down to fit, so more of the inbox or task list fits.
     private static let contentScale = 0.85
