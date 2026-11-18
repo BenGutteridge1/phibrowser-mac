@@ -286,8 +286,13 @@ private final class ThemeEditorPreviewThrottle: NSObject {
 
 /// The existing Space theme editor, with a linked palette and live window updates.
 struct SpaceThemeEditorView: View {
-    // Fork: +26pt for the saturation slider row.
-    static let contentSize = NSSize(width: 260, height: 354)
+    // Fork: +26pt each for the saturation and transparency slider rows.
+    static let contentSize = NSSize(width: 260, height: 380)
+    /// Fork: the transparency row needs an existing Space to store into, so
+    /// the create-Space form's editor is one row shorter.
+    private var contentHeight: CGFloat {
+        spaceId == nil ? Self.contentSize.height - 26 : Self.contentSize.height
+    }
 
     let spaceId: String?
     let allowsWindowDragging: Bool
@@ -306,6 +311,8 @@ struct SpaceThemeEditorView: View {
     @State private var hoveredPreset: Int?
     @State private var deletablePreset: Int?
     @State private var uneditedPalette: ThemePalette?
+    /// Fork: the Space's sidebar overlay opacity (transparency slider).
+    @State private var overlayOpacity = Double(ThemeColorAdjustment.defaultOverlayAlpha)
     private let storeIdentifier: UUID?
     /// New Spaces edit the form's draft until creation commits it.
     private let draftPalette: Binding<ThemePalette>?
@@ -350,13 +357,33 @@ struct SpaceThemeEditorView: View {
                 }
                 .frame(width: 244)
                 .anchorPreference(key: ThemeEditorControlBoundsKey.self, value: .bounds) { [$0] }
+                if let spaceId {
+                    ForkThemeTransparencySlider(
+                        opacity: overlayOpacity,
+                        color: palette.colors(for: appearance)[0],
+                        appearance: appearance
+                    ) { opacity in
+                        draggedHandle = -1
+                        overlayOpacity = opacity
+                        previewThrottle.schedule {
+                            spaceManager.forkPreviewOverlayOpacity(opacity, forSpaceId: spaceId)
+                        }
+                    } onEnded: { opacity in
+                        previewThrottle.cancel()
+                        overlayOpacity = opacity
+                        spaceManager.forkSetOverlayOpacity(opacity, forSpaceId: spaceId)
+                        draggedHandle = nil
+                    }
+                    .frame(width: 244)
+                    .anchorPreference(key: ThemeEditorControlBoundsKey.self, value: .bounds) { [$0] }
+                }
                 presetStrip
             }
         }
         .padding(.horizontal, 8)
         .padding(.top, 8)
         .padding(.bottom, 10)
-        .frame(width: Self.contentSize.width, height: Self.contentSize.height)
+        .frame(width: Self.contentSize.width, height: contentHeight)
         .background { SpaceThemeEditorGlassBackground() }
         // Standalone panels use AppKit's system window mask, shared with the
         // browser. Embedded editors still need a continuous content mask.
@@ -376,7 +403,14 @@ struct SpaceThemeEditorView: View {
             focusSelectedPreset()
         }
         .onDisappear {
-            if draggedHandle != nil { update(palette) }
+            if draggedHandle != nil {
+                update(palette)
+                // Fork: land an in-flight transparency drag too.
+                if let spaceId, overlayOpacity != (ForkSettings.overlayOpacity(forSpaceId: spaceId)
+                    ?? Double(ThemeColorAdjustment.defaultOverlayAlpha)) {
+                    spaceManager.forkSetOverlayOpacity(overlayOpacity, forSpaceId: spaceId)
+                }
+            }
             previewThrottle.cancel()
         }
         .onReceive(NotificationCenter.default.publisher(for: .spaceThemeDidChange)) { notification in
@@ -856,6 +890,8 @@ struct SpaceThemeEditorView: View {
         }
         guard let spaceId, spaceManager.acceptsStoreAction(from: storeIdentifier) else { onDismiss(); return }
         guard draggedHandle == nil else { return }
+        overlayOpacity = ForkSettings.overlayOpacity(forSpaceId: spaceId)
+            ?? Double(ThemeColorAdjustment.defaultOverlayAlpha)
         palette = spaceManager.themePalette(forSpaceId: spaceId) ?? ThemePalette(
             color: spaceManager.resolvedTheme(forSpaceId: spaceId).color(for: .windowOverlayBackground, appearance: appearance),
             appearance: appearance

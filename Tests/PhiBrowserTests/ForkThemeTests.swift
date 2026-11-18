@@ -39,6 +39,39 @@ final class ForkThemeTests: XCTestCase {
         }
     }
 
+    func testOverlayOpacityAppliesToSidebarColorsButNotTheOmnibox() {
+        let theme = ThemePalette(hue: 0.55, saturation: 0.6, brightness: 0.5, harmony: .analogous)
+            .applying(to: Theme.pure)
+        XCTAssertEqual(theme.color(for: .windowOverlayBackground, appearance: .dark).alphaComponent,
+                       ThemeColorAdjustment.defaultOverlayAlpha, accuracy: 0.0001)
+        theme.forkOverlayAlpha = 0.3
+        let copy = theme.duplicating()
+        for candidate in [theme, copy] {
+            for appearance in [Appearance.light, .dark] {
+                XCTAssertEqual(candidate.color(for: .windowOverlayBackground, appearance: appearance).alphaComponent,
+                               0.3, accuracy: 0.0001)
+                for color in candidate.navigationColors(for: appearance) ?? [] {
+                    XCTAssertEqual(color.alphaComponent, 0.3, accuracy: 0.0001)
+                }
+                let omnibox = ThemedColor.forkOmniboxBackground.resolve(theme: candidate, appearance: appearance)
+                XCTAssertEqual(omnibox.alphaComponent, 1, accuracy: 0.0001)
+            }
+        }
+        XCTAssertEqual(theme.navigationColors(for: .dark)?.count, 2)
+    }
+
+    func testOverlayOpacityIsStoredPerSpaceAndClamped() {
+        let id = "fork-test-\(UUID().uuidString)"
+        defer { ForkSettings.setOverlayOpacity(nil, forSpaceId: id) }
+        XCTAssertNil(ForkSettings.overlayOpacity(forSpaceId: id))
+        ForkSettings.setOverlayOpacity(0.5, forSpaceId: id)
+        XCTAssertEqual(ForkSettings.overlayOpacity(forSpaceId: id), 0.5)
+        ForkSettings.setOverlayOpacity(0.01, forSpaceId: id)
+        XCTAssertEqual(ForkSettings.overlayOpacity(forSpaceId: id), ForkSettings.overlayOpacityRange.lowerBound)
+        ForkSettings.setOverlayOpacity(nil, forSpaceId: id)
+        XCTAssertNil(ForkSettings.overlayOpacity(forSpaceId: id))
+    }
+
     func testClassicPresetsMatchTheOriginalDarkColors() {
         let originals: [Int] = [0x383838, 0x1B380B, 0x0B2938, 0x0B3738, 0x100B38, 0x2D0B38, 0x380B0B, 0x382D0B]
         for (palette, hex) in zip(ThemePalette.forkClassicPresets, originals) {

@@ -130740,6 +130740,18 @@
         }
       }
     },
+    "theme.editor.transparencySlider" : {
+      "comment" : "Theme editor - accessible label of the slider that sets how see-through the Space's sidebar color is",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Transparency"
+          }
+        }
+      }
+    },
     "theme.editor.twoColors" : {
       "comment" : "Theme editor - select two linked complementary colors",
       "extractionState" : "manual",

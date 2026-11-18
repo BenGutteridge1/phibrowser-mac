@@ -32,6 +32,22 @@ enum ForkSettings {
     enum Key {
         static let spaceSwitcherPlacement = "fork.spaceSwitcherPlacement"
         static let spaceSwitcherUsesDots = "fork.spaceSwitcherUsesDots"
+        static let spaceOverlayOpacities = "fork.spaceOverlayOpacities"
+    }
+
+    /// Range of the theme editor's transparency slider, as overlay opacity.
+    /// 2.3's opacity slider went down to 10%; the top is fully opaque.
+    static let overlayOpacityRange: ClosedRange<Double> = 0.10...1.0
+
+    /// A Space's sidebar overlay opacity, or nil for upstream's fixed 80%.
+    static func overlayOpacity(forSpaceId spaceId: String) -> Double? {
+        (UserDefaults.standard.dictionary(forKey: Key.spaceOverlayOpacities) as? [String: Double])?[spaceId]
+    }
+
+    static func setOverlayOpacity(_ opacity: Double?, forSpaceId spaceId: String) {
+        var map = (UserDefaults.standard.dictionary(forKey: Key.spaceOverlayOpacities) as? [String: Double]) ?? [:]
+        map[spaceId] = opacity.map { min(max($0, overlayOpacityRange.lowerBound), overlayOpacityRange.upperBound) }
+        UserDefaults.standard.set(map, forKey: Key.spaceOverlayOpacities)
     }
 
     static var spaceSwitcherPlacement: SpaceSwitcherPlacement {

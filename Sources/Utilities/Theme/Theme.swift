@@ -501,6 +501,9 @@ public class Theme: NSObject {
     public let name: String
     private var colorPalette: [ColorRole: ColorPair]
     var navigationPalette: ThemePalette?
+    /// Fork: the Space's sidebar overlay opacity (the theme editor's
+    /// transparency slider). Nil keeps upstream's fixed `defaultOverlayAlpha`.
+    var forkOverlayAlpha: CGFloat?
 
     /// The navigation gradient's stops while a Space switch ramps this theme
     /// toward another Space's (`SpaceWindowSlot.interpolatedTheme`). A
@@ -513,11 +516,15 @@ public class Theme: NSObject {
     /// Space-switch ramp, else the palette's colors. Nil for a theme that
     /// paints a flat overlay (no palette, or a single-color one).
     func navigationColors(for appearance: Appearance) -> [NSColor]? {
+        let colors: [NSColor]
         if let blendedNavigationColors {
-            return blendedNavigationColors.map { $0.color(for: appearance) }
+            colors = blendedNavigationColors.map { $0.color(for: appearance) }
+        } else {
+            guard let navigationPalette, navigationPalette.colorCount > 1 else { return nil }
+            colors = navigationPalette.colors(for: appearance)
         }
-        guard let navigationPalette, navigationPalette.colorCount > 1 else { return nil }
-        return navigationPalette.colors(for: appearance)
+        guard let forkOverlayAlpha else { return colors }
+        return colors.map { $0.withAlphaComponent(forkOverlayAlpha) }
     }
 
     public init(id: String, name: String, colorPalette: [ColorRole: ColorPair] = [:]) {
@@ -536,13 +543,10 @@ public class Theme: NSObject {
         let pair = colorPalette[role] ?? DefaultColors.colorPair(for: role)
         switch role {
         case .windowOverlayBackground:
+            let alpha = forkOverlayAlpha ?? ThemeColorAdjustment.defaultOverlayAlpha
             return ColorPair(
-                light: pair.light.withAlphaComponent(
-                    ThemeColorAdjustment.defaultOverlayAlpha
-                ),
-                dark: pair.dark.withAlphaComponent(
-                    ThemeColorAdjustment.defaultOverlayAlpha
-                )
+                light: pair.light.withAlphaComponent(alpha),
+                dark: pair.dark.withAlphaComponent(alpha)
             )
         case .windowBackground:
             // Content backgrounds stay neutral even when legacy snapshots or
@@ -571,6 +575,7 @@ public class Theme: NSObject {
         let copy = Theme(id: id, name: name, colorPalette: colorPalette)
         copy.navigationPalette = navigationPalette
         copy.blendedNavigationColors = blendedNavigationColors
+        copy.forkOverlayAlpha = forkOverlayAlpha
         return copy
     }
 

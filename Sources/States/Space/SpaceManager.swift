@@ -7442,6 +7442,7 @@ final class SpaceManager: ObservableObject {
     /// because ThemeSnapshot V2 uses the standard overlay alpha.
     fileprivate func hasThemeCustomization(forSpaceId spaceId: String) -> Bool {
         if themePalette(forSpaceId: spaceId) != nil { return true }
+        if ForkSettings.overlayOpacity(forSpaceId: spaceId) != nil { return true }
         if themeId(forSpaceId: spaceId) != nil {
             return true
         }
@@ -7455,6 +7456,7 @@ final class SpaceManager: ObservableObject {
     /// going away for good; nothing else prunes them and the id never
     /// comes back.
     func clearThemeRecords(forSpaceId spaceId: String) {
+        ForkSettings.setOverlayOpacity(nil, forSpaceId: spaceId)
         guard let account = boundAccount else { return }
         var palettes = account.userDefaults.spaceThemePalettes()
         var changed = false
@@ -8077,6 +8079,8 @@ final class SpaceManager: ObservableObject {
             let registeredBase = manager.registeredThemes[resolvedThemeId(forSpaceId: spaceId)]
                 ?? manager.currentTheme
             let base = ThemeColorAdjustment.applyingStandardAlpha(to: registeredBase)
+            // Fork: every branch below copies `base`, so this carries through.
+            base.forkOverlayAlpha = ForkSettings.overlayOpacity(forSpaceId: spaceId).map { CGFloat($0) }
             if let palette = themePalette(forSpaceId: spaceId) {
                 return palette.applying(to: base)
             }
@@ -8189,6 +8193,27 @@ final class SpaceManager: ObservableObject {
 
     /// Re-applies the Space's resolved theme to every live controller
     /// bound to it, across all slots.
+    /// Fork: previews a transparency-slider drag in the Space's windows
+    /// without persisting, like `previewThemePalette`.
+    func forkPreviewOverlayOpacity(_ opacity: Double, forSpaceId spaceId: String) {
+        MainActor.assumeIsolated {
+            let theme = resolvedTheme(forSpaceId: spaceId).duplicating()
+            theme.forkOverlayAlpha = CGFloat(opacity)
+            for slot in slots {
+                if let controller = slot.windowController(for: spaceId) {
+                    controller.browserState.themeContext.setTheme(theme)
+                }
+            }
+        }
+    }
+
+    /// Fork: persists a Space's transparency and re-applies its theme.
+    func forkSetOverlayOpacity(_ opacity: Double, forSpaceId spaceId: String) {
+        ForkSettings.setOverlayOpacity(opacity, forSpaceId: spaceId)
+        reapplyResolvedTheme(forSpaceId: spaceId)
+        postSpaceThemeDidChange(spaceId: spaceId)
+    }
+
     fileprivate func reapplyResolvedTheme(forSpaceId spaceId: String) {
         for slot in slots {
             if let controller = slot.windowController(for: spaceId) {
@@ -12424,6 +12449,12 @@ final class SpaceWindowSlot: ObservableObject {
             )
         }
         theme.blendedNavigationColors = blendedNavigationColors(from: from, to: to, progress: progress)
+        // Fork: ramp the Spaces' overlay opacities too (see `forkOverlayAlpha`).
+        if from.forkOverlayAlpha != nil || to.forkOverlayAlpha != nil {
+            let fromAlpha = from.forkOverlayAlpha ?? ThemeColorAdjustment.defaultOverlayAlpha
+            let toAlpha = to.forkOverlayAlpha ?? ThemeColorAdjustment.defaultOverlayAlpha
+            theme.forkOverlayAlpha = fromAlpha + (toAlpha - fromAlpha) * progress
+        }
         return theme
     }
 
