@@ -11,3 +11,7 @@ CR_PRODUCT_DIR_NAME = ${PRODUCT_BUNDLE_IDENTIFIER}
 URL_SCHEME = https:/
 // Note: ${APPCAST_PATH} is defined in each configuration file and will be expanded when SUFEED_URL is used
 SUFEED_URL = ${URL_SCHEME}/ota.phibrowser.com/${APPCAST_PATH}/PhiBrowserMacUpdate.xml
+
+// Fork: the app name people see (menu bar, Dock, About). Official builds
+// keep their product name; OpenSource.xcconfig names the fork.
+PHI_DISPLAY_NAME = $(PRODUCT_NAME)

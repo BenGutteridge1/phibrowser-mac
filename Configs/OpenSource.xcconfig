@@ -3,7 +3,10 @@
 
 // Product Settings
 PRODUCT_NAME = Phi
-PRODUCT_BUNDLE_IDENTIFIER = com.phibrowser.opensource.Mac
+// Fork: Phi+ is a personal, unofficial build with its own identity, so it
+// never passes for Phi and runs beside it with its own data.
+PHI_DISPLAY_NAME = Phi+
+PRODUCT_BUNDLE_IDENTIFIER = com.bengutteridge.phiplus
 APP_ENTITLEMENTS = Resources/PhiBrowser-OpenSource.entitlements
 
 // Asset Catalog

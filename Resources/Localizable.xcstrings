@@ -513,6 +513,30 @@
         }
       }
     },
+    "about.fork.frameworkCredit" : {
+      "comment" : "About window - fork builds only: the credit the Phi Browser Framework license requires",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Built with Phi Browser Framework, part of the Phi Browser project. Copyright Phinomenon Inc. Used under the Phi Browser Framework Binary License."
+          }
+        }
+      }
+    },
+    "about.fork.notice" : {
+      "comment" : "About window - fork builds only: says the app is an unofficial fork; %@ is the app name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ is a personal, unofficial fork of Phi Browser. It is not made, endorsed or supported by Phinomenon."
+          }
+        }
+      }
+    },
     "about.versionLabel" : {
       "comment" : "About window - App version and build number label",
       "extractionState" : "extracted_with_value",

@@ -11,7 +11,7 @@ app_path=$1
 contents_path="$app_path/Contents"
 macos_path="$contents_path/MacOS"
 info_plist_path="$contents_path/Info.plist"
-expected_bundle_identifier="com.phibrowser.opensource.Mac"
+expected_bundle_identifier="com.bengutteridge.phiplus"
 
 if [ ! -d "$app_path" ] || [ ! -d "$macos_path" ] || [ ! -f "$info_plist_path" ]; then
     echo "error: OpenSource app product is incomplete: $app_path" >&2
@@ -22,6 +22,12 @@ bundle_identifier=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$inf
 if [ "$bundle_identifier" != "$expected_bundle_identifier" ]; then
     echo "error: OpenSource bundle identifier is '$bundle_identifier', expected '$expected_bundle_identifier'" >&2
     exit 1
+fi
+
+# Fork: the name in the menu bar. Xcode's generated Info.plist always sets
+# CFBundleName to the product name, so the fork's display name goes in here.
+if [ -n "${PHI_DISPLAY_NAME:-}" ]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleName $PHI_DISPLAY_NAME" "$info_plist_path"
 fi
 
 remove_component() {

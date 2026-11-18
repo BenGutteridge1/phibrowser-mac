@@ -8,7 +8,12 @@ import AppKit
 
 struct AboutView: View {
     @Environment(\.colorScheme) private var colorScheme
+    #if PHI_OSS_BUILD
+    // Fork: room for the fork notice and the framework credit.
+    static let contentSize = NSSize(width: 290, height: 500)
+    #else
     static let contentSize = NSSize(width: 290, height: 392)
+    #endif
 
     private let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ??
                          Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Phi"
@@ -194,6 +199,10 @@ struct AboutView: View {
                         layoutWidth: Self.acknowledgementsLayoutWidth
                     )
                     .frame(maxWidth: Self.acknowledgementsLayoutWidth)
+                    #if PHI_OSS_BUILD
+                    ForkAboutNotice(appName: appName)
+                        .frame(maxWidth: Self.acknowledgementsLayoutWidth)
+                    #endif
                 }
             }
 
@@ -382,3 +391,27 @@ private struct AboutAcknowledgementsTextView: NSViewRepresentable {
 #Preview {
     AboutView()
 }
+
+#if PHI_OSS_BUILD
+/// Fork: says the app is an unofficial fork, and carries the credit the
+/// Phi Browser Framework Binary License requires.
+private struct ForkAboutNotice: View {
+    let appName: String
+    private static let frameworkURL = URL(string: "https://github.com/phibrowser/phibrowser-framework")!
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text(String(format: NSLocalizedString("about.fork.notice", value: "%@ is a personal, unofficial fork of Phi Browser. It is not made, endorsed or supported by Phinomenon.",
+                comment: "About window - fork builds only: says the app is an unofficial fork; %@ is the app name"), appName))
+            Text(NSLocalizedString("about.fork.frameworkCredit", value: "Built with Phi Browser Framework, part of the Phi Browser project. Copyright Phinomenon Inc. Used under the Phi Browser Framework Binary License.",
+                comment: "About window - fork builds only: the credit the Phi Browser Framework license requires"))
+            Link(Self.frameworkURL.absoluteString, destination: Self.frameworkURL)
+        }
+        .font(.system(size: 9))
+        .foregroundColor(Color(NSColor.secondaryLabelColor))
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.top, 4)
+    }
+}
+#endif
