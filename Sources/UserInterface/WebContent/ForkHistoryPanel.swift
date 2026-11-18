@@ -67,7 +67,10 @@ final class ForkHistoryPanelModel: ObservableObject {
         self.onOpen = onOpen
         self.onShowFullHistory = onShowFullHistory
         self.onClose = onClose
+        // Paint the last opening view at once; `onAppear` refreshes it.
+        if let cached = service.lastOpeningResults { apply(cached) }
     }
+
 
     func favicon(for entry: ForkHistoryEntry) -> NSImage? { service.cachedFavicon(for: entry.url) }
 
@@ -113,6 +116,9 @@ final class ForkHistoryPanelModel: ObservableObject {
             guard !Task.isCancelled else { return }
             self.reachedEnd = results.count < limit
             if range == .yesterday { results.removeAll { $0.time >= startOfToday } }
+            if text.isEmpty, range == .week, limit == Self.pageSize {
+                self.service.lastOpeningResults = results
+            }
             self.apply(results)
             self.queryTask = nil
         }
@@ -210,7 +216,8 @@ struct ForkHistoryPanelView: View {
         }
         .onAppear {
             searchFocused = true
-            if !model.hasLoaded { model.reload(debounced: false) }
+            // Shows the cached opening view (if any) at once, then refreshes.
+            model.reload(debounced: false)
         }
         .onKeyPress(.escape) {
             if model.searchText.isEmpty { model.onClose() } else { model.searchText = "" }
@@ -426,15 +433,19 @@ final class ForkHistoryPanelController: NSObject {
             controllers[ObjectIdentifier(parent)]?.close()
             return true
         }
-        if let existing = controllers[ObjectIdentifier(window)] {
+        // Chromium dispatches with its own hidden widget window, not the
+        // window on screen; attaching there would force that hidden window
+        // on screen as an empty browser window. Use the session's window.
+        guard let controller = SpaceSessionControllersManager.shared.findControllerWith(window: window),
+              let host = controller.window else {
+            return false
+        }
+        if let existing = controllers[ObjectIdentifier(host)] {
             existing.close()
             return true
         }
-        guard let controller = SpaceSessionControllersManager.shared.findControllerWith(window: window) else {
-            return false
-        }
-        let panelController = ForkHistoryPanelController(parent: window, session: controller)
-        controllers[ObjectIdentifier(window)] = panelController
+        let panelController = ForkHistoryPanelController(parent: host, session: controller)
+        controllers[ObjectIdentifier(host)] = panelController
         panelController.show()
         return true
     }
@@ -453,7 +464,8 @@ final class ForkHistoryPanelController: NSObject {
     private init(parent: NSWindow, session: SpaceSessionController) {
         self.parent = parent
         let state = session.browserState
-        service = ForkHistoryService(windowId: Int64(state.windowId), profileId: state.profileId)
+        service = ForkHistoryService.service(windowId: Int64(state.windowId), profileId: state.profileId)
+        let windowId = Int64(state.windowId)
         panel = ForkHistoryNSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
                                    backing: .buffered, defer: true)
         super.init()
@@ -468,8 +480,8 @@ final class ForkHistoryPanelController: NSObject {
         panel.backgroundColor = .clear
         // The card draws its own shadow, so it slides with the card.
         panel.hasShadow = false
-        // An ordinary window attached to the browser window: it stays above
-        // that window only, never over other apps.
+        // An ordinary window attached to the browser window: it stays just
+        // above that window, so other apps cover both and it stays open.
         panel.level = .normal
         panel.hidesOnDeactivate = false
         panel.isMovableByWindowBackground = false
@@ -498,14 +510,10 @@ final class ForkHistoryPanelController: NSObject {
             MainActor.assumeIsolated { self?.position() }
         })
         observers.append(center.addObserver(forName: NSWindow.willCloseNotification, object: parent, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.close(animated: false) }
-        })
-        // Out of the way while another app is active; back on return.
-        observers.append(center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.setDetached(true) }
-        })
-        observers.append(center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.setDetached(false) }
+            MainActor.assumeIsolated {
+                self?.close(animated: false)
+                ForkHistoryService.release(windowId: windowId)
+            }
         })
         // While the panel is key, Show History (⌘Y, or its remapped key)
         // closes it here, before anything else sees the key: the panel is
@@ -536,16 +544,6 @@ final class ForkHistoryPanelController: NSObject {
     }
 
     private var reducesMotion: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
-
-    private func setDetached(_ detached: Bool) {
-        guard !isClosing, let parent else { return }
-        if detached {
-            parent.removeChildWindow(panel)
-            panel.orderOut(nil)
-        } else if parent.isVisible, !parent.isMiniaturized {
-            parent.addChildWindow(panel, ordered: .above)
-        }
-    }
 
     private func show() {
         guard let parent else { return }
@@ -600,7 +598,7 @@ final class ForkHistoryPanelController: NSObject {
         let finish = { [self] in
             parent?.removeChildWindow(panel)
             panel.orderOut(nil)
-            service.close()
+            service.scheduleRelease()
         }
         guard animated, !reducesMotion, panel.isVisible else { finish(); return }
         NSAnimationContext.runAnimationGroup { context in

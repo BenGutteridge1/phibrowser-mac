@@ -29,10 +29,47 @@ struct ForkHistoryEntry: Identifiable, Equatable {
 /// outside. Queries are serialized, because a session runs one command at a
 /// time. Favicons come from the profile's favicon database over the bridge.
 ///
-/// One instance per browser window (the window's profile); `close()` when the
-/// window goes away.
+/// One instance per browser window (the window's profile), from
+/// `service(windowId:profileId:)`. It stays warm between panel openings, so
+/// reopening (also after switching apps) is instant, and releases its hidden
+/// page after `idleRelease` without use, or at once when the window closes.
 @MainActor
 final class ForkHistoryService {
+    private static var services: [Int64: ForkHistoryService] = [:]
+    private static let idleRelease: TimeInterval = 600
+
+    static func service(windowId: Int64, profileId: String) -> ForkHistoryService {
+        if let existing = services[windowId], existing.profileId == profileId {
+            existing.releaseWork?.cancel()
+            existing.releaseWork = nil
+            return existing
+        }
+        services[windowId]?.close()
+        let service = ForkHistoryService(windowId: windowId, profileId: profileId)
+        services[windowId] = service
+        return service
+    }
+
+    /// Releases the window's service now (the window closed).
+    static func release(windowId: Int64) {
+        services.removeValue(forKey: windowId)?.close()
+    }
+
+    /// Keeps the service for `idleRelease`, then releases its hidden page.
+    func scheduleRelease() {
+        releaseWork?.cancel()
+        let work = DispatchWorkItem { [windowId] in
+            MainActor.assumeIsolated { Self.release(windowId: windowId) }
+        }
+        releaseWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.idleRelease, execute: work)
+    }
+
+    private var releaseWork: DispatchWorkItem?
+    /// The panel's opening view (no search, its default range) from the last
+    /// time it was shown, painted at once on the next open while it refreshes.
+    var lastOpeningResults: [ForkHistoryEntry]?
+
     private let windowId: Int64
     private let profileId: String
     private var wrapper: (any WebContentWrapper)?
@@ -41,7 +78,7 @@ final class ForkHistoryService {
     private let favicons = NSCache<NSString, NSImage>()
     private var faviconWaiters: [String: [(NSImage?) -> Void]] = [:]
 
-    init(windowId: Int64, profileId: String) {
+    private init(windowId: Int64, profileId: String) {
         self.windowId = windowId
         self.profileId = profileId
         favicons.countLimit = 600
