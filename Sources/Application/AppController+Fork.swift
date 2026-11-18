@@ -42,7 +42,9 @@ extension AppController {
             guard ForkAddressBarPanel.current == nil else { return }
             let panel = KioskLaunchOmniBoxPanelController(
                 browserState: host.browserState,
-                hostWindow: host.lifecycleWindow
+                hostWindow: host.lifecycleWindow,
+                // The same width as the omnibox inside the browser window.
+                boxWidth: OmniBoxViewController.boxWidth
             ) { url in
                 ForkAddressBarPanel.current = nil
                 guard let url else { return }

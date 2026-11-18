@@ -37,7 +37,9 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
     static let rightInset: CGFloat = 12
     static let topInset: CGFloat = 40
 
-    static var panelSize: NSSize {
+    static var panelSize: NSSize { panelSize(boxWidth: boxWidth) }
+
+    static func panelSize(boxWidth: CGFloat) -> NSSize {
         NSSize(
             width: boxWidth + shadowMargin * 2,
             height: OmniBoxContainerViewController.maxOmniBoxHeight + shadowMargin * 2
@@ -72,8 +74,9 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
 
     /// Fork: horizontally centered, the box's top a third of the way down
     /// the screen (Spotlight's place), so suggestions have room below it.
-    static func centeredFrame(onVisibleFrame visibleFrame: NSRect) -> NSRect {
+    static func centeredFrame(onVisibleFrame visibleFrame: NSRect, boxWidth: CGFloat) -> NSRect {
         let boxTop = visibleFrame.maxY - visibleFrame.height / 3
+        let panelSize = panelSize(boxWidth: boxWidth)
         return NSRect(
             x: (visibleFrame.midX - panelSize.width / 2).rounded(),
             y: (boxTop + shadowMargin - panelSize.height).rounded(),
@@ -140,13 +143,19 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
         )
     }
 
+    /// The omnibox box's width: Kiosk's `boxWidth` by default; the fork's
+    /// address-bar shortcut passes the browser omnibox's own width.
+    private let panelBoxWidth: CGFloat
+
     init(
         browserState: BrowserState,
         hostWindow: NSWindow?,
+        boxWidth: CGFloat = KioskLaunchOmniBoxPanelController.boxWidth,
         onFinish: @escaping (String?) -> Void
     ) {
+        panelBoxWidth = boxWidth
         panel = Panel(
-            contentRect: NSRect(origin: .zero, size: Self.panelSize),
+            contentRect: NSRect(origin: .zero, size: Self.panelSize(boxWidth: boxWidth)),
             styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: true
@@ -157,7 +166,7 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
             browserState: browserState,
             superView: backgroundView,
             isDetachedFromHostWindow: true,
-            fixedBoxWidth: Self.boxWidth
+            fixedBoxWidth: boxWidth
         )
         self.onFinish = onFinish
         super.init()
@@ -190,7 +199,7 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
         panel.collectionBehavior = [
             .canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle
         ]
-        panel.contentView = NSView(frame: NSRect(origin: .zero, size: Self.panelSize))
+        panel.contentView = NSView(frame: NSRect(origin: .zero, size: Self.panelSize(boxWidth: panelBoxWidth)))
         panel.delegate = self
     }
 
@@ -200,7 +209,7 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
         guard !isFinished, let contentView = panel.contentView else { return }
         if let visibleFrame = (screen ?? NSScreen.main)?.visibleFrame {
             panel.setFrame(
-                centered ? Self.centeredFrame(onVisibleFrame: visibleFrame)
+                centered ? Self.centeredFrame(onVisibleFrame: visibleFrame, boxWidth: panelBoxWidth)
                     : Self.frame(onVisibleFrame: visibleFrame),
                 display: false
             )
