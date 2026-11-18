@@ -5,32 +5,57 @@
 
 import AppKit
 
+/// Fork: the floating address bar of "Open Address Bar from Any App".
+@MainActor
+private enum ForkAddressBarPanel {
+    static var current: KioskLaunchOmniBoxPanelController?
+}
+
 extension AppController {
-    /// Fork: "Open Address Bar from Any App". Brings Phi forward and does
-    /// what New Tab (⌘T) does in the front window, so the New tab behavior
-    /// setting decides between the omnibox and a new tab page. With no
-    /// window open, opens one first, the way clicking the Dock icon does.
+    /// Fork: "Open Address Bar from Any App". Shows Phi's own omnibox,
+    /// unchanged, in the floating, non-activating panel Kiosk's global
+    /// shortcut uses (`KioskLaunchOmniBoxPanelController`): it appears over
+    /// whatever app is in front, on the screen the pointer is on, without
+    /// bringing Phi forward. Picking a result activates Phi and opens it in a
+    /// new tab of the browser window; Escape, or the shortcut again, leaves
+    /// the user where they were.
     @MainActor
     func forkOpenAddressBarFromAnywhere() {
-        NSApp.activate(ignoringOtherApps: true)
-        let manager = SpaceSessionControllersManager.shared
-        if let controller = manager.activeWindowController, let window = controller.window,
-           window.isVisible || window.isMiniaturized {
-            if window.isMiniaturized { window.deminiaturize(nil) }
-            window.makeKeyAndOrderFront(nil)
-            controller.newBrowserTab(nil)
+        if let panel = ForkAddressBarPanel.current, !panel.isFinished {
+            panel.dismiss()
             return
         }
-        _ = ChromiumLauncher.sharedInstance().bridge?
-            .applicationShouldHandleReopen(NSApp, hasVisibleWindows: false)
-        // A window that opens empty (the fork's empty state) still owes the
-        // address bar; one that opens on a new tab already shows it.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            MainActor.assumeIsolated {
-                guard let controller = SpaceSessionControllersManager.shared.activeWindowController,
-                      controller.browserState.isInPlaceholderMode else { return }
-                controller.newBrowserTab(nil)
+        ForkAddressBarPanel.current = nil
+        let manager = SpaceSessionControllersManager.shared
+        // The omnibox takes its suggestions from a browser window; with no
+        // window open the shortcut does nothing.
+        guard let host = manager.activeWindowController, !host.isDormant,
+              host.window?.isVisible == true || host.window?.isMiniaturized == true else { return }
+        // One omnibox at a time: an omnibox already up in the window ends.
+        if let container = host.omniBoxContainerViewController, container.hasShown {
+            container.hideOmniBox()
+        }
+        let pointer = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { $0.frame.contains(pointer) } ?? NSScreen.main
+        // One turn later, like Kiosk: the hide above hands key back first.
+        DispatchQueue.main.async {
+            guard ForkAddressBarPanel.current == nil else { return }
+            let panel = KioskLaunchOmniBoxPanelController(
+                browserState: host.browserState,
+                hostWindow: host.lifecycleWindow
+            ) { url in
+                ForkAddressBarPanel.current = nil
+                guard let url else { return }
+                KioskLaunchActivation().perform {
+                    if let window = host.window {
+                        if window.isMiniaturized { window.deminiaturize(nil) }
+                        window.makeKeyAndOrderFront(nil)
+                    }
+                    host.browserState.createTab(url)
+                }
             }
+            ForkAddressBarPanel.current = panel
+            panel.present(on: screen)
         }
     }
 }
