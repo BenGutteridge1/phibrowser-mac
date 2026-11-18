@@ -328,6 +328,7 @@
 		8E0B00022FC0000000000001 /* BrowserState+GroupOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00042FC0000000000001 /* BrowserState+GroupOverview.swift */; };
 		8E0B00052FC0000000000001 /* GroupOverviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00072FC0000000000001 /* GroupOverviewViewController.swift */; };
 		8E0B00062FC0000000000001 /* GroupOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00082FC0000000000001 /* GroupOverviewView.swift */; };
+		5030903DF1515D030209915B /* ForkHistoryPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */; };
 		E9114B7679FAFCF153494F66 /* ForkEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */; };
 		8E21BB6A2FC5503D00378ABE /* PlaceholderShellViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E21BB692FC5503D00378ABE /* PlaceholderShellViewController.swift */; };
 		8E2A91272FB18051003E1F05 /* TabGroupDragContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E2A91252FB18051003E1F05 /* TabGroupDragContext.swift */; };
@@ -440,6 +441,7 @@
 		ACDC00000000000000000B01 /* AgentCDPListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDC00000000000000000A01 /* AgentCDPListener.swift */; };
 		ACDC00000000000000000B02 /* AgentPeerIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDC00000000000000000A02 /* AgentPeerIdentity.swift */; };
 		ACDC00000000000000000B03 /* AgentDirectChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDC00000000000000000A03 /* AgentDirectChannel.swift */; };
+		A76E1F72E03B82B1D2EB3660 /* ForkHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3BA51975DD985379E6AF2B3 /* ForkHistoryService.swift */; };
 		ACDC00000000000000000B04 /* AppDevToolsPageSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDC00000000000000000A04 /* AppDevToolsPageSession.swift */; };
 		ACDC00000000000000000B05 /* PageActionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDC00000000000000000A05 /* PageActionRegistry.swift */; };
 		AE00FFFE0000000000000002 /* PhiAgentEndpointResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE00FFFE0000000000000001 /* PhiAgentEndpointResolver.swift */; };
@@ -1190,6 +1192,7 @@
 		8E0B00042FC0000000000001 /* BrowserState+GroupOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BrowserState+GroupOverview.swift"; sourceTree = "<group>"; };
 		8E0B00072FC0000000000001 /* GroupOverviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupOverviewViewController.swift; sourceTree = "<group>"; };
 		8E0B00082FC0000000000001 /* GroupOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupOverviewView.swift; sourceTree = "<group>"; };
+		B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkHistoryPanel.swift; sourceTree = "<group>"; };
 		C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkEmptyStateView.swift; sourceTree = "<group>"; };
 		8E21BB692FC5503D00378ABE /* PlaceholderShellViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderShellViewController.swift; sourceTree = "<group>"; };
 		8E2A91252FB18051003E1F05 /* TabGroupDragContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabGroupDragContext.swift; sourceTree = "<group>"; };
@@ -1310,6 +1313,7 @@
 		ACDC00000000000000000A01 /* AgentCDPListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentCDPListener.swift; sourceTree = "<group>"; };
 		ACDC00000000000000000A02 /* AgentPeerIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentPeerIdentity.swift; sourceTree = "<group>"; };
 		ACDC00000000000000000A03 /* AgentDirectChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDirectChannel.swift; sourceTree = "<group>"; };
+		A3BA51975DD985379E6AF2B3 /* ForkHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkHistoryService.swift; sourceTree = "<group>"; };
 		ACDC00000000000000000A04 /* AppDevToolsPageSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDevToolsPageSession.swift; sourceTree = "<group>"; };
 		ACDC00000000000000000A05 /* PageActionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageActionRegistry.swift; sourceTree = "<group>"; };
 		AE00FFFE0000000000000001 /* PhiAgentEndpointResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhiAgentEndpointResolver.swift; sourceTree = "<group>"; };
@@ -2535,6 +2539,7 @@
 				ACDC00000000000000000A01 /* AgentCDPListener.swift */,
 				ACDC00000000000000000A02 /* AgentPeerIdentity.swift */,
 				ACDC00000000000000000A03 /* AgentDirectChannel.swift */,
+				A3BA51975DD985379E6AF2B3 /* ForkHistoryService.swift */,
 				ACDC00000000000000000A04 /* AppDevToolsPageSession.swift */,
 				ACDC00000000000000000A05 /* PageActionRegistry.swift */,
 			);
@@ -3255,6 +3260,7 @@
 			children = (
 				8EA1FD952FEB74530060DCFF /* RendererCrashViewController.swift */,
 				8E5D8B002FDFFAD30039CBE3 /* WebContentSnapshotter.swift */,
+				B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */,
 				C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */,
 				8E21BB692FC5503D00378ABE /* PlaceholderShellViewController.swift */,
 				EAD000000000000000000015 /* ReaderDocumentBuilder.swift */,
@@ -3756,6 +3762,7 @@
 				ACDC00000000000000000B01 /* AgentCDPListener.swift in Sources */,
 				ACDC00000000000000000B02 /* AgentPeerIdentity.swift in Sources */,
 				ACDC00000000000000000B03 /* AgentDirectChannel.swift in Sources */,
+				A76E1F72E03B82B1D2EB3660 /* ForkHistoryService.swift in Sources */,
 				ACDC00000000000000000B04 /* AppDevToolsPageSession.swift in Sources */,
 				ACDC00000000000000000B05 /* PageActionRegistry.swift in Sources */,
 				A17100000000000000000011 /* NativeMediaAdapter.swift in Sources */,
@@ -3863,6 +3870,7 @@
 				8E0B00012FC0000000000001 /* GroupOverviewState.swift in Sources */,
 				8E0B00022FC0000000000001 /* BrowserState+GroupOverview.swift in Sources */,
 				8E8008D82FA1A59800EB24C5 /* WebContentGroupInfo.swift in Sources */,
+				5030903DF1515D030209915B /* ForkHistoryPanel.swift in Sources */,
 				E9114B7679FAFCF153494F66 /* ForkEmptyStateView.swift in Sources */,
 				8E21BB6A2FC5503D00378ABE /* PlaceholderShellViewController.swift in Sources */,
 				376CE2F32F27226A0093D937 /* NewTabViewController.swift in Sources */,

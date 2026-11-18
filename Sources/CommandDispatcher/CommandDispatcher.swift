@@ -99,6 +99,10 @@ struct CommandDispatcher {
             .isGuestTransitionInteractionBlocked {
             return true
         }
+        // Fork: Show History (⌘Y) toggles the floating history panel.
+        if command == .IDC_SHOW_HISTORY, ForkHistoryPanelController.toggle(from: window) {
+            return true
+        }
         if command == .PHI_NEW_KIOSK_WINDOW {
             guard let appController = AppController.shared else { return false }
             appController.newKioskWindowFromMenu(nil)
