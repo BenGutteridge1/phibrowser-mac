@@ -533,8 +533,9 @@ final class ForkHistoryPanelController: NSObject {
         guard !reducesMotion else { return }
         hosting.setFrameOrigin(NSPoint(x: container.bounds.width, y: 0))
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.28
-            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
+            // Same timing as the floating sidebar's hover reveal.
+            context.duration = FloatingSidebarHostViewController.floatingSidebarShowDuration
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             hosting.animator().setFrameOrigin(.zero)
         }
     }
@@ -579,8 +580,8 @@ final class ForkHistoryPanelController: NSObject {
         }
         guard animated, !reducesMotion, panel.isVisible else { finish(); return }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
-            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 1, 1)
+            context.duration = FloatingSidebarHostViewController.floatingSidebarHideDuration
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             hosting.animator().setFrameOrigin(NSPoint(x: container.bounds.width, y: 0))
         } completionHandler: {
             MainActor.assumeIsolated { finish() }
