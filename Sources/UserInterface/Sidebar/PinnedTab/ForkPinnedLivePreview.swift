@@ -22,10 +22,20 @@ final class ForkPinnedLivePreview: NSObject {
 
     /// Hosts that get a live card, the page the card opens on, and the
     /// card-only styling injected into that site's pages.
-    private static let sites: [(host: String, url: String, css: String)] = [
-        ("mail.google.com", "https://mail.google.com/mail/", gmailCSS),
-        ("ticktick.com", "https://ticktick.com/webapp/", "")
+    private static let sites: [(host: String, url: String, css: String, name: String, signedInPath: String)] = [
+        ("mail.google.com", "https://mail.google.com/mail/", gmailCSS, "Gmail", "/mail/mu/mp/"),
+        ("ticktick.com", "https://ticktick.com/webapp/", "", "TickTick", "/webapp")
     ]
+
+    /// A signed-in page lives under the site's app path; anything else (a
+    /// sign-in page, Google's "better on the app" page) means signed out.
+    /// Signing in can't happen in the card (Google refuses the mobile
+    /// identity it uses), so the card offers a real tab instead.
+    private func isSignedIn(_ page: Page, url: String) -> Bool {
+        guard let site = Self.sites.first(where: { $0.url == url }),
+              let current = page.wrapper.urlString.flatMap(URL.init(string:)) else { return true }
+        return current.path.hasPrefix(site.signedInPath)
+    }
 
     /// Gmail's mobile site: drop the "Gmail is better on the app" banner, and
     /// in dark mode (the card follows the browser) give the page a dark look
@@ -78,6 +88,9 @@ final class ForkPinnedLivePreview: NSObject {
         var session: AppDevToolsPageSession?
         /// The color scheme last requested from the site, nil before any.
         var isDark: Bool?
+        /// Set while the card showed the sign-in prompt, so the next showing
+        /// reloads the site (the user may have signed in in a tab since).
+        var needsReload = false
         var releaseWork: DispatchWorkItem?
         init(wrapper: any WebContentWrapper) { self.wrapper = wrapper }
         func close() {
@@ -181,6 +194,7 @@ final class ForkPinnedLivePreview: NSObject {
         let panel = self.panel ?? makePanel()
         if shownURL != url {
             content?.subviews.forEach { $0.removeFromSuperview() }
+            signInPrompt = nil
             shownURL = url
             mount(page(for: url, state: state))
         }
@@ -206,6 +220,13 @@ final class ForkPinnedLivePreview: NSObject {
             parent.addChildWindow(panel, ordered: .above)
         }
         panel.orderFront(nil)
+        if let page = pages[url] {
+            if page.needsReload {
+                page.needsReload = false
+                page.wrapper.navigate(toURL: url)
+            }
+            updateSignInPrompt(for: page, url: url)
+        }
         panel.invalidateShadow()
     }
 
@@ -255,6 +276,62 @@ final class ForkPinnedLivePreview: NSObject {
     }
 
     // MARK: Pages
+
+    // MARK: Sign-in prompt
+
+    private var signInPrompt: NSView?
+
+    /// Shows the native sign-in prompt over the card while the site is
+    /// signed out; looks again once the page has had time to load.
+    private func updateSignInPrompt(for page: Page, url: String, recheck: Bool = true) {
+        let signedOut = !page.wrapper.isLoading && !isSignedIn(page, url: url)
+        if signedOut, signInPrompt == nil, let content, let site = Self.sites.first(where: { $0.url == url }) {
+            let prompt = NSVisualEffectView()
+            prompt.material = .popover
+            prompt.blendingMode = .withinWindow
+            let title = NSTextField(labelWithString: String(format: NSLocalizedString(
+                "pinnedPreview.signIn.title", value: "Not signed in to %@",
+                comment: "Live pinned-tab card - shown when the site in the card is signed out; %@ is the site, such as Gmail"), site.name))
+            title.font = .systemFont(ofSize: 14, weight: .semibold)
+            let detail = NSTextField(wrappingLabelWithString: NSLocalizedString(
+                "pinnedPreview.signIn.detail", value: "Sign in in a tab. The card shows it here afterwards.",
+                comment: "Live pinned-tab card - explains that signing in happens in a normal tab"))
+            detail.font = .systemFont(ofSize: 12)
+            detail.textColor = .secondaryLabelColor
+            detail.alignment = .center
+            let button = NSButton(title: NSLocalizedString("pinnedPreview.signIn.button", value: "Sign In",
+                comment: "Live pinned-tab card - opens the site in a tab to sign in"), target: self, action: #selector(signInPressed))
+            button.bezelStyle = .push
+            let stack = NSStackView(views: [title, detail, button])
+            stack.orientation = .vertical
+            stack.spacing = 10
+            prompt.addSubview(stack)
+            stack.snp.makeConstraints { make in
+                make.center.equalToSuperview()
+                make.leading.trailing.equalToSuperview().inset(24)
+            }
+            content.addSubview(prompt)
+            prompt.snp.makeConstraints { make in make.edges.equalToSuperview() }
+            signInPrompt = prompt
+            page.needsReload = true
+        } else if !signedOut, !page.wrapper.isLoading {
+            signInPrompt?.removeFromSuperview()
+            signInPrompt = nil
+        }
+        guard recheck else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak page] in
+            MainActor.assumeIsolated {
+                guard let self, let page, self.shownURL == url, self.panel?.isVisible == true else { return }
+                self.updateSignInPrompt(for: page, url: url, recheck: false)
+            }
+        }
+    }
+
+    @objc private func signInPressed() {
+        guard let url = shownURL, let state else { return }
+        hide()
+        state.createTab(url)
+    }
 
     private func page(for url: String, state: BrowserState) -> Page? {
         if let page = pages[url] { return page }

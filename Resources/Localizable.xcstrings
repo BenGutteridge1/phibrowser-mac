@@ -56903,6 +56903,42 @@
         }
       }
     },
+    "pinnedPreview.signIn.button" : {
+      "comment" : "Live pinned-tab card - opens the site in a tab to sign in",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sign In"
+          }
+        }
+      }
+    },
+    "pinnedPreview.signIn.detail" : {
+      "comment" : "Live pinned-tab card - explains that signing in happens in a normal tab",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sign in in a tab. The card shows it here afterwards."
+          }
+        }
+      }
+    },
+    "pinnedPreview.signIn.title" : {
+      "comment" : "Live pinned-tab card - shown when the site in the card is signed out; %@ is the site, such as Gmail",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Not signed in to %@"
+          }
+        }
+      }
+    },
     "profile.button.accessibilityLabel" : {
       "comment" : "Profile button - Opens the account and browser actions menu",
       "extractionState" : "extracted_with_value",
