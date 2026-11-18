@@ -99,6 +99,12 @@ import PostHog
         KioskGlobalShortcutRegistrar { [weak self] in
             self?.newKioskWindowFromGlobalShortcut()
         }
+    /// Fork: "Open Address Bar from Any App".
+    private(set) lazy var forkAddressBarShortcutRegistrar = KioskGlobalShortcutRegistrar(
+        action: { [weak self] in MainActor.assumeIsolated { self?.forkOpenAddressBarFromAnywhere() } },
+        shortcut: { Shortcuts.key(for: .FORK_OPEN_ADDRESS_BAR_ANYWHERE) },
+        hotKeySignature: 0x50484142 // PHAB
+    )
 
     override init() {
         super.init()
@@ -250,6 +256,7 @@ import PostHog
                                                name: .activeBrowserWindowDidChange,
                                                object: nil)
         kioskGlobalShortcutRegistrar.start()
+        forkAddressBarShortcutRegistrar.start(enabled: ForkSettings.addressBarGlobalShortcutEnabled)
         
         if permitsSentinelLaunch,
            ApplicationState.shared.isAuthenticated {
@@ -374,6 +381,7 @@ import PostHog
         pendingHotKioskPresentationWorkItem?.cancel()
         pendingHotKioskPresentationWorkItem = nil
         kioskGlobalShortcutRegistrar.invalidate()
+        forkAddressBarShortcutRegistrar.invalidate()
         AppLogInfo("-------applicationWillTerminate----")
         MainActor.assumeIsolated {
             LoginController.shared.recordOOBEAppTermination()
@@ -1380,7 +1388,10 @@ import PostHog
     }
 
     func suspendKioskGlobalShortcutForRecording() -> () -> Void {
-        kioskGlobalShortcutRegistrar.suspendForShortcutRecording()
+        // Fork: the address-bar shortcut must let the recorder see keys too.
+        let resumeKiosk = kioskGlobalShortcutRegistrar.suspendForShortcutRecording()
+        let resumeAddressBar = forkAddressBarShortcutRegistrar.suspendForShortcutRecording()
+        return { resumeKiosk(); resumeAddressBar() }
     }
 
     @MainActor

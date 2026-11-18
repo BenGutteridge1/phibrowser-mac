@@ -285,7 +285,7 @@ final class TabSwitchManager {
         guard let state = browserState else { return [] }
         pruneHistory()
         let others = otherSpaceControllers()
-        guard !others.isEmpty else { return recentTabIDs }
+        guard !others.isEmpty else { return forkFiltered(recentTabIDs) }
 
         // All-Spaces mode: the focused tab stays first, then every Space's
         // recent tabs by when they were last recorded. Each Space keeps
@@ -297,11 +297,22 @@ final class TabSwitchManager {
             entries += manager.recentTabIDs.map { (id: $0, stamp: manager.recencyStamps[$0] ?? 0) }
         }
         let currentID = state.focusingTab?.guid
-        return Self.mergedCandidates(
+        return forkFiltered(Self.mergedCandidates(
             currentTabID: recentTabIDs.contains(where: { $0 == currentID }) ? currentID : nil,
             entries: entries,
             limit: TabSwitchMetrics.maxRecentTabs
-        )
+        ))
+    }
+
+    /// Fork: drops the tabs the user keeps out of the switcher (pinned, in a
+    /// closed folder); the focused tab always stays, so a switch starts there.
+    private func forkFiltered(_ ids: [Int]) -> [Int] {
+        let currentID = browserState?.focusingTab?.guid
+        return ids.filter { id in
+            guard id != currentID, let resolved = resolveTab(id),
+                  let owner = resolved.otherSpaceController?.browserState ?? browserState else { return true }
+            return !owner.forkTabSwitcherExcludes(resolved.tab)
+        }
     }
 
     /// Orders recent tabs from several Spaces: the focused tab first, then

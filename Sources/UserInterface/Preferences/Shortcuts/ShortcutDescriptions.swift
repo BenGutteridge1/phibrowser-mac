@@ -192,6 +192,8 @@ extension CommandWrapper {
             return NSLocalizedString("settings.shortcuts.description.copyURL", value: "Copy the current page's URL to the clipboard.", comment: "Shortcuts settings - Description of the copyURL command")
         case .PHI_TOGGLE_READER:
             return NSLocalizedString("settings.shortcuts.description.reader", value: "Open or close Reader for the current page.", comment: "Shortcuts settings - Description of the reader command")
+        case .FORK_OPEN_ADDRESS_BAR_ANYWHERE:
+            return NSLocalizedString("settings.shortcuts.description.fork.openAddressBarAnywhere", value: "Bring Phi forward and open the address bar, even while another app is active.", comment: "Shortcuts settings - Description of the system-wide open-address-bar command")
         case .PHI_NEW_KIOSK_WINDOW:
             return NSLocalizedString("settings.shortcuts.description.newKiosk", value: "Open a new Kiosk window.", comment: "Shortcuts settings - Description of the newKiosk command")
         case .PHI_NEW_INCOGNITO_SPACE:

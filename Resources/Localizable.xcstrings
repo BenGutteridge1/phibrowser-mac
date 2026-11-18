@@ -75592,6 +75592,66 @@
         }
       }
     },
+    "settings.navigations.fork.addressBarShortcut.registered" : {
+      "comment" : "Navigations settings - status when the system-wide open-address-bar shortcut is registered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Works while any app is active. Change the key in Shortcuts."
+          }
+        }
+      }
+    },
+    "settings.navigations.fork.addressBarShortcut.sectionTitle" : {
+      "comment" : "Navigations settings - title of the section for the system-wide open-address-bar shortcut",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Address Bar"
+          }
+        }
+      }
+    },
+    "settings.navigations.fork.addressBarShortcut.title" : {
+      "comment" : "Navigations settings - toggle for the system-wide open-address-bar shortcut; %@ is the shortcut, such as ⌥Space",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open the address bar when pressing %@ in any app"
+          }
+        }
+      }
+    },
+    "settings.navigations.fork.addressBarShortcut.unassigned" : {
+      "comment" : "Navigations settings - status when the system-wide open-address-bar shortcut has no key assigned",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Assign an Open Address Bar from Any App shortcut in Shortcuts."
+          }
+        }
+      }
+    },
+    "settings.navigations.fork.addressBarShortcut.unavailable" : {
+      "comment" : "Navigations settings - status when the system-wide open-address-bar shortcut could not be registered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This shortcut can't be used system-wide, often because another app owns it. Choose another in Shortcuts."
+          }
+        }
+      }
+    },
     "settings.navigations.kiosk.commandOption.description" : {
       "comment" : "Navigations settings - Explanation of the Command-Option Kiosk toggle",
       "extractionState" : "extracted_with_value",
@@ -86979,6 +87039,18 @@
         }
       }
     },
+    "settings.shortcuts.command.fork.openAddressBarAnywhere" : {
+      "comment" : "Shortcuts settings - Command title for the system-wide shortcut that opens the address bar while another app is active",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open Address Bar from Any App"
+          }
+        }
+      }
+    },
     "settings.shortcuts.command.fullscreen" : {
       "comment" : "Shortcuts settings - Command title for entering or leaving full screen",
       "localizations" : {
@@ -93787,6 +93859,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不使用快取內容重新載入目前頁面。"
+          }
+        }
+      }
+    },
+    "settings.shortcuts.description.fork.openAddressBarAnywhere" : {
+      "comment" : "Shortcuts settings - Description of the system-wide open-address-bar command",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bring Phi forward and open the address bar, even while another app is active."
           }
         }
       }
@@ -101638,6 +101722,54 @@
         }
       }
     },
+    "settings.spaces.fork.numbersSkipPinned.description" : {
+      "comment" : "Spaces settings - description under the toggle that makes Command-number shortcuts skip pinned tabs",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "⌘1 selects the first tab after your pinned tabs."
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.numbersSkipPinned.title" : {
+      "comment" : "Spaces settings - toggle that makes the Command-number tab shortcuts count from the first tab that is not pinned",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "⌘1–⌘8 skip pinned tabs"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.skipClosedFolders.description" : {
+      "comment" : "Spaces settings - description under the toggle that skips tabs in closed folders",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The Tab Switcher and ⌘1–⌘8 leave out tabs inside collapsed folders and tab groups."
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.skipClosedFolders.title" : {
+      "comment" : "Spaces settings - toggle that leaves tabs inside collapsed folders and tab groups out of the tab switcher and Command-number shortcuts",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Skip tabs in closed folders"
+          }
+        }
+      }
+    },
     "settings.spaces.fork.spaceSwitcherDots.description" : {
       "comment" : "Spaces settings - description under the Space switcher dots toggle",
       "extractionState" : "extracted_with_value",
@@ -101670,6 +101802,18 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Space switcher position"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.switcherSkipsPinned.title" : {
+      "comment" : "Spaces settings - toggle that leaves pinned tabs out of the Ctrl-Tab tab switcher",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tab Switcher skips pinned tabs"
           }
         }
       }

@@ -193,6 +193,7 @@
 		49FFE933ACE83E9890AD08F7 /* TabDataModelSchemaV11.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79EAC38D7D0DEEE2A1E0CEC3 /* TabDataModelSchemaV11.swift */; };
 		4A0B34B89EDDDD8EF26394E7 /* ContentBlockingListInfoPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2641EED1C4477FEDD13FA92 /* ContentBlockingListInfoPopover.swift */; };
 		4A1F8A4E3847DE0E10062837 /* sync_enums.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = F381BC900D7B1C92A256C6D4 /* sync_enums.pb.swift */; };
+		9AA2A84E14E5FED7B177F8A4 /* AppController+Fork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938205BAEDADB7044E03A138 /* AppController+Fork.swift */; };
 		4B4B00000000000000000001 /* KioskGlobalShortcutRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4B00000000000000000002 /* KioskGlobalShortcutRegistrar.swift */; };
 		4B4C00000000000000000001 /* ExternalOpenSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4C00000000000000000002 /* ExternalOpenSender.swift */; };
 		4D454D4F5259000000000001 /* MemoryUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D454D4F5259000000000002 /* MemoryUsageModels.swift */; };
@@ -428,6 +429,7 @@
 		AA10000000000000000000B2 /* TabSwitchItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000000F2 /* TabSwitchItem.swift */; };
 		AA10000000000000000000B3 /* TabSwitchCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000000F3 /* TabSwitchCellView.swift */; };
 		AA10000000000000000000B4 /* TabSwitchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000000F4 /* TabSwitchWindowController.swift */; };
+		50A2A9A3983D95E7F45E39CA /* BrowserState+ForkTabExclusions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB49082DC3C31089E24F673 /* BrowserState+ForkTabExclusions.swift */; };
 		AA10000000000000000000B5 /* TabSwitchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000000000000000000F5 /* TabSwitchManager.swift */; };
 		AB1000000000000000000FA1 /* TabMultiSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000000000000000000FA2 /* TabMultiSelection.swift */; };
 		AB1000000000000000000FB1 /* TabMultiSelectionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000000000000000000FB2 /* TabMultiSelectionMenu.swift */; };
@@ -1059,6 +1061,7 @@
 		457F461C0F164136A46FF641 /* GroupTabsTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupTabsTableView.swift; sourceTree = "<group>"; };
 		4AAB7BA138E072B24EABDF00 /* PhiSyncEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PhiSyncEngine.swift; sourceTree = "<group>"; };
 		4AFBF4E016A9AE2F4AD2AC8D /* ContentBlockingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBlockingAnalytics.swift; sourceTree = "<group>"; };
+		938205BAEDADB7044E03A138 /* AppController+Fork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppController+Fork.swift"; sourceTree = "<group>"; };
 		4B4B00000000000000000002 /* KioskGlobalShortcutRegistrar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KioskGlobalShortcutRegistrar.swift; sourceTree = "<group>"; };
 		4B4C00000000000000000002 /* ExternalOpenSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalOpenSender.swift; sourceTree = "<group>"; };
 		4D454D4F5259000000000002 /* MemoryUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryUsageModels.swift; sourceTree = "<group>"; };
@@ -1300,6 +1303,7 @@
 		AA10000000000000000000F2 /* TabSwitchItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSwitchItem.swift; sourceTree = "<group>"; };
 		AA10000000000000000000F3 /* TabSwitchCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSwitchCellView.swift; sourceTree = "<group>"; };
 		AA10000000000000000000F4 /* TabSwitchWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSwitchWindowController.swift; sourceTree = "<group>"; };
+		9AB49082DC3C31089E24F673 /* BrowserState+ForkTabExclusions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BrowserState+ForkTabExclusions.swift"; sourceTree = "<group>"; };
 		AA10000000000000000000F5 /* TabSwitchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSwitchManager.swift; sourceTree = "<group>"; };
 		AB1000000000000000000FA2 /* TabMultiSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMultiSelection.swift; sourceTree = "<group>"; };
 		AB1000000000000000000FB2 /* TabMultiSelectionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMultiSelectionMenu.swift; sourceTree = "<group>"; };
@@ -2765,6 +2769,7 @@
 			isa = PBXGroup;
 			children = (
 				37A4A06F30174C5800F7DC2E /* Apple Scripts */,
+				938205BAEDADB7044E03A138 /* AppController+Fork.swift */,
 				4B4B00000000000000000002 /* KioskGlobalShortcutRegistrar.swift */,
 				B02586F22E42FD97001B08FC /* PhiApplication.h */,
 				B02586F32E42FD97001B08FC /* PhiApplication.m */,
@@ -3248,6 +3253,7 @@
 				EAD000000000000000000035 /* PeekViewAnalytics.swift */,
 				5F1A5A11AC1D000000000002 /* BrowserState+Split.swift */,
 				B0F370CA2E43261A000B51F9 /* EventBus.swift */,
+				9AB49082DC3C31089E24F673 /* BrowserState+ForkTabExclusions.swift */,
 				AA10000000000000000000F5 /* TabSwitchManager.swift */,
 				37C2A68C2F8E15C1006E856E /* Dragging */,
 				37C2A6892F8E1572006E856E /* TabOrder */,
@@ -3810,6 +3816,7 @@
 				AA10000000000000000000B2 /* TabSwitchItem.swift in Sources */,
 				AA10000000000000000000B3 /* TabSwitchCellView.swift in Sources */,
 				AA10000000000000000000B4 /* TabSwitchWindowController.swift in Sources */,
+				50A2A9A3983D95E7F45E39CA /* BrowserState+ForkTabExclusions.swift in Sources */,
 				AA10000000000000000000B5 /* TabSwitchManager.swift in Sources */,
 				5EA17ABC0000000000000100 /* SearchTabsModels.swift in Sources */,
 				5EA17ABC0000000000000101 /* SearchTabsQueryMatcher.swift in Sources */,
@@ -3932,6 +3939,7 @@
 				CCBF8FA22E698A7400B9A99E /* SpaceSessionControllersManager.swift in Sources */,
 				B02586F62E42FD97001B08FC /* AppController.swift in Sources */,
 				4B4C00000000000000000001 /* ExternalOpenSender.swift in Sources */,
+				9AA2A84E14E5FED7B177F8A4 /* AppController+Fork.swift in Sources */,
 				4B4B00000000000000000001 /* KioskGlobalShortcutRegistrar.swift in Sources */,
 				8E6145BE2F753469001919BA /* ImportDataTypeViewController.swift in Sources */,
 				37C1B2882EE0418700DD4496 /* DownloadsManager+Test.swift in Sources */,

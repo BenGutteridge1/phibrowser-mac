@@ -29,6 +29,7 @@ struct NavigationsSettingsView: View {
     var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 28) {
+                ForkAddressBarShortcutSection()
                 NavigationsSettingsSection(
                     title: NSLocalizedString("settings.navigations.kiosk.sectionTitle", value: "Kiosk", comment: "Navigations settings - Kiosk section title"),
                     description: NSLocalizedString("settings.navigations.kiosk.sectionDescription", value: "Open links in a lightweight window, one page at a time.", comment: "Navigations settings - Description of Kiosk windows")

@@ -90,7 +90,9 @@ final class KioskGlobalShortcutRegistrar {
         )
     }
 
-    private static let hotKeySignature: OSType = 0x5048494B // PHIK
+    /// Carbon hot-key signature; each registrar needs its own (fork: the
+    /// address-bar shortcut uses a second registrar).
+    private let hotKeySignature: OSType
 
     private let action: () -> Void
     private let hotKeyAPI: HotKeyAPI
@@ -122,8 +124,10 @@ final class KioskGlobalShortcutRegistrar {
         shortcut: @escaping () -> ShortcutsKey? = { Shortcuts.key(for: .PHI_NEW_KIOSK_WINDOW) },
         keyboardLayout: @escaping () -> KeyboardLayout? = KeyboardLayout.current,
         notificationCenter: NotificationCenter = .default,
-        inputSourceNotificationCenter: NotificationCenter = DistributedNotificationCenter.default()
+        inputSourceNotificationCenter: NotificationCenter = DistributedNotificationCenter.default(),
+        hotKeySignature: OSType = 0x5048494B // PHIK
     ) {
+        self.hotKeySignature = hotKeySignature
         self.action = action
         self.hotKeyAPI = hotKeyAPI
         self.shortcut = shortcut
@@ -294,7 +298,7 @@ final class KioskGlobalShortcutRegistrar {
         for configuration in configurations {
             nextHotKeyID &+= 1
             if nextHotKeyID == 0 { nextHotKeyID = 1 }
-            let identifier = EventHotKeyID(signature: Self.hotKeySignature, id: nextHotKeyID)
+            let identifier = EventHotKeyID(signature: hotKeySignature, id: nextHotKeyID)
             let (result, newHotKey) = hotKeyAPI.register(configuration, identifier)
             guard result == noErr, let newHotKey else {
                 let failure = result == noErr ? OSStatus(paramErr) : result
@@ -334,7 +338,7 @@ final class KioskGlobalShortcutRegistrar {
             &identifier
         )
         guard status == noErr, isEnabled, recordingSessions.isEmpty, self.status == .registered,
-              identifier.signature == Self.hotKeySignature,
+              identifier.signature == hotKeySignature,
               registrations.contains(where: { $0.identifier.id == identifier.id }) else {
             return OSStatus(eventNotHandledErr)
         }

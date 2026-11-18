@@ -411,6 +411,11 @@ extension BrowserState {
             return
         }
 
+        // Fork: optionally count from the first non-pinned tab, and skip tabs
+        // in collapsed tab groups (closed bookmark folders already are).
+        let pinnedTabs = ForkSettings.numberShortcutsExcludePinnedTabs ? [] : self.pinnedTabs
+        let normalTabs = ForkSettings.tabSelectionExcludesClosedFolders
+            ? self.normalTabs.filter { !forkIsInClosedFolder($0) } : self.normalTabs
         let pinnedCount = pinnedTabs.count
         let bookmarkCount = visibleBookmarkTabs.count
         let normalCount = normalTabs.count

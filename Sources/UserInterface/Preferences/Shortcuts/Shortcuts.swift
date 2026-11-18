@@ -158,6 +158,9 @@ enum CommandWrapper: Int, Equatable {
     case PHI_CAPTURE_AREA            = 90029
     case PHI_SPLIT_WITH_NEW_TAB      = 90030
     case PHI_CLEAR_ALL_TABS          = 90031
+    /// Fork: system-wide shortcut that opens the address bar from any app
+    /// (`AppController.forkOpenAddressBarFromAnywhere`). A fork-only id range.
+    case FORK_OPEN_ADDRESS_BAR_ANYWHERE = 99001
 
     // System Preserved
     case IDS_HIDE_OTHERS_MAC         = 110
@@ -720,6 +723,7 @@ extension Shortcuts {
         // Chromium's reading-mode alias; Cmd-Shift-R remains hard reload.
         .PHI_TOGGLE_READER: .init(characters: "r", modifiers: [.command, .option]),
         .PHI_NEW_KIOSK_WINDOW: .init(characters: "n", modifiers: [.command, .option]),
+        .FORK_OPEN_ADDRESS_BAR_ANYWHERE: .init(characters: " ", modifiers: [.option]),
         .PHI_NEW_INCOGNITO_SPACE: .init(characters: "n", modifiers: [.control, .shift]),
         .PHI_SHARE_PAGE: .init(characters: "s", modifiers: [.control, .option]),
         // Printable shortcuts store the shifted character, as shortcut recording does.

@@ -34,7 +34,25 @@ enum ForkSettings {
         static let spaceSwitcherUsesDots = "fork.spaceSwitcherUsesDots"
         static let spaceOverlayOpacities = "fork.spaceOverlayOpacities"
         static let lastTabShowsEmptyState = "fork.lastTabShowsEmptyState"
+        static let tabSwitcherExcludesPinnedTabs = "fork.tabSwitcherExcludesPinnedTabs"
+        static let numberShortcutsExcludePinnedTabs = "fork.numberShortcutsExcludePinnedTabs"
+        static let tabSelectionExcludesClosedFolders = "fork.tabSelectionExcludesClosedFolders"
+        static let addressBarGlobalShortcutEnabled = "fork.addressBarGlobalShortcutEnabled"
     }
+
+    private static func bool(_ key: String, default value: Bool) -> Bool {
+        UserDefaults.standard.object(forKey: key) as? Bool ?? value
+    }
+
+    /// The tab switcher (Ctrl-Tab) skips pinned tabs. On by default.
+    static var tabSwitcherExcludesPinnedTabs: Bool { bool(Key.tabSwitcherExcludesPinnedTabs, default: true) }
+    /// ⌘1–⌘8 count from the first non-pinned tab. On by default.
+    static var numberShortcutsExcludePinnedTabs: Bool { bool(Key.numberShortcutsExcludePinnedTabs, default: true) }
+    /// The tab switcher and ⌘1–⌘8 skip tabs inside closed folders (collapsed
+    /// tab groups and bookmark folders). On by default.
+    static var tabSelectionExcludesClosedFolders: Bool { bool(Key.tabSelectionExcludesClosedFolders, default: true) }
+    /// "Open Address Bar from Any App" is registered system-wide. On by default.
+    static var addressBarGlobalShortcutEnabled: Bool { bool(Key.addressBarGlobalShortcutEnabled, default: true) }
 
     /// Closing the last tab leaves the window on the native empty state
     /// (`ForkEmptyStateView`) instead of opening a new tab. On by default.

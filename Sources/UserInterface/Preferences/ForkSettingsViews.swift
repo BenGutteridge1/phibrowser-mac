@@ -87,3 +87,112 @@ struct ForkLastTabEmptyStateRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+/// One labelled switch, in the style of the settings panes' toggle rows.
+private struct ForkToggleRow: View {
+    let title: String
+    let description: String?
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 13))
+                    .themedForeground(.textPrimary)
+                if let description {
+                    Text(description)
+                        .font(.system(size: 11))
+                        .themedForeground(.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 12)
+            Toggle("", isOn: $isOn)
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+                .themedTint(.themeColor)
+                .labelsHidden()
+        }
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Settings → Spaces: which tabs the tab switcher and ⌘1–⌘8 skip.
+struct ForkTabExclusionSettingsRows: View {
+    @AppStorage(ForkSettings.Key.tabSwitcherExcludesPinnedTabs) private var switcherSkipsPinned = true
+    @AppStorage(ForkSettings.Key.numberShortcutsExcludePinnedTabs) private var numbersSkipPinned = true
+    @AppStorage(ForkSettings.Key.tabSelectionExcludesClosedFolders) private var skipsClosedFolders = true
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForkToggleRow(
+                title: NSLocalizedString("settings.spaces.fork.switcherSkipsPinned.title", value: "Tab Switcher skips pinned tabs",
+                    comment: "Spaces settings - toggle that leaves pinned tabs out of the Ctrl-Tab tab switcher"),
+                description: nil, isOn: $switcherSkipsPinned)
+            Divider()
+            ForkToggleRow(
+                title: NSLocalizedString("settings.spaces.fork.numbersSkipPinned.title", value: "⌘1–⌘8 skip pinned tabs",
+                    comment: "Spaces settings - toggle that makes the Command-number tab shortcuts count from the first tab that is not pinned"),
+                description: NSLocalizedString("settings.spaces.fork.numbersSkipPinned.description", value: "⌘1 selects the first tab after your pinned tabs.",
+                    comment: "Spaces settings - description under the toggle that makes Command-number shortcuts skip pinned tabs"),
+                isOn: $numbersSkipPinned)
+            Divider()
+            ForkToggleRow(
+                title: NSLocalizedString("settings.spaces.fork.skipClosedFolders.title", value: "Skip tabs in closed folders",
+                    comment: "Spaces settings - toggle that leaves tabs inside collapsed folders and tab groups out of the tab switcher and Command-number shortcuts"),
+                description: NSLocalizedString("settings.spaces.fork.skipClosedFolders.description", value: "The Tab Switcher and ⌘1–⌘8 leave out tabs inside collapsed folders and tab groups.",
+                    comment: "Spaces settings - description under the toggle that skips tabs in closed folders"),
+                isOn: $skipsClosedFolders)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Settings → Navigations: the system-wide "Open Address Bar from Any App".
+struct ForkAddressBarShortcutSection: View {
+    @AppStorage(ForkSettings.Key.addressBarGlobalShortcutEnabled) private var isEnabled = true
+    @State private var status = AppController.shared?.forkAddressBarShortcutRegistrar.status ?? .disabled
+    @State private var shortcut = Shortcuts.key(for: .FORK_OPEN_ADDRESS_BAR_ANYWHERE)?.displayString ?? "—"
+
+    private var statusDescription: String? {
+        switch status {
+        case .disabled: return nil
+        case .registered:
+            return NSLocalizedString("settings.navigations.fork.addressBarShortcut.registered", value: "Works while any app is active. Change the key in Shortcuts.",
+                comment: "Navigations settings - status when the system-wide open-address-bar shortcut is registered")
+        case .unassigned:
+            return NSLocalizedString("settings.navigations.fork.addressBarShortcut.unassigned", value: "Assign an Open Address Bar from Any App shortcut in Shortcuts.",
+                comment: "Navigations settings - status when the system-wide open-address-bar shortcut has no key assigned")
+        case .unsupported, .failed:
+            return NSLocalizedString("settings.navigations.fork.addressBarShortcut.unavailable", value: "This shortcut can't be used system-wide, often because another app owns it. Choose another in Shortcuts.",
+                comment: "Navigations settings - status when the system-wide open-address-bar shortcut could not be registered")
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(NSLocalizedString("settings.navigations.fork.addressBarShortcut.sectionTitle", value: "Address Bar",
+                comment: "Navigations settings - title of the section for the system-wide open-address-bar shortcut"))
+                .font(.system(size: 12))
+                .themedForeground(.textSecondary)
+            SettingsDetailCard {
+                ForkToggleRow(
+                    title: String(format: NSLocalizedString("settings.navigations.fork.addressBarShortcut.title", value: "Open the address bar when pressing %@ in any app",
+                        comment: "Navigations settings - toggle for the system-wide open-address-bar shortcut; %@ is the shortcut, such as ⌥Space"), shortcut),
+                    description: statusDescription,
+                    isOn: $isEnabled)
+            }
+        }
+        .onChange(of: isEnabled) { _, enabled in
+            AppController.shared?.forkAddressBarShortcutRegistrar.setEnabled(enabled)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: KioskGlobalShortcutRegistrar.statusDidChangeNotification)) { _ in
+            status = AppController.shared?.forkAddressBarShortcutRegistrar.status ?? .disabled
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .shortcutsDidChange)) { _ in
+            shortcut = Shortcuts.key(for: .FORK_OPEN_ADDRESS_BAR_ANYWHERE)?.displayString ?? "—"
+        }
+    }
+}

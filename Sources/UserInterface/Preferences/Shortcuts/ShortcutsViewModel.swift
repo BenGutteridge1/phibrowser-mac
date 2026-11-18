@@ -626,6 +626,8 @@ private extension CommandWrapper {
             return NSLocalizedString("settings.shortcuts.command.newIncognitoWindow", value: "New Incognito Window", comment: "Shortcuts settings - Command title for opening a new Incognito window")
         case .PHI_NEW_INCOGNITO_SPACE:
             return NSLocalizedString("app.fileMenu.createNewIncognitoSpace", value: "New Incognito Space", comment: "File menu and Shortcuts settings - Command title for creating a new Incognito Space")
+        case .FORK_OPEN_ADDRESS_BAR_ANYWHERE:
+            return NSLocalizedString("settings.shortcuts.command.fork.openAddressBarAnywhere", value: "Open Address Bar from Any App", comment: "Shortcuts settings - Command title for the system-wide shortcut that opens the address bar while another app is active")
         case .PHI_NEW_KIOSK_WINDOW:
             return NSLocalizedString("settings.shortcuts.command.newKioskWindow", value: "New Kiosk Window", comment: "Shortcuts settings - Command title for opening a new Kiosk window")
         case .PHI_KIOSK_OPEN_IN_SPACE:
