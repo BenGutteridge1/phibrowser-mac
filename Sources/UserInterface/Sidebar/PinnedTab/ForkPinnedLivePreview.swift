@@ -20,11 +20,23 @@ import AppKit
 final class ForkPinnedLivePreview: NSObject {
     // MARK: Eligibility
 
-    /// Hosts that get a live card, and the page the card opens on.
-    private static let sites: [(host: String, url: String)] = [
-        ("mail.google.com", "https://mail.google.com/mail/"),
-        ("ticktick.com", "https://ticktick.com/webapp/")
+    /// Hosts that get a live card, the page the card opens on, and the
+    /// card-only styling injected into that site's pages.
+    private static let sites: [(host: String, url: String, css: String)] = [
+        ("mail.google.com", "https://mail.google.com/mail/", gmailCSS),
+        ("ticktick.com", "https://ticktick.com/webapp/", "")
     ]
+
+    /// Gmail's mobile site: drop the "Gmail is better on the app" banner, and
+    /// in dark mode (the card follows the browser) give the page a dark look
+    /// with the usual invert-and-rotate, flipping pictures back.
+    private static let gmailCSS = """
+    #speedbump { display: none !important; }
+    @media (prefers-color-scheme: dark) {
+      html { filter: invert(0.9) hue-rotate(180deg); background: #fff; }
+      img, video, picture, [style*="background-image"] { filter: invert(1) hue-rotate(180deg); }
+    }
+    """
 
     /// The card's page for `tab`, or nil when the tab gets Phi's own preview.
     static func previewURL(for tab: Tab) -> String? {
@@ -32,6 +44,10 @@ final class ForkPinnedLivePreview: NSObject {
               let raw = tab.pinnedUrl ?? tab.url,
               let host = URL(string: raw)?.host?.lowercased() else { return nil }
         return sites.first { host == $0.host || host.hasSuffix("." + $0.host) }?.url
+    }
+
+    private static func css(forPageURL url: String) -> String {
+        sites.first { $0.url == url }?.css ?? ""
     }
 
     // MARK: Per-window controllers
@@ -45,18 +61,23 @@ final class ForkPinnedLivePreview: NSObject {
         return controller
     }
 
-    private static let cardSize = NSSize(width: 390, height: 600)
+    private static let cardSize = NSSize(width: 340, height: 500)
+    /// The page lays out this much wider than the card, then is drawn scaled
+    /// down to fit, so more of the inbox or task list fits.
+    private static let contentScale = 0.85
     private static let gap: CGFloat = 8
     private static let showDelay: TimeInterval = 0.35
     private static let hideDelay: TimeInterval = 0.3
     private static let idleRelease: TimeInterval = 600
     /// A mobile Chrome user agent, so sites serve their small-screen layout.
     private static let mobileUserAgent =
-        "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
 
     private final class Page {
         let wrapper: any WebContentWrapper
         var session: AppDevToolsPageSession?
+        /// The color scheme last requested from the site, nil before any.
+        var isDark: Bool?
         var releaseWork: DispatchWorkItem?
         init(wrapper: any WebContentWrapper) { self.wrapper = wrapper }
         func close() {
@@ -164,6 +185,12 @@ final class ForkPinnedLivePreview: NSObject {
             mount(page(for: url, state: state))
         }
         pages[url]?.releaseWork?.cancel()
+        // Follow the browser's light or dark appearance.
+        let isDark = state.themeContext.currentAppearance.isDark
+        panel.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
+        if let page = pages[url], page.session != nil, page.isDark != isDark {
+            Task { @MainActor [weak self] in await self?.applyColorScheme(isDark: isDark, to: page) }
+        }
         // Beside the sidebar, top-aligned with the pinned tab, kept on screen.
         let anchorRect = parent.convertToScreen(anchor.convert(anchor.bounds, to: nil))
         let visible = (parent.screen ?? NSScreen.main)?.visibleFrame ?? parent.frame
@@ -250,10 +277,35 @@ final class ForkPinnedLivePreview: NSObject {
             _ = try? await session.command("Emulation.setUserAgentOverride",
                                            params: ["userAgent": Self.mobileUserAgent])
             _ = try? await session.command("Emulation.setDeviceMetricsOverride", params: [
-                "width": 0, "height": 0, "deviceScaleFactor": 0, "mobile": true
+                "width": Int(Self.cardSize.width / Self.contentScale),
+                "height": Int(Self.cardSize.height / Self.contentScale),
+                "deviceScaleFactor": 0, "mobile": true, "scale": Self.contentScale
             ])
+            await applyColorScheme(isDark: state?.themeContext.currentAppearance.isDark ?? false, to: page)
+            let css = Self.css(forPageURL: url)
+            if !css.isEmpty, let literal = String(data: (try? JSONSerialization.data(withJSONObject: [css])) ?? Data(), encoding: .utf8) {
+                // Every page the card loads gets the style from its start. A
+                // constructed (adopted) stylesheet, not a <style> element:
+                // sites' content security policies block inline styles.
+                let script = """
+                (()=>{try{const s=new CSSStyleSheet();s.replaceSync(\(literal)[0]);\
+                document.adoptedStyleSheets=[...document.adoptedStyleSheets,s];}catch(e){}})();
+                """
+                // The injected script only runs with the Page domain on.
+                _ = try? await session.command("Page.enable")
+                _ = try? await session.command("Page.addScriptToEvaluateOnNewDocument", params: ["source": script])
+            }
         }
         page.wrapper.navigate(toURL: url)
+    }
+
+    /// Asks the site for its dark or light look (`prefers-color-scheme`).
+    private func applyColorScheme(isDark: Bool, to page: Page) async {
+        guard let session = page.session else { return }
+        page.isDark = isDark
+        _ = try? await session.command("Emulation.setEmulatedMedia", params: [
+            "features": [["name": "prefers-color-scheme", "value": isDark ? "dark" : "light"]]
+        ])
     }
 
     private func scheduleRelease(_ url: String) {
