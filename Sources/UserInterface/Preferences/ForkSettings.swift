@@ -38,7 +38,11 @@ enum ForkSettings {
         static let numberShortcutsExcludePinnedTabs = "fork.numberShortcutsExcludePinnedTabs"
         static let tabSelectionExcludesClosedFolders = "fork.tabSelectionExcludesClosedFolders"
         static let addressBarGlobalShortcutEnabled = "fork.addressBarGlobalShortcutEnabled"
+        static let pinnedTabLivePreviewsEnabled = "fork.pinnedTabLivePreviewsEnabled"
     }
+
+    /// Gmail and TickTick pinned tabs show a live card on hover. On by default.
+    static var pinnedTabLivePreviewsEnabled: Bool { bool(Key.pinnedTabLivePreviewsEnabled, default: true) }
 
     private static func bool(_ key: String, default value: Bool) -> Bool {
         UserDefaults.standard.object(forKey: key) as? Bool ?? value

@@ -238,6 +238,7 @@ class PinnedTabItem: NSCollectionViewItem, NSMenuDelegate {
         backgroundView.shouldClickOnMouseDown = { true }
         backgroundView.clickActionWithModifierFlags = { [weak self] modifierFlags in
             self?.tabPreviewRegistration.cancelForInteraction()
+            if let state = self?.browserState { ForkPinnedLivePreview.controller(for: state).dismissForInteraction() }
             self?.itemClicked?(self?.tab, modifierFlags)
         }
         backgroundView.doubleClickAction = { [weak self] event in
@@ -245,7 +246,13 @@ class PinnedTabItem: NSCollectionViewItem, NSMenuDelegate {
             self?.itemDoubleClicked?(self?.tab, event.modifierFlags)
         }
         backgroundView.hoverStateChanged = { [weak self] isHovered in
-            self?.tabPreviewRegistration.setHovering(isHovered)
+            guard let self else { return }
+            // Fork: Gmail and TickTick pinned tabs get a live card instead.
+            if let tab = self.tab, let state = self.browserState,
+               ForkPinnedLivePreview.controller(for: state).hoverChanged(isHovered, tab: tab, anchor: self.view) {
+                return
+            }
+            self.tabPreviewRegistration.setHovering(isHovered)
         }
         tabPreviewRegistration.onEligibilityChanged = { [weak self] isEligible in
             self?.showsTabPreview = isEligible

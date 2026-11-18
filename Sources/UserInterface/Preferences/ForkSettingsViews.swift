@@ -196,3 +196,17 @@ struct ForkAddressBarShortcutSection: View {
         }
     }
 }
+
+/// Settings → Spaces: live hover cards for Gmail and TickTick pinned tabs.
+struct ForkPinnedPreviewSettingsRow: View {
+    @AppStorage(ForkSettings.Key.pinnedTabLivePreviewsEnabled) private var isEnabled = true
+
+    var body: some View {
+        ForkToggleRow(
+            title: NSLocalizedString("settings.spaces.fork.pinnedLivePreviews.title", value: "Live previews for Gmail and TickTick pinned tabs",
+                comment: "Spaces settings - toggle for interactive hover cards on Gmail and TickTick pinned tabs"),
+            description: NSLocalizedString("settings.spaces.fork.pinnedLivePreviews.description", value: "Hover the pinned tab to see and use the site in a small card.",
+                comment: "Spaces settings - description under the live pinned-tab preview toggle"),
+            isOn: $isEnabled)
+    }
+}

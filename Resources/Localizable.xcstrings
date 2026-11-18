@@ -101746,6 +101746,30 @@
         }
       }
     },
+    "settings.spaces.fork.pinnedLivePreviews.description" : {
+      "comment" : "Spaces settings - description under the live pinned-tab preview toggle",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hover the pinned tab to see and use the site in a small card."
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.pinnedLivePreviews.title" : {
+      "comment" : "Spaces settings - toggle for interactive hover cards on Gmail and TickTick pinned tabs",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Live previews for Gmail and TickTick pinned tabs"
+          }
+        }
+      }
+    },
     "settings.spaces.fork.skipClosedFolders.description" : {
       "comment" : "Spaces settings - description under the toggle that skips tabs in closed folders",
       "extractionState" : "extracted_with_value",

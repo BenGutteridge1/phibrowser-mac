@@ -575,6 +575,7 @@
 		CC6336052E4EE55300A176DA /* FileSystemUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6336042E4EE55300A176DA /* FileSystemUtils.swift */; };
 		CC6B000F2E77E04800D4F133 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6B000E2E77E04800D4F133 /* AboutView.swift */; };
 		CC6B001B2E793EAC00D4F133 /* PinnedTabViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6B001A2E793EAC00D4F133 /* PinnedTabViewController.swift */; };
+		4D4760BA49B614262918F765 /* ForkPinnedLivePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07BC772418EFEEE396DD5626 /* ForkPinnedLivePreview.swift */; };
 		CC6B00322E7941C300D4F133 /* PinnedTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6B00312E7941C300D4F133 /* PinnedTabItem.swift */; };
 		CC6BFFDD2E72C04000D4F133 /* FaviconDataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6BFFDC2E72C04000D4F133 /* FaviconDataProvider.swift */; };
 		CC71BAB92E9E2E74006C7238 /* EventBlockBgView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC71BAB82E9E2E74006C7238 /* EventBlockBgView.swift */; };
@@ -1447,6 +1448,7 @@
 		CC6336042E4EE55300A176DA /* FileSystemUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemUtils.swift; sourceTree = "<group>"; };
 		CC6B000E2E77E04800D4F133 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		CC6B001A2E793EAC00D4F133 /* PinnedTabViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedTabViewController.swift; sourceTree = "<group>"; };
+		07BC772418EFEEE396DD5626 /* ForkPinnedLivePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkPinnedLivePreview.swift; sourceTree = "<group>"; };
 		CC6B00312E7941C300D4F133 /* PinnedTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedTabItem.swift; sourceTree = "<group>"; };
 		CC6BFFD82E72B83500D4F133 /* Phi Framework.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = "Phi Framework.framework"; sourceTree = "<group>"; };
 		CC6BFFDC2E72C04000D4F133 /* FaviconDataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaviconDataProvider.swift; sourceTree = "<group>"; };
@@ -3053,6 +3055,7 @@
 			children = (
 				CC6B001A2E793EAC00D4F133 /* PinnedTabViewController.swift */,
 				CC2708972E7959DF00B65AB8 /* PinnedTabLayout.swift */,
+				07BC772418EFEEE396DD5626 /* ForkPinnedLivePreview.swift */,
 				CC6B00312E7941C300D4F133 /* PinnedTabItem.swift */,
 				CCAA00012F00010000000002 /* PinnedSplitItem.swift */,
 				CCD3246C2EB1EFB600AA0B85 /* PinnedExtensionItem.swift */,
@@ -3705,6 +3708,7 @@
 				A197CA000000000000000006 /* HolographicCardDebugViewController.swift in Sources */,
 				A197CA000000000000000005 /* HolographicCardMaterials.swift in Sources */,
 				8EEBD7692FAB137E008CBD9A /* TabGroupRun.swift in Sources */,
+				4D4760BA49B614262918F765 /* ForkPinnedLivePreview.swift in Sources */,
 				CC6B00322E7941C300D4F133 /* PinnedTabItem.swift in Sources */,
 				CCAA00012F00010000000001 /* PinnedSplitItem.swift in Sources */,
 				CCBF0E912ECD7DE7005E729B /* ProfileCardViewController.swift in Sources */,
