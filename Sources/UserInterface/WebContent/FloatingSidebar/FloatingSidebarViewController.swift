@@ -116,9 +116,43 @@ class FloatingSidebarViewController: NSViewController, BrowserThemeContextProvid
         }
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         spacesStripHostingView = hostingView
-        headerView.mountSpaceSwitch(hostingView)
+        bottomBarSwiftUI.spaceSwitchPipCount = { [weak slot] in
+            guard let slot else { return 0 }
+            return slot.presentedSpaces.count + (slot.isCreatingSpace ? 1 : 0)
+        }
+        applySpaceSwitcherPlacement()
         spacesStripRowView = hostingView
         updateHeaderHeight()
+    }
+
+    // MARK: - Fork: Space switcher placement
+
+    private var appliedSpaceSwitcherPlacement: SpaceSwitcherPlacement?
+
+    /// Mounts the Space switcher in the header or the bottom bar, following
+    /// `ForkSettings.spaceSwitcherPlacement` (mirrors the docked sidebar).
+    private func applySpaceSwitcherPlacement() {
+        guard let hostingView = spacesStripHostingView else { return }
+        let placement = ForkSettings.spaceSwitcherPlacement
+        if placement != appliedSpaceSwitcherPlacement {
+            appliedSpaceSwitcherPlacement = placement
+            switch placement {
+            case .top:
+                bottomBarSwiftUI.unmountSpaceSwitch()
+                hostingView.translatesAutoresizingMaskIntoConstraints = false
+                headerView.mountSpaceSwitch(hostingView)
+            case .bottomCenter:
+                headerView.unmountSpaceSwitch()
+                bottomBarSwiftUI.mountSpaceSwitch(hostingView)
+            }
+        }
+        guard placement == .bottomCenter else { return }
+        let visible = PhiPreferences.GeneralSettings.spacesFeatureEnabled.loadValue()
+            && SpaceManager.shared.spaces.count > 1
+        if hostingView.isHidden == visible {
+            hostingView.isHidden = !visible
+        }
+        bottomBarSwiftUI.invalidateSpaceSwitchLayout()
     }
 
     /// The floating strip row's AppKit view, consulted by the slot's
@@ -564,6 +598,7 @@ class FloatingSidebarViewController: NSViewController, BrowserThemeContextProvid
                 self?.updateChatButtonVisibility()
                 self?.updateMemoryButtonVisibility()
                 self?.headerView.updateSpaceSwitchVisibility()
+                self?.applySpaceSwitcherPlacement()
                 self?.updateHeaderHeight()
             }
             .store(in: &cancellables)
@@ -579,6 +614,7 @@ class FloatingSidebarViewController: NSViewController, BrowserThemeContextProvid
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.headerView.updateSpaceSwitchVisibility()
+                self?.applySpaceSwitcherPlacement()
                 self?.updateHeaderHeight()
             }
             .store(in: &cancellables)
@@ -881,6 +917,7 @@ class FloatingSidebarViewController: NSViewController, BrowserThemeContextProvid
         let spacesEnabled = PhiPreferences.GeneralSettings.spacesFeatureEnabled.loadValue()
             && state.participatesInSpaces
             && (SpaceManager.shared.spaces.count > 1 || headerView.forcesSpaceSwitchVisible)
+            && ForkSettings.spaceSwitcherPlacement == .top
         // The floating header keeps its nav row 8pt from the top in every
         // layout (see SidebarHeaderView.sidebarButtonTopOffset), so both
         // bases leave 3pt under the last header row, as the docked one does.
@@ -943,6 +980,7 @@ class FloatingSidebarViewController: NSViewController, BrowserThemeContextProvid
         view.layoutSubtreeIfNeeded()
         let stripRow = spacesStripRowView
         let anchorsBelowStrip = stripRow?.isHidden == false
+            && ForkSettings.spaceSwitcherPlacement == .top
 
         // No backdrop, unlike the docked flow: the docked sidebar keeps its
         // content in place and stands a matching visual-effect sheet over it,
