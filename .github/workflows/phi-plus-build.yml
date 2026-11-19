@@ -10,10 +10,16 @@ on:
 
 jobs:
   build:
-    runs-on: macos-26
+    # Phi 2.18 needs the Xcode 27 compiler: Xcode 26.6 (macos-26's newest)
+    # times out type-checking one of its SwiftData predicates.
+    runs-on: xcode-27
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+      - name: Select Xcode 27.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_27.2.app
+          xcodebuild -version
       - name: Download Phi Framework
         run: ./scripts/download_phi_framework.sh --version 2.18.0
         env:
