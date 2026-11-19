@@ -21,9 +21,10 @@ final class ForkPinnedLivePreview: NSObject {
     // MARK: Eligibility
 
     /// Hosts that get a live card, the page the card opens on, and the
-    /// card-only styling injected into that site's pages.
+    /// card-only styling injected into that site's pages. Gmail opens on All
+    /// Mail (its mobile site's `#tl/All%20Mail`) rather than Primary.
     private static let sites: [(host: String, url: String, css: String, name: String, signedInPath: String)] = [
-        ("mail.google.com", "https://mail.google.com/mail/", gmailCSS, "Gmail", "/mail/mu/mp/"),
+        ("mail.google.com", "https://mail.google.com/mail/#tl/All%20Mail", gmailCSS, "Gmail", "/mail/mu/mp/"),
         ("ticktick.com", "https://ticktick.com/webapp/", "", "TickTick", "/webapp")
     ]
 
