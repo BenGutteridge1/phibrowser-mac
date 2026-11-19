@@ -585,6 +585,12 @@ final class FloatingSidebarHostViewController: NSViewController {
             if floatingSidebarShownFromRightToLeft, isMouseAtFloatingSidebarLeftSide() {
                 return
             }
+            // Fork: stay while a card or popup opened from the panel is up;
+            // look again until it closes.
+            if forkKeepsFloatingSidebarOpen {
+                scheduleFloatingSidebarHide()
+                return
+            }
             hideFloatingSidebar(animated: true)
         }
         floatingSidebarHideWorkItem = workItem

@@ -64,6 +64,11 @@ final class ForkPinnedLivePreview: NSObject {
 
     private static var controllers: [Int: ForkPinnedLivePreview] = [:]
 
+    /// Whether a live card is up over `window`.
+    static func isShowingCard(over window: NSWindow) -> Bool {
+        controllers.values.contains { $0.panel?.isVisible == true && $0.panel?.parent === window }
+    }
+
     static func controller(for state: BrowserState) -> ForkPinnedLivePreview {
         if let existing = controllers[state.windowId] { return existing }
         let controller = ForkPinnedLivePreview(state: state)

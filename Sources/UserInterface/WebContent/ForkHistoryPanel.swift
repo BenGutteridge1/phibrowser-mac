@@ -431,6 +431,9 @@ private final class ForkHistoryNSPanel: NSPanel {
 /// edge and back out.
 @MainActor
 final class ForkHistoryPanelController: NSObject {
+    /// Whether `window` is a floating history panel.
+    static func isHistoryPanel(_ window: NSWindow) -> Bool { window is ForkHistoryNSPanel }
+
     private static var controllers: [ObjectIdentifier: ForkHistoryPanelController] = [:]
 
     static let width: CGFloat = 236

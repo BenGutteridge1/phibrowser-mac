@@ -729,6 +729,7 @@
 		F02B00010000000000000001 /* BookmarkFolderIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02B00110000000000000001 /* BookmarkFolderIcon.swift */; };
 		F02B00020000000000000002 /* TabDataModelSchemaV10.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02B00120000000000000002 /* TabDataModelSchemaV10.swift */; };
 		F02B00040000000000000004 /* BookmarkFolderIcons in Copy LottieFiles */ = {isa = PBXBuildFile; fileRef = F02B00140000000000000004 /* BookmarkFolderIcons */; };
+		B9355DB35D733C3C5CF6EACC /* FloatingSidebarHostViewController+Fork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F9300FDF5F4F0B8BD002817 /* FloatingSidebarHostViewController+Fork.swift */; };
 		F10920260921000000000001 /* FloatingSidebarHostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10920260921000000000002 /* FloatingSidebarHostViewController.swift */; };
 		F4AE5B2099AC4E24B856E89C /* ShortcutsListSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9832B3A1FE5C4D268B63C55C /* ShortcutsListSection.swift */; };
 		F7FD00000000000000000002 /* FullTitleDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7FD00000000000000000001 /* FullTitleDisplay.swift */; };
@@ -1597,6 +1598,7 @@
 		F02B00110000000000000001 /* BookmarkFolderIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkFolderIcon.swift; sourceTree = "<group>"; };
 		F02B00120000000000000002 /* TabDataModelSchemaV10.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabDataModelSchemaV10.swift; sourceTree = "<group>"; };
 		F02B00140000000000000004 /* BookmarkFolderIcons */ = {isa = PBXFileReference; lastKnownFileType = folder; path = BookmarkFolderIcons; sourceTree = "<group>"; };
+		4F9300FDF5F4F0B8BD002817 /* FloatingSidebarHostViewController+Fork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FloatingSidebarHostViewController+Fork.swift"; sourceTree = "<group>"; };
 		F10920260921000000000002 /* FloatingSidebarHostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingSidebarHostViewController.swift; sourceTree = "<group>"; };
 		F1C7683ECEB27E49DFDEFC3C /* SpaceOverwriteDiff.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SpaceOverwriteDiff.swift; path = UI/SpaceOverwriteDiff.swift; sourceTree = "<group>"; };
 		A7F3C2D19E4B5A6C7D8E9F01 /* PairingFlowPlan.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PairingFlowPlan.swift; path = UI/PairingFlowPlan.swift; sourceTree = "<group>"; };
@@ -1822,6 +1824,7 @@
 			isa = PBXGroup;
 			children = (
 				376195BF2F518DDE0094A78E /* FloatingSidebarViewController.swift */,
+				4F9300FDF5F4F0B8BD002817 /* FloatingSidebarHostViewController+Fork.swift */,
 				F10920260921000000000002 /* FloatingSidebarHostViewController.swift */,
 			);
 			path = FloatingSidebar;
@@ -3951,6 +3954,7 @@
 				37C1B1E62EDEA1E200DD4496 /* FeedbackViewController.swift in Sources */,
 				376CE5E82F2C669B0093D937 /* TabStripRightButtons.swift in Sources */,
 				376195C02F518DDE0094A78E /* FloatingSidebarViewController.swift in Sources */,
+				B9355DB35D733C3C5CF6EACC /* FloatingSidebarHostViewController+Fork.swift in Sources */,
 				F10920260921000000000001 /* FloatingSidebarHostViewController.swift in Sources */,
 				CC376CFA2EC6D3F900270B93 /* SettingItemBackgroundView.swift in Sources */,
 				B02586F72E42FD97001B08FC /* SpaceSessionController.swift in Sources */,
