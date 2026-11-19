@@ -4,6 +4,7 @@
 // found in the LICENSE file.
 
 import AppKit
+import Combine
 import SwiftUI
 
 /// Fork: an interactive live card for chosen pinned tabs (Gmail, TickTick),
@@ -79,6 +80,12 @@ final class ForkPinnedLivePreview: NSObject {
     }
 
     private static let cardSize = NSSize(width: 340, height: 400)
+    /// The Thunderbird card while a message is open in it.
+    private static let readingCardSize = NSSize(width: 340, height: 600)
+
+    private var currentCardSize: NSSize {
+        showsThunderbird && ForkThunderbirdMail.shared.openedMessage != nil ? Self.readingCardSize : Self.cardSize
+    }
     /// The page lays out this much wider than the card, then is drawn scaled
     /// down to fit, so more of the inbox or task list fits.
     private static let contentScale = 0.85
@@ -233,9 +240,9 @@ final class ForkPinnedLivePreview: NSObject {
         let grid = anchor.enclosingScrollView ?? anchor
         let sidebarEdge = parent.convertToScreen(grid.convert(grid.bounds, to: nil)).maxX
         var origin = NSPoint(x: max(sidebarEdge, anchorRect.maxX) + Self.gap,
-                             y: anchorRect.maxY - Self.cardSize.height)
-        origin.y = min(max(origin.y, visible.minY + Self.gap), visible.maxY - Self.cardSize.height - Self.gap)
-        panel.setFrame(NSRect(origin: origin, size: Self.cardSize), display: true)
+                             y: anchorRect.maxY - currentCardSize.height)
+        origin.y = min(max(origin.y, visible.minY + Self.gap), visible.maxY - currentCardSize.height - Self.gap)
+        panel.setFrame(NSRect(origin: origin, size: currentCardSize), display: true)
         if panel.parent !== parent {
             panel.parent?.removeChildWindow(panel)
             parent.addChildWindow(panel, ordered: .above)
@@ -330,14 +337,36 @@ final class ForkPinnedLivePreview: NSObject {
         ForkSettings.gmailCardSource == .thunderbird && sites.first(where: { $0.url == url })?.host == "mail.google.com"
     }
 
+    private var readingObserver: AnyCancellable?
+
     private func mountThunderbirdCard() {
         guard let content else { return }
-        let view = NSHostingView(rootView: ForkThunderbirdCardView(mail: .shared))
+        let view = NSHostingView(rootView: ForkThunderbirdCardView(mail: .shared) { [weak self] url in
+            self?.state?.createTab(url.absoluteString)
+        })
+        // Taller while a message is open, keeping the card's top edge.
+        readingObserver = ForkThunderbirdMail.shared.$openedMessage
+            .map { $0 != nil }
+            .removeDuplicates()
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.resizeForReading() }
         // The card's size is fixed; the list must not resize the panel.
         view.sizingOptions = []
         content.addSubview(view)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.snp.remakeConstraints { make in make.edges.equalToSuperview() }
+    }
+
+    private func resizeForReading() {
+        guard showsThunderbird, let panel, panel.isVisible else { return }
+        let size = currentCardSize
+        let visible = panel.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? panel.frame
+        var frame = panel.frame
+        frame.origin.y = max(frame.maxY - size.height, visible.minY + Self.gap)
+        frame.size = size
+        panel.setFrame(frame, display: true, animate: true)
+        panel.invalidateShadow()
     }
 
     /// Mounts the page's view the way the placeholder shell does: add first,

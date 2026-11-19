@@ -60,6 +60,8 @@ enum ForkSettings {
         static let pinnedTabLivePreviewsEnabled = "fork.pinnedTabLivePreviewsEnabled"
         static let gmailCardSource = "fork.gmailCardSource"
         static let thunderbirdAddonSeen = "fork.thunderbirdAddonSeen"
+        /// The Thunderbird card shows messages darkened in dark mode.
+        static let mailMessagesDark = "fork.mailMessagesDark"
     }
 
     /// What the Gmail pinned tab's card shows. The website by default.

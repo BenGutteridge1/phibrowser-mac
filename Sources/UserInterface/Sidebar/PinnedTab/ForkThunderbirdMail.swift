@@ -50,7 +50,20 @@ final class ForkThunderbirdMail: ObservableObject {
         case connected
     }
 
+    /// A message's content, for reading it in the card.
+    struct Body: Equatable {
+        let id: Int
+        let html: String
+        let text: String
+        let to: String
+        let cc: String
+        let error: String?
+    }
+
     static let thunderbirdBundleId = "org.mozilla.thunderbird"
+    /// The add-on version this Phi+ expects (its `hello` message). An older
+    /// add-on keeps working for the list; the card asks to update it.
+    static let currentAddonVersion = 3
     static let hostName = "com.bengutteridge.phiplus.mail"
     static let addonId = "phiplus-mail@bengutteridge"
 
@@ -59,6 +72,13 @@ final class ForkThunderbirdMail: ObservableObject {
     @Published private(set) var isConnected = false
     @Published private(set) var isThunderbirdRunning = false
     @Published private(set) var addonSeen = ForkSettings.thunderbirdAddonSeen
+    @Published private(set) var addonVersion: Int?
+    /// The message being read in the card, and its content once it arrives.
+    @Published private(set) var openedMessage: Message?
+    @Published private(set) var openedBody: Body?
+    private var bodyRequestedAt: Date?
+
+    var addonNeedsUpdate: Bool { isConnected && (addonVersion ?? 0) < Self.currentAddonVersion }
 
     var status: Status {
         if isConnected { return .connected }
@@ -85,7 +105,10 @@ final class ForkThunderbirdMail: ObservableObject {
             Task { @MainActor in self?.isConnected = true }
         }
         server.onDisconnect = { [weak self] in
-            Task { @MainActor in self?.isConnected = false }
+            Task { @MainActor in
+                self?.isConnected = false
+                self?.addonVersion = nil
+            }
         }
         server.onMessage = { [weak self] json in
             Task { @MainActor in self?.handle(json) }
@@ -113,9 +136,30 @@ final class ForkThunderbirdMail: ObservableObject {
         activateThunderbird()
     }
 
+    /// Shows `message` in the card and asks the add-on for its content.
+    func read(_ message: Message) {
+        openedMessage = message
+        openedBody = nil
+        bodyRequestedAt = Date()
+        AppLogInfo("[ForkThunderbirdMail] content requested for \(message.id)")
+        send(["cmd": "getBody", "id": message.id])
+        if !message.read { setRead(message, true) }
+    }
+
+    func closeReader() {
+        openedMessage = nil
+        openedBody = nil
+    }
+
     func setRead(_ message: Message, _ read: Bool) {
         send(["cmd": "setRead", "id": message.id, "read": read])
         setLocalRead(message.id, read)
+    }
+
+    /// Opens Thunderbird's reply window for `message`, ready to type.
+    func reply(_ message: Message, all: Bool) {
+        send(["cmd": "reply", "id": message.id, "all": all])
+        activateThunderbird()
     }
 
     func compose() {
@@ -152,6 +196,7 @@ final class ForkThunderbirdMail: ObservableObject {
     }
 
     private func setLocalRead(_ id: Int, _ read: Bool) {
+        if openedMessage?.id == id { openedMessage?.read = read }
         guard let index = messages.firstIndex(where: { $0.id == id }) else { return }
         messages[index].read = read
     }
@@ -182,6 +227,16 @@ final class ForkThunderbirdMail: ObservableObject {
                                preview: item["preview"] as? String ?? "")
             }
             hasSnapshot = true
+        case "hello":
+            addonVersion = (json["version"] as? NSNumber)?.intValue
+            AppLogInfo("[ForkThunderbirdMail] add-on connected, version \(addonVersion ?? 0)")
+        case "body":
+            let elapsed = bodyRequestedAt.map { Int(Date().timeIntervalSince($0) * 1000) } ?? -1
+            AppLogInfo("[ForkThunderbirdMail] content for \(json["id"] ?? "?") after \(elapsed) ms, \(data.count) bytes, error: \(json["error"] as? String ?? "none")")
+            guard let id = (json["id"] as? NSNumber)?.intValue, id == openedMessage?.id else { break }
+            openedBody = Body(id: id, html: json["html"] as? String ?? "", text: json["text"] as? String ?? "",
+                              to: json["to"] as? String ?? "", cc: json["cc"] as? String ?? "",
+                              error: json["error"] as? String)
         case "error":
             AppLogInfo("[ForkThunderbirdMail] add-on error: \(json["message"] as? String ?? "")")
         default:
@@ -279,7 +334,7 @@ final class ForkThunderbirdMail: ObservableObject {
       "manifest_version": 2,
       "name": "Phi+ Mail",
       "description": "Shows your latest mail in the Gmail pinned tab's card in Phi+.",
-      "version": "1.1",
+      "version": "1.3",
       "browser_specific_settings": {
         "gecko": { "id": "phiplus-mail@bengutteridge", "strict_min_version": "128.0" }
       },
@@ -315,7 +370,7 @@ final class ForkThunderbirdMail: ObservableObject {
         port = null;
         scheduleReconnect();
       });
-      port.postMessage({ type: "hello", version: 1 });
+      port.postMessage({ type: "hello", version: 3 });
       scheduleSnapshot(0);
     }
 
@@ -423,7 +478,10 @@ final class ForkThunderbirdMail: ObservableObject {
             scheduleSnapshot(0);
             break;
           case "open":
-            await messenger.messageDisplay.open({ messageId: msg.id });
+            await openInThunderbird(msg.id);
+            break;
+          case "getBody":
+            await sendBody(msg.id);
             break;
           case "setRead":
             await messenger.messages.update(msg.id, { read: !!msg.read });
@@ -431,9 +489,44 @@ final class ForkThunderbirdMail: ObservableObject {
           case "compose":
             await messenger.compose.beginNew();
             break;
+          case "reply":
+            await messenger.compose.beginReply(msg.id, msg.all ? "replyToAll" : "replyToSender");
+            break;
         }
       } catch (e) {
         if (port) port.postMessage({ type: "error", message: String(e) });
+      }
+    }
+
+    // With no main window (Thunderbird running, window closed) there is no
+    // tab to show the message in, so it gets a window of its own.
+    async function openInThunderbird(id) {
+      const normal = await messenger.windows.getAll({ windowTypes: ["normal"] });
+      const props = { messageId: id };
+      if (!normal.length) props.location = "window";
+      const tab = await messenger.messageDisplay.open(props);
+      if (tab && tab.windowId !== undefined) {
+        try { await messenger.windows.update(tab.windowId, { focused: true }); } catch (e) {}
+      }
+    }
+
+    // The message's content, for reading it in the card.
+    async function sendBody(id) {
+      try {
+        const header = await messenger.messages.get(id);
+        const parts = await messenger.messages.listInlineTextParts(id);
+        const html = parts.find(p => p.contentType === "text/html");
+        const plain = parts.find(p => p.contentType === "text/plain");
+        if (port) port.postMessage({
+          type: "body",
+          id,
+          html: html ? html.content : "",
+          text: plain ? plain.content : "",
+          to: (header.recipients || []).join(", "),
+          cc: (header.ccList || []).join(", ")
+        });
+      } catch (e) {
+        if (port) port.postMessage({ type: "body", id, error: String(e) });
       }
     }
 

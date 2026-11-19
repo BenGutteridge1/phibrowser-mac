@@ -56963,6 +56963,18 @@
         }
       }
     },
+    "pinnedPreview.mail.connecting.hint" : {
+      "comment" : "Thunderbird mail card - hint under the connecting spinner",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "If this doesn't change, check the Phi+ Mail add-on is installed and enabled in Thunderbird's Add-ons and Themes."
+          }
+        }
+      }
+    },
     "pinnedPreview.mail.empty" : {
       "comment" : "Thunderbird mail card - shown when the inbox has no recent messages",
       "extractionState" : "extracted_with_value",
@@ -57047,6 +57059,42 @@
         }
       }
     },
+    "pinnedPreview.mail.reader.offline" : {
+      "comment" : "Thunderbird mail card - shown in place of a message while the Thunderbird add-on is not connected",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Not connected to Thunderbird. Make sure Thunderbird is open and the Phi+ Mail add-on is installed and enabled."
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.reader.slow" : {
+      "comment" : "Thunderbird mail card - shown when a message's content hasn't arrived after 15 seconds",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This message is taking a while to load from the mail server."
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.reconnecting" : {
+      "comment" : "Thunderbird mail card - slim notice above the list while the Thunderbird add-on is not connected",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reconnecting to Thunderbird…"
+          }
+        }
+      }
+    },
     "pinnedPreview.mail.refresh" : {
       "comment" : "Thunderbird mail card - button that reloads the message list",
       "extractionState" : "extracted_with_value",
@@ -57055,6 +57103,30 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Refresh"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.reply" : {
+      "comment" : "Thunderbird mail card - button that opens Thunderbird's reply window for the message",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reply"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.replyAll" : {
+      "comment" : "Thunderbird mail card - button that opens Thunderbird's reply-to-all window for the message",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reply All"
           }
         }
       }
@@ -57095,6 +57167,30 @@
         }
       }
     },
+    "pinnedPreview.mail.showDark" : {
+      "comment" : "Thunderbird mail card - button that darkens messages to match dark mode",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Messages in Dark"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.showLight" : {
+      "comment" : "Thunderbird mail card - button that shows messages with their own light colours",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Messages as Designed"
+          }
+        }
+      }
+    },
     "pinnedPreview.mail.subtitle" : {
       "comment" : "Thunderbird mail card - subtitle naming the app the mail comes from",
       "extractionState" : "extracted_with_value",
@@ -57119,6 +57215,18 @@
         }
       }
     },
+    "pinnedPreview.mail.to" : {
+      "comment" : "Thunderbird mail card - the message's recipients; %@ is the list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "To: %@"
+          }
+        }
+      }
+    },
     "pinnedPreview.mail.unread" : {
       "comment" : "Thunderbird mail card - subtitle with the number of unread messages in the list",
       "extractionState" : "extracted_with_value",
@@ -57127,6 +57235,54 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%d unread"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.update.bar" : {
+      "comment" : "Thunderbird mail card - slim notice above the list when the Thunderbird add-on is out of date",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update the Phi+ Mail add-on to read mail here."
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.update.detail" : {
+      "comment" : "Thunderbird mail card - explains how to update the Thunderbird add-on",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reading mail here needs the newer add-on. Install it the same way: Tools ▸ Add-ons and Themes ▸ gear button ▸ Install Add-on From File."
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.update.show" : {
+      "comment" : "Thunderbird mail card - link in the update notice that shows the add-on file in Finder",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show File"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.update.title" : {
+      "comment" : "Thunderbird mail card - title when the Thunderbird add-on is older than Phi+ needs",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update the Phi+ Mail Add-on"
           }
         }
       }
