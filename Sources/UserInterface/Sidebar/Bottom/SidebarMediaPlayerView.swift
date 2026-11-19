@@ -598,7 +598,9 @@ struct SidebarMediaPlayerView: View {
             .contentShape(Rectangle())
             .simultaneousGesture(cardDragGesture(item))
 
-            if let duration = item.playback.duration, let position = item.playback.currentTime {
+            if item.playback.isLive {
+                liveTimeline
+            } else if let duration = item.playback.duration, let position = item.playback.currentTime {
                 VStack(spacing: 4) {
                     timeline(item, duration: duration, currentTime: position)
                     HStack {
@@ -616,6 +618,37 @@ struct SidebarMediaPlayerView: View {
         .padding(.horizontal, 10)
         .padding(.top, 8)
         .frame(maxWidth: .infinity)
+    }
+
+    /// Fork: a live stream has no end, so the line is full and LIVE stands
+    /// where the elapsed time would be.
+    private var liveTimeline: some View {
+        VStack(spacing: 4) {
+            Capsule().fill(foreground.opacity(0.8))
+                .frame(height: 3)
+                .frame(maxWidth: .infinity)
+                .frame(height: 18)
+            HStack {
+                Text(liveLabel)
+                    .fontWeight(.semibold)
+                    .accessibilityIdentifier("sidebarMedia.live")
+                Spacer(minLength: 2)
+            }
+            .font(.system(size: 10, design: .monospaced))
+            .foregroundStyle(secondary)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(liveAccessibilityLabel)
+    }
+
+    private var liveLabel: String {
+        NSLocalizedString("sidebar.media.fork.live", value: "LIVE",
+                          comment: "Sidebar media player - shown under the full progress line while the media is a live stream")
+    }
+
+    private var liveAccessibilityLabel: String {
+        NSLocalizedString("sidebar.media.fork.liveAccessibility", value: "Live stream",
+                          comment: "Sidebar media player - accessible description of the progress area for a live stream")
     }
 
     /// A single quiet progress line; the larger invisible hit area supports

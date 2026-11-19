@@ -32,6 +32,8 @@ enum NativeMediaAdapter {
         let canEnterPictureInPicture: Bool
         let canExitPictureInPicture: Bool
         let isPictureInPicture: Bool
+        /// Fork: a live stream, which has no end to measure progress against.
+        var isLive = false
         var canPlayPause: Bool { isPlaying ? canPause : canPlay }
         var canPictureInPicture: Bool {
             isPictureInPicture ? canExitPictureInPicture : canEnterPictureInPicture
@@ -147,6 +149,7 @@ enum NativeMediaAdapter {
             let title = (value["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
             let artist = (value["artist"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
             let position = (value["currentTime"] as? Double).flatMap { $0.isFinite ? max(0, $0) : nil }
+            let isLive = isLiveStream(rawDuration: value["duration"], currentTime: position, playing: playing)
             let duration = (value["duration"] as? Double).flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
             let volume = (value["volume"] as? Double).flatMap { $0.isFinite && (0...1).contains($0) ? $0 : nil }
             return Playback(token: token, sourceToken: sourceToken,
@@ -161,10 +164,22 @@ enum NativeMediaAdapter {
                 isLoadingVolume: supportsElementVolume && value["volumePending"] as? Bool == true,
                 canPreviousTrack: value["canPreviousTrack"] as? Bool ?? false,
                 canNextTrack: value["canNextTrack"] as? Bool ?? false,
-                canSeek: canSeek && position != nil && duration != nil,
+                canSeek: canSeek && position != nil && duration != nil && !isLive,
                 canEnterPictureInPicture: canEnter,
                 canExitPictureInPicture: canExit && inPictureInPicture,
-                isPictureInPicture: inPictureInPicture)
+                isPictureInPicture: inPictureInPicture,
+                isLive: isLive)
+        }
+
+        /// Fork: a live stream has no end. The framework leaves `duration`
+        /// out for one (an element's +Infinity), and some MSE players stand
+        /// in 2^30 seconds. A position that has moved, or playback, tells it
+        /// apart from media whose duration hasn't loaded yet.
+        static func isLiveStream(rawDuration: Any?, currentTime: Double?, playing: Bool) -> Bool {
+            if let duration = rawDuration as? Double, duration.isFinite,
+               duration > 0, duration < 1_073_741_824 { return false }
+            guard let currentTime else { return false }
+            return currentTime > 0 || playing
         }
 
         isolated deinit { close() }

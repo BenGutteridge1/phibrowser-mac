@@ -106095,6 +106095,30 @@
         }
       }
     },
+    "sidebar.media.fork.live" : {
+      "comment" : "Sidebar media player - shown under the full progress line while the media is a live stream",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "LIVE"
+          }
+        }
+      }
+    },
+    "sidebar.media.fork.liveAccessibility" : {
+      "comment" : "Sidebar media player - accessible description of the progress area for a live stream",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Live stream"
+          }
+        }
+      }
+    },
     "sidebar.media.mute" : {
       "comment" : "Sidebar media player - Mute the tab that owns the media",
       "localizations" : {
