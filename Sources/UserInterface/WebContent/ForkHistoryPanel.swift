@@ -63,11 +63,11 @@ final class ForkHistoryPanelModel: ObservableObject {
     @Published var selectedId: String?
     @Published private(set) var hasLoaded = false
 
-    /// Rows per page; scrolling near the end asks for the next page.
+    /// Raw visits Chromium is asked for per page (repeat visits to a page
+    /// merge, so fewer rows arrive); scrolling near the end reads the next.
     private static let pageSize = 150
     private let service: ForkHistoryService
     private var entries: [ForkHistoryEntry] = []
-    private var limit = pageSize
     private var reachedEnd = false
     private var queryTask: Task<Void, Never>?
     let onOpen: (ForkHistoryEntry, ForkHistoryOpenMode) -> Void
@@ -94,28 +94,29 @@ final class ForkHistoryPanelModel: ObservableObject {
     }
 
     func reload(debounced: Bool) {
-        limit = Self.pageSize
         reachedEnd = false
-        runQuery(delay: debounced ? 0.12 : 0)
+        runQuery(delay: debounced ? 0.12 : 0, mode: .fresh)
     }
 
-    /// Re-runs the current search at the current size (new visits appear).
+    /// Re-reads the newest page so new visits appear; rows already loaded
+    /// below it stay.
     func refresh() {
-        runQuery(delay: 0)
+        runQuery(delay: 0, mode: .refresh)
     }
 
     func loadMoreIfNeeded(after entry: ForkHistoryEntry) {
         guard !reachedEnd, queryTask == nil,
               let index = entries.firstIndex(of: entry), index >= entries.count - 10 else { return }
-        limit += Self.pageSize
-        runQuery(delay: 0)
+        runQuery(delay: 0, mode: .more)
     }
 
-    private func runQuery(delay: TimeInterval) {
+    private enum QueryMode { case fresh, refresh, more }
+
+    private func runQuery(delay: TimeInterval, mode: QueryMode) {
         queryTask?.cancel()
         let text = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         let range = range
-        let limit = limit
+        let existing = entries
         queryTask = Task { [weak self] in
             if delay > 0 { try? await Task.sleep(for: .seconds(delay)) }
             guard !Task.isCancelled, let self else { return }
@@ -127,32 +128,37 @@ final class ForkHistoryPanelModel: ObservableObject {
             case .week: calendar.date(byAdding: .day, value: -7, to: Date())
             case nil: nil
             }
-            var results: [ForkHistoryEntry]
-            if range == .yesterday {
-                // History comes newest first, so today's visits fill the page
-                // before yesterday's begin. Ask again for as many more rows as
-                // today took, until the page reaches `limit` rows of yesterday
-                // or the end of history.
-                var asked = limit
-                var page: [ForkHistoryEntry] = []
-                for _ in 0..<4 {
-                    page = await self.service.query(text, since: since, limit: asked)
-                    guard !Task.isCancelled else { return }
-                    let todayCount = page.filter { $0.time >= startOfToday }.count
-                    if page.count < asked || page.count - todayCount >= limit { break }
-                    asked = todayCount + limit
-                }
-                self.reachedEnd = page.count < asked
-                results = page.filter { $0.time < startOfToday }
-            } else {
-                results = await self.service.query(text, since: since, limit: limit)
+            // Yesterday's view skips today's visits, which come first.
+            let keeps: (ForkHistoryEntry) -> Bool = range == .yesterday ? { $0.time < startOfToday } : { _ in true }
+            var rows: [ForkHistoryEntry] = mode == .more ? existing : []
+            var seen = Set(rows.map(\.id))
+            func absorb(_ page: [ForkHistoryEntry]) {
+                for entry in page where keeps(entry) && seen.insert(entry.id).inserted { rows.append(entry) }
+            }
+            var page = mode == .more
+                ? await self.service.continueQuery(since: since)
+                : await self.service.query(text, since: since, limit: Self.pageSize)
+            guard !Task.isCancelled else { return }
+            absorb(page.entries)
+            if mode == .refresh, let boundary = page.entries.last?.time {
+                absorb(existing.filter { $0.time < boundary })
+            }
+            // Read on until something new shows (a refresh's continuation can
+            // return rows already listed; Yesterday's first pages can be all
+            // today) or history ends. Each page costs about the same.
+            let wanted = mode == .more ? existing.count + 1 : (mode == .fresh ? 40 : 0)
+            var rounds = 0
+            while !page.finished, rows.count < wanted, rounds < 20 {
+                rounds += 1
+                page = await self.service.continueQuery(since: since)
                 guard !Task.isCancelled else { return }
-                self.reachedEnd = results.count < limit
+                absorb(page.entries)
             }
-            if text.isEmpty, range == .week, limit == Self.pageSize {
-                self.service.lastOpeningResults = results
+            if mode != .refresh { self.reachedEnd = page.finished }
+            if mode == .fresh, text.isEmpty, range == .week {
+                self.service.lastOpeningResults = rows
             }
-            self.apply(results)
+            self.apply(rows)
             self.queryTask = nil
         }
     }
