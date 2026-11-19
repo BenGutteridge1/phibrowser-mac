@@ -88,6 +88,20 @@ struct ForkLastTabEmptyStateRow: View {
     }
 }
 
+/// Settings → General → Browsing: Chromium's Esc hint when a page goes fullscreen.
+struct ForkFullscreenHintRow: View {
+    @AppStorage(ForkSettings.Key.hidesFullscreenExitHint) private var hidesHint = true
+
+    var body: some View {
+        ForkToggleRow(
+            title: NSLocalizedString("settings.general.fork.fullscreenExitHint.title", value: "Hide “Press Esc to exit full screen”",
+                comment: "General settings - toggle that hides the message shown when a page or video goes full screen"),
+            description: NSLocalizedString("settings.general.fork.fullscreenExitHint.description", value: "Videos and pages go full screen without the message. Esc still leaves full screen.",
+                comment: "General settings - description under the toggle that hides the full-screen exit message"),
+            isOn: $hidesHint)
+    }
+}
+
 /// One labelled switch, in the style of the settings panes' toggle rows.
 private struct ForkToggleRow: View {
     let title: String

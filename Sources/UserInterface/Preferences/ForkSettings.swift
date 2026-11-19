@@ -62,6 +62,7 @@ enum ForkSettings {
         static let thunderbirdAddonSeen = "fork.thunderbirdAddonSeen"
         /// The Thunderbird card shows messages darkened in dark mode.
         static let mailMessagesDark = "fork.mailMessagesDark"
+        static let hidesFullscreenExitHint = "fork.hidesFullscreenExitHint"
     }
 
     /// What the Gmail pinned tab's card shows. The website by default.
@@ -75,6 +76,9 @@ enum ForkSettings {
         get { UserDefaults.standard.bool(forKey: Key.thunderbirdAddonSeen) }
         set { UserDefaults.standard.set(newValue, forKey: Key.thunderbirdAddonSeen) }
     }
+
+    /// Chromium's "Press Esc to exit full screen" bubble stays hidden. On by default.
+    static var hidesFullscreenExitHint: Bool { bool(Key.hidesFullscreenExitHint, default: true) }
 
     /// Gmail and TickTick pinned tabs show a live card on hover. On by default.
     static var pinnedTabLivePreviewsEnabled: Bool { bool(Key.pinnedTabLivePreviewsEnabled, default: true) }

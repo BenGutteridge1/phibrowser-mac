@@ -3564,6 +3564,11 @@ extension PhiChromiumCoordinator: PhiChromiumBridgeDelegate {
                            action: .tabContentFullscreenChanged(
                                tabId: tabId.intValue,
                                isFullscreen: isFullscreen)))
+        // Fork: hide the Esc hint; make sure the page hears the exit.
+        MainActor.assumeIsolated {
+            ForkFullscreen.pageFullscreenChanged(tabId: tabId.intValue, windowId: windowId.intValue,
+                                                 isFullscreen: isFullscreen)
+        }
     }
 
     // =========================================================================

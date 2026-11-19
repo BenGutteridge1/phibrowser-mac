@@ -74670,6 +74670,30 @@
         }
       }
     },
+    "settings.general.fork.fullscreenExitHint.description" : {
+      "comment" : "General settings - description under the toggle that hides the full-screen exit message",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Videos and pages go full screen without the message. Esc still leaves full screen."
+          }
+        }
+      }
+    },
+    "settings.general.fork.fullscreenExitHint.title" : {
+      "comment" : "General settings - toggle that hides the message shown when a page or video goes full screen",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide “Press Esc to exit full screen”"
+          }
+        }
+      }
+    },
     "settings.general.fork.lastTabEmptyState.description" : {
       "comment" : "General settings - description under the empty-after-last-tab toggle",
       "extractionState" : "extracted_with_value",

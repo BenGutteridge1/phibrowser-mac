@@ -457,7 +457,11 @@ private struct BrowsingSectionView: View {
                         }
                     }
                 }
-                GeneralContainerView { ForkLastTabEmptyStateRow() }
+                GeneralContainerView {
+                    ForkLastTabEmptyStateRow()
+                    Divider()
+                    ForkFullscreenHintRow()
+                }
             }
         }
     }
