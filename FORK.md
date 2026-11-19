@@ -10,7 +10,7 @@ logo are Phinomenon's trademarks; this licence grants no trademark rights.
 
 ## What Phi+ adds
 
-All on the `phi-plus` branch, on top of Phi 2.17.0:
+All on the `phi-plus` branch, on top of Phi 2.18.0:
 
 - Space switcher: dot style and a bottom-center placement (Settings → Spaces)
 - Omnibox in the Space's color; theme editor with the classic 2.12 presets, a
@@ -28,7 +28,7 @@ All on the `phi-plus` branch, on top of Phi 2.17.0:
 Requirements: Apple silicon, Xcode 26 or later.
 
 ```sh
-./scripts/download_phi_framework.sh --version 2.17.0
+./scripts/download_phi_framework.sh --version 2.18.0
 xcodebuild build -project Phi.xcodeproj -scheme PhiBrowser-OpenSource \
   -destination 'platform=macOS' -derivedDataPath build/DerivedData-OpenSource
 ```

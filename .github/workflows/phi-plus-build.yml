@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download Phi Framework
-        run: ./scripts/download_phi_framework.sh --version 2.17.0
+        run: ./scripts/download_phi_framework.sh --version 2.18.0
         env:
           # Authenticated API calls: anonymous ones share a small per-runner limit.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

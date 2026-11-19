@@ -5388,7 +5388,7 @@
 					"$(PROJECT_DIR)/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = debug;
+				MARKETING_VERSION = "$(PHI_MARKETING_VERSION:default=debug)";
 				NIGHTLY_BUILD = 1;
 				OTHER_CFLAGS = "-DDEBUG";
 				OTHER_LDFLAGS = (

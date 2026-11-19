@@ -6,6 +6,8 @@ PRODUCT_NAME = Phi
 // Fork: Phi+ is a personal, unofficial build with its own identity, so it
 // never passes for Phi and runs beside it with its own data.
 PHI_DISPLAY_NAME = Phi+
+// The Phi release this build is based on, shown in About (upstream OSS builds say "debug").
+PHI_MARKETING_VERSION = 2.18.0
 PRODUCT_BUNDLE_IDENTIFIER = com.bengutteridge.phiplus
 APP_ENTITLEMENTS = Resources/PhiBrowser-OpenSource.entitlements
 
