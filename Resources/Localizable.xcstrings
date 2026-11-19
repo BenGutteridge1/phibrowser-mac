@@ -56903,6 +56903,246 @@
         }
       }
     },
+    "pinnedPreview.mail.closed.button" : {
+      "comment" : "Thunderbird mail card - button that opens Thunderbird",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open Thunderbird"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.closed.detail" : {
+      "comment" : "Thunderbird mail card - explains that Thunderbird must be running",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your inbox shows here while Thunderbird is running."
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.closed.title" : {
+      "comment" : "Thunderbird mail card - title when Thunderbird is not running",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thunderbird Isn't Open"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.compose" : {
+      "comment" : "Thunderbird mail card - button that starts a new message in Thunderbird",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Message"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.connecting" : {
+      "comment" : "Thunderbird mail card - shown while waiting for the Thunderbird add-on to connect",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Connecting to Thunderbird…"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.empty" : {
+      "comment" : "Thunderbird mail card - shown when the inbox has no recent messages",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No Mail"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.markRead" : {
+      "comment" : "Thunderbird mail card - context menu item that marks the message read",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mark as Read"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.markUnread" : {
+      "comment" : "Thunderbird mail card - context menu item that marks the message unread",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mark as Unread"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.missing.detail" : {
+      "comment" : "Thunderbird mail card - explains what to do when Thunderbird is not installed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install Thunderbird, or show the Gmail website in this card in Settings → Spaces."
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.missing.title" : {
+      "comment" : "Thunderbird mail card - title when Thunderbird is not installed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thunderbird Isn't Installed"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.noSubject" : {
+      "comment" : "Thunderbird mail card - shown for a message without a subject",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "(No Subject)"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.open" : {
+      "comment" : "Thunderbird mail card - context menu item that opens the message in Thunderbird",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open in Thunderbird"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.refresh" : {
+      "comment" : "Thunderbird mail card - button that reloads the message list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Refresh"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.setup.reveal" : {
+      "comment" : "Thunderbird mail card - button that shows the add-on file in Finder, to install it in Thunderbird",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Add-on File"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.setup.steps" : {
+      "comment" : "Thunderbird mail card - steps for installing the Phi+ add-on file in Thunderbird",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install the small Phi+ Mail add-on: in Thunderbird, choose Tools ▸ Add-ons and Themes, click the gear button, choose Install Add-on From File, and pick the file this button shows."
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.setup.title" : {
+      "comment" : "Thunderbird mail card - title when the Phi+ add-on is not installed in Thunderbird yet",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Connect Thunderbird"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.subtitle" : {
+      "comment" : "Thunderbird mail card - subtitle naming the app the mail comes from",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thunderbird"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.title" : {
+      "comment" : "Thunderbird mail card - title above the Unified Inbox list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Inbox"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.unread" : {
+      "comment" : "Thunderbird mail card - subtitle with the number of unread messages in the list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%d unread"
+          }
+        }
+      }
+    },
+    "pinnedPreview.mail.yesterday" : {
+      "comment" : "Thunderbird mail card - date shown for a message from yesterday",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Yesterday"
+          }
+        }
+      }
+    },
     "pinnedPreview.signIn.button" : {
       "comment" : "Live pinned-tab card - opens the site in a tab to sign in",
       "extractionState" : "extracted_with_value",
@@ -101778,6 +102018,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "選取空間以查看其設定。"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.gmailCardSource.description" : {
+      "comment" : "Spaces settings - description under the Gmail card source picker",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thunderbird shows your latest mail from the Thunderbird app, through a small add-on the card helps you install."
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.gmailCardSource.thunderbird" : {
+      "comment" : "Gmail card source option - the card shows the latest mail from the Thunderbird app",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thunderbird"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.gmailCardSource.title" : {
+      "comment" : "Spaces settings - picker for what the Gmail pinned tab's hover card shows",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Gmail card shows"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.gmailCardSource.website" : {
+      "comment" : "Gmail card source option - the card shows Gmail's mobile site",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Gmail website"
           }
         }
       }

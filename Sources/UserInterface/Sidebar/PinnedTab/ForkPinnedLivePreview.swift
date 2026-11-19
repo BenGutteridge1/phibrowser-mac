@@ -4,6 +4,7 @@
 // found in the LICENSE file.
 
 import AppKit
+import SwiftUI
 
 /// Fork: an interactive live card for chosen pinned tabs (Gmail, TickTick),
 /// shown on hover beside the sidebar, like Arc's calendar preview. It shows
@@ -139,6 +140,8 @@ final class ForkPinnedLivePreview: NSObject {
     private var pointerOverTab = false
     private var pointerOverCard = false
     private var scrollMonitor: Any?
+    /// Whether the card shows Thunderbird's inbox instead of a web page.
+    private var showsThunderbird = false
 
     private init(state: BrowserState) {
         self.state = state
@@ -199,11 +202,22 @@ final class ForkPinnedLivePreview: NSObject {
     private func show(url: String, beside anchor: NSView) {
         guard let state, let parent = anchor.window else { return }
         let panel = self.panel ?? makePanel()
-        if shownURL != url {
+        let usesThunderbird = Self.usesThunderbird(url)
+        if shownURL != url || showsThunderbird != usesThunderbird {
             content?.subviews.forEach { $0.removeFromSuperview() }
             signInPrompt = nil
             shownURL = url
-            mount(page(for: url, state: state))
+            showsThunderbird = usesThunderbird
+            if usesThunderbird {
+                mountThunderbirdCard()
+            } else {
+                mount(page(for: url, state: state))
+            }
+        }
+        if usesThunderbird {
+            let mail = ForkThunderbirdMail.shared
+            mail.start()
+            if mail.status == .connected { mail.refresh() }
         }
         pages[url]?.releaseWork?.cancel()
         // Follow the browser's light or dark appearance.
@@ -228,7 +242,7 @@ final class ForkPinnedLivePreview: NSObject {
         }
         panel.orderFront(nil)
         installScrollMonitor()
-        if let page = pages[url] {
+        if !usesThunderbird, let page = pages[url] {
             if page.needsReload {
                 page.needsReload = false
                 page.wrapper.navigate(toURL: url)
@@ -308,6 +322,22 @@ final class ForkPinnedLivePreview: NSObject {
         self.panel = panel
         self.content = content
         return panel
+    }
+
+    /// The Gmail card shows Thunderbird's Unified Inbox when chosen in
+    /// Settings → Spaces (`ForkSettings.gmailCardSource`).
+    private static func usesThunderbird(_ url: String) -> Bool {
+        ForkSettings.gmailCardSource == .thunderbird && sites.first(where: { $0.url == url })?.host == "mail.google.com"
+    }
+
+    private func mountThunderbirdCard() {
+        guard let content else { return }
+        let view = NSHostingView(rootView: ForkThunderbirdCardView(mail: .shared))
+        // The card's size is fixed; the list must not resize the panel.
+        view.sizingOptions = []
+        content.addSubview(view)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.snp.remakeConstraints { make in make.edges.equalToSuperview() }
     }
 
     /// Mounts the page's view the way the placeholder shell does: add first,

@@ -24,6 +24,25 @@ enum SpaceSwitcherPlacement: String, CaseIterable, Identifiable {
     }
 }
 
+/// What the Gmail pinned tab's hover card shows.
+enum GmailCardSource: String, CaseIterable, Identifiable {
+    /// Gmail's mobile site, live in the card.
+    case website
+    /// A native list of the latest mail, from Thunderbird through its add-on.
+    case thunderbird
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .website:
+            return NSLocalizedString("settings.spaces.fork.gmailCardSource.website", value: "Gmail website", comment: "Gmail card source option - the card shows Gmail's mobile site")
+        case .thunderbird:
+            return NSLocalizedString("settings.spaces.fork.gmailCardSource.thunderbird", value: "Thunderbird", comment: "Gmail card source option - the card shows the latest mail from the Thunderbird app")
+        }
+    }
+}
+
 /// Preferences added by this fork. Kept in one place, separate from
 /// `PhiPreferences`, so upstream merges stay conflict-free. Every key is
 /// prefixed with `fork.` and read through `UserDefaults.standard`, which is
@@ -39,6 +58,20 @@ enum ForkSettings {
         static let tabSelectionExcludesClosedFolders = "fork.tabSelectionExcludesClosedFolders"
         static let addressBarGlobalShortcutEnabled = "fork.addressBarGlobalShortcutEnabled"
         static let pinnedTabLivePreviewsEnabled = "fork.pinnedTabLivePreviewsEnabled"
+        static let gmailCardSource = "fork.gmailCardSource"
+        static let thunderbirdAddonSeen = "fork.thunderbirdAddonSeen"
+    }
+
+    /// What the Gmail pinned tab's card shows. The website by default.
+    static var gmailCardSource: GmailCardSource {
+        UserDefaults.standard.string(forKey: Key.gmailCardSource).flatMap(GmailCardSource.init(rawValue:)) ?? .website
+    }
+
+    /// Set once the Phi+ add-on in Thunderbird has connected, so the card
+    /// stops offering to install it.
+    static var thunderbirdAddonSeen: Bool {
+        get { UserDefaults.standard.bool(forKey: Key.thunderbirdAddonSeen) }
+        set { UserDefaults.standard.set(newValue, forKey: Key.thunderbirdAddonSeen) }
     }
 
     /// Gmail and TickTick pinned tabs show a live card on hover. On by default.

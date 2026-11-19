@@ -257,6 +257,8 @@ import PostHog
                                                object: nil)
         kioskGlobalShortcutRegistrar.start()
         forkAddressBarShortcutRegistrar.start(enabled: ForkSettings.addressBarGlobalShortcutEnabled)
+        // Fork: listen for Thunderbird early, so the Gmail card's inbox is ready.
+        if ForkSettings.gmailCardSource == .thunderbird { ForkThunderbirdMail.shared.start() }
         
         if permitsSentinelLaunch,
            ApplicationState.shared.isAuthenticated {

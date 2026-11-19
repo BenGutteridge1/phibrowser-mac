@@ -200,13 +200,45 @@ struct ForkAddressBarShortcutSection: View {
 /// Settings → Spaces: live hover cards for Gmail and TickTick pinned tabs.
 struct ForkPinnedPreviewSettingsRow: View {
     @AppStorage(ForkSettings.Key.pinnedTabLivePreviewsEnabled) private var isEnabled = true
+    @AppStorage(ForkSettings.Key.gmailCardSource) private var gmailSource: GmailCardSource = .website
 
     var body: some View {
-        ForkToggleRow(
-            title: NSLocalizedString("settings.spaces.fork.pinnedLivePreviews.title", value: "Live previews for Gmail and TickTick pinned tabs",
-                comment: "Spaces settings - toggle for interactive hover cards on Gmail and TickTick pinned tabs"),
-            description: NSLocalizedString("settings.spaces.fork.pinnedLivePreviews.description", value: "Hover the pinned tab to see and use the site in a small card.",
-                comment: "Spaces settings - description under the live pinned-tab preview toggle"),
-            isOn: $isEnabled)
+        VStack(spacing: 0) {
+            ForkToggleRow(
+                title: NSLocalizedString("settings.spaces.fork.pinnedLivePreviews.title", value: "Live previews for Gmail and TickTick pinned tabs",
+                    comment: "Spaces settings - toggle for interactive hover cards on Gmail and TickTick pinned tabs"),
+                description: NSLocalizedString("settings.spaces.fork.pinnedLivePreviews.description", value: "Hover the pinned tab to see and use the site in a small card.",
+                    comment: "Spaces settings - description under the live pinned-tab preview toggle"),
+                isOn: $isEnabled)
+            if isEnabled {
+                Divider()
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(NSLocalizedString("settings.spaces.fork.gmailCardSource.title", value: "Gmail card shows",
+                            comment: "Spaces settings - picker for what the Gmail pinned tab's hover card shows"))
+                            .font(.system(size: 13))
+                            .themedForeground(.textPrimary)
+                        Text(NSLocalizedString("settings.spaces.fork.gmailCardSource.description", value: "Thunderbird shows your latest mail from the Thunderbird app, through a small add-on the card helps you install.",
+                            comment: "Spaces settings - description under the Gmail card source picker"))
+                            .font(.system(size: 11))
+                            .themedForeground(.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 12)
+                    Picker("", selection: $gmailSource) {
+                        ForEach(GmailCardSource.allCases) { option in
+                            Text(option.displayName).tag(option)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .fixedSize()
+                }
+                .padding(.vertical, 12)
+            }
+        }
+        .onChange(of: gmailSource) { _, source in
+            if source == .thunderbird { ForkThunderbirdMail.shared.start() }
+        }
     }
 }
