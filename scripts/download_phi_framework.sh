@@ -116,16 +116,23 @@ release_metadata="$temporary_directory/release.json"
 extracted_directory="$temporary_directory/extracted"
 
 # Prints the HTTP status code; the response body is written to $2.
+# A GITHUB_TOKEN, when set (as in CI), lifts the anonymous API rate limit.
 fetch_json() {
+    set -- "$1" "$2" --header "Accept: application/vnd.github+json"
+    if [ -n "${GITHUB_TOKEN:-}" ]; then
+        set -- "$@" --header "Authorization: Bearer $GITHUB_TOKEN"
+    fi
+    url=$1 output=$2
+    shift 2
     /usr/bin/curl \
         --location \
         --silent \
         --show-error \
         --retry 3 \
-        --header "Accept: application/vnd.github+json" \
-        --output "$2" \
+        "$@" \
+        --output "$output" \
         --write-out '%{http_code}' \
-        "$1"
+        "$url"
 }
 
 # Downloads the release tagged $1 into $release_metadata.
