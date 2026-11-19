@@ -382,6 +382,21 @@ final class ForkPinnedLivePreview: NSObject {
         return page
     }
 
+    /// Mobile sites scroll some views by touch alone: Gmail's open email sits
+    /// in an `overflow: hidden` box it moves on swipes. When the wheel would
+    /// scroll nothing natively, this scrolls the nearest such box that has
+    /// room to move.
+    private static let wheelScrollScript = """
+    (()=>{addEventListener('wheel',e=>{if(e.ctrlKey||e.defaultPrevented)return;\
+    const dy=e.deltaMode===1?e.deltaY*16:e.deltaMode===2?e.deltaY*innerHeight:e.deltaY;if(!dy)return;\
+    for(let el=e.target instanceof Element?e.target:null;el&&el!==document.documentElement&&el!==document.body;el=el.parentElement){\
+    if(el.scrollHeight<=el.clientHeight+1)continue;\
+    const room=dy>0?el.scrollTop+el.clientHeight<el.scrollHeight-1:el.scrollTop>0;if(!room)continue;\
+    const oy=getComputedStyle(el).overflowY;\
+    if(oy==='hidden'){el.scrollTop+=dy;e.preventDefault();return}\
+    if(/auto|scroll|overlay/.test(oy))return}},{passive:false,capture:true})})();
+    """
+
     /// Switches the page to the site's mobile layout, then loads the site.
     private func load(_ url: String, into page: Page) async {
         for _ in 0..<60 where page.wrapper.devToolsTargetId == nil {
@@ -398,6 +413,11 @@ final class ForkPinnedLivePreview: NSObject {
                 "deviceScaleFactor": 0, "mobile": true, "scale": Self.contentScale
             ])
             await applyColorScheme(isDark: state?.themeContext.currentAppearance.isDark ?? false, to: page)
+            // Scripts injected into every page the card loads only run with
+            // the Page domain on.
+            _ = try? await session.command("Page.enable")
+            _ = try? await session.command("Page.addScriptToEvaluateOnNewDocument",
+                                           params: ["source": Self.wheelScrollScript])
             let css = Self.css(forPageURL: url)
             if !css.isEmpty, let literal = String(data: (try? JSONSerialization.data(withJSONObject: [css])) ?? Data(), encoding: .utf8) {
                 // Every page the card loads gets the style from its start. A
@@ -407,8 +427,6 @@ final class ForkPinnedLivePreview: NSObject {
                 (()=>{try{const s=new CSSStyleSheet();s.replaceSync(\(literal)[0]);\
                 document.adoptedStyleSheets=[...document.adoptedStyleSheets,s];}catch(e){}})();
                 """
-                // The injected script only runs with the Page domain on.
-                _ = try? await session.command("Page.enable")
                 _ = try? await session.command("Page.addScriptToEvaluateOnNewDocument", params: ["source": script])
             }
         }
