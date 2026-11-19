@@ -127,10 +127,28 @@ final class ForkHistoryPanelModel: ObservableObject {
             case .week: calendar.date(byAdding: .day, value: -7, to: Date())
             case nil: nil
             }
-            var results = await self.service.query(text, since: since, limit: limit)
-            guard !Task.isCancelled else { return }
-            self.reachedEnd = results.count < limit
-            if range == .yesterday { results.removeAll { $0.time >= startOfToday } }
+            var results: [ForkHistoryEntry]
+            if range == .yesterday {
+                // History comes newest first, so today's visits fill the page
+                // before yesterday's begin. Ask again for as many more rows as
+                // today took, until the page reaches `limit` rows of yesterday
+                // or the end of history.
+                var asked = limit
+                var page: [ForkHistoryEntry] = []
+                for _ in 0..<4 {
+                    page = await self.service.query(text, since: since, limit: asked)
+                    guard !Task.isCancelled else { return }
+                    let todayCount = page.filter { $0.time >= startOfToday }.count
+                    if page.count < asked || page.count - todayCount >= limit { break }
+                    asked = todayCount + limit
+                }
+                self.reachedEnd = page.count < asked
+                results = page.filter { $0.time < startOfToday }
+            } else {
+                results = await self.service.query(text, since: since, limit: limit)
+                guard !Task.isCancelled else { return }
+                self.reachedEnd = results.count < limit
+            }
             if text.isEmpty, range == .week, limit == Self.pageSize {
                 self.service.lastOpeningResults = results
             }
