@@ -124,17 +124,36 @@ final class ForkPinnedLivePreview: NSObject {
     /// Tracks the pointer over the card so the card stays while it is used.
     private final class CardContentView: NSView {
         var onPointerInside: ((Bool) -> Void)?
+        /// Whether the card's own content sets no pointer (the native
+        /// Thunderbird card), so this view keeps it visible.
+        var managesCursor: () -> Bool = { false }
         private var area: NSTrackingArea?
         override func updateTrackingAreas() {
             super.updateTrackingAreas()
             if let area { removeTrackingArea(area) }
-            let new = NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            let new = NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .mouseMoved, .activeAlways, .inVisibleRect],
                                      owner: self, userInfo: nil)
             addTrackingArea(new)
             area = new
         }
-        override func mouseEntered(with event: NSEvent) { onPointerInside?(true) }
+        override func mouseEntered(with event: NSEvent) {
+            onPointerInside?(true)
+            showPointer()
+        }
+        override func mouseMoved(with event: NSEvent) { showPointer() }
         override func mouseExited(with event: NSEvent) { onPointerInside?(false) }
+
+        /// A video page under the card (YouTube while playing) hides the
+        /// pointer with an invisible cursor, and nothing in the native card
+        /// sets one, so it stayed hidden over the card. Put the arrow back,
+        /// leaving the hand and text cursors the card itself shows.
+        private func showPointer() {
+            guard managesCursor() else { return }
+            let current = NSCursor.current
+            if current != .arrow, current != .pointingHand, current != .iBeam {
+                NSCursor.arrow.set()
+            }
+        }
     }
 
     private weak var state: BrowserState?
@@ -324,6 +343,7 @@ final class ForkPinnedLivePreview: NSObject {
         content.layer?.borderColor = NSColor(white: 0.5, alpha: 0.25).cgColor
         content.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
         content.onPointerInside = { [weak self] inside in self?.pointerOverCardChanged(inside) }
+        content.managesCursor = { [weak self] in self?.showsThunderbird == true }
         panel.onPointerInside = { [weak self] _ in self?.hide() }
         panel.contentView = content
         self.panel = panel
