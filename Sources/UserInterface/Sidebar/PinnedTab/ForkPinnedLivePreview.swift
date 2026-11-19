@@ -132,6 +132,7 @@ final class ForkPinnedLivePreview: NSObject {
     private var hideWork: DispatchWorkItem?
     private var pointerOverTab = false
     private var pointerOverCard = false
+    private var scrollMonitor: Any?
 
     private init(state: BrowserState) {
         self.state = state
@@ -220,6 +221,7 @@ final class ForkPinnedLivePreview: NSObject {
             parent.addChildWindow(panel, ordered: .above)
         }
         panel.orderFront(nil)
+        installScrollMonitor()
         if let page = pages[url] {
             if page.needsReload {
                 page.needsReload = false
@@ -235,8 +237,45 @@ final class ForkPinnedLivePreview: NSObject {
         guard let panel, panel.isVisible else { return }
         panel.parent?.removeChildWindow(panel)
         panel.orderOut(nil)
+        removeScrollMonitor()
         pointerOverCard = false
         if let url = shownURL { scheduleRelease(url) }
+    }
+
+    /// The card never becomes key and sits in a child panel, so the wheel
+    /// doesn't reach its page on its own. While the card is up, scrolling
+    /// over it goes straight to the view under the pointer.
+    private func installScrollMonitor() {
+        guard scrollMonitor == nil else { return }
+        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+            MainActor.assumeIsolated {
+                guard let self, let panel = self.panel, panel.isVisible,
+                      let content = panel.contentView else { return event }
+                let pointer = NSEvent.mouseLocation
+                guard panel.frame.contains(pointer) else { return event }
+                let point = panel.convertPoint(fromScreen: pointer)
+                guard let target = content.hitTest(content.convert(point, from: nil)) else { return event }
+                if event.window === panel {
+                    target.scrollWheel(with: event)
+                    return nil
+                }
+                // An event addressed to another window carries that window's
+                // coordinates: rebuild it at the pointer's spot in the card.
+                // (Without a window, an event's location is read as the
+                // card's own coordinates.)
+                guard let copy = event.cgEvent?.copy(),
+                      let primaryHeight = NSScreen.screens.first?.frame.height else { return event }
+                copy.location = CGPoint(x: point.x, y: primaryHeight - point.y)
+                guard let redirected = NSEvent(cgEvent: copy) else { return event }
+                target.scrollWheel(with: redirected)
+                return nil
+            }
+        }
+    }
+
+    private func removeScrollMonitor() {
+        if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
+        scrollMonitor = nil
     }
 
     private func makePanel() -> CardPanel {
