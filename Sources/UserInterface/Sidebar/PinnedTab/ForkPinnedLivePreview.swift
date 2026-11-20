@@ -14,8 +14,9 @@ import SwiftUI
 /// snapshot preview.
 ///
 /// Each site's page is a detached WebContents (never in a tab strip) kept
-/// warm for `idleRelease` after its card was last shown, so a card appears at
-/// once. The mobile layout is requested over the app's in-process CDP session
+/// loaded while Phi+ runs, so a card appears at once however long since it
+/// was last shown; when macOS reports memory pressure, the pages not on
+/// screen are released and load again on their next hover. The mobile layout is requested over the app's in-process CDP session
 /// (`AppDevToolsPageSession`), which stays open while the page lives because
 /// the user-agent override lasts only as long as the session.
 @MainActor
@@ -66,6 +67,21 @@ final class ForkPinnedLivePreview: NSObject {
     // MARK: Per-window controllers
 
     private static var controllers: [Int: ForkPinnedLivePreview] = [:]
+    /// Releases cards' hidden pages when memory runs low (see `releaseHiddenPages`).
+    private static var memoryPressureSource: DispatchSourceMemoryPressure?
+
+    private static func watchMemoryPressure() {
+        guard memoryPressureSource == nil else { return }
+        let source = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .main)
+        source.setEventHandler {
+            MainActor.assumeIsolated {
+                AppLogInfo("[ForkPinnedLivePreview] memory pressure: releasing hidden card pages")
+                controllers.values.forEach { $0.releaseHiddenPages() }
+            }
+        }
+        source.resume()
+        memoryPressureSource = source
+    }
 
     /// Whether a live card is up over `window`.
     static func isShowingCard(over window: NSWindow) -> Bool {
@@ -76,6 +92,7 @@ final class ForkPinnedLivePreview: NSObject {
         if let existing = controllers[state.windowId] { return existing }
         let controller = ForkPinnedLivePreview(state: state)
         controllers[state.windowId] = controller
+        watchMemoryPressure()
         return controller
     }
 
@@ -92,7 +109,6 @@ final class ForkPinnedLivePreview: NSObject {
     private static let gap: CGFloat = 8
     private static let showDelay: TimeInterval = 0.35
     private static let hideDelay: TimeInterval = 0.3
-    private static let idleRelease: TimeInterval = 600
     /// A mobile Chrome user agent, so sites serve their small-screen layout.
     private static let mobileUserAgent =
         "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
@@ -105,10 +121,8 @@ final class ForkPinnedLivePreview: NSObject {
         /// Set while the card showed the sign-in prompt, so the next showing
         /// reloads the site (the user may have signed in in a tab since).
         var needsReload = false
-        var releaseWork: DispatchWorkItem?
         init(wrapper: any WebContentWrapper) { self.wrapper = wrapper }
         func close() {
-            releaseWork?.cancel()
             session?.close()
             wrapper.close()
         }
@@ -245,7 +259,6 @@ final class ForkPinnedLivePreview: NSObject {
             mail.start()
             if mail.status == .connected { mail.refresh() }
         }
-        pages[url]?.releaseWork?.cancel()
         // Follow the browser's light or dark appearance.
         let isDark = state.themeContext.currentAppearance.isDark
         panel.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
@@ -285,7 +298,6 @@ final class ForkPinnedLivePreview: NSObject {
         panel.orderOut(nil)
         removeScrollMonitor()
         pointerOverCard = false
-        if let url = shownURL { scheduleRelease(url) }
     }
 
     /// The card never becomes key and sits in a child panel, so the wheel
@@ -527,21 +539,19 @@ final class ForkPinnedLivePreview: NSObject {
         ])
     }
 
-    private func scheduleRelease(_ url: String) {
-        guard let page = pages[url] else { return }
-        page.releaseWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, self.shownURL != url || self.panel?.isVisible != true else { return }
-                if self.shownURL == url {
-                    self.content?.subviews.forEach { $0.removeFromSuperview() }
-                    self.shownURL = nil
-                }
-                self.pages.removeValue(forKey: url)?.close()
+    /// Closes every page whose card is not on screen (memory pressure). The
+    /// card on screen keeps its page.
+    private func releaseHiddenPages() {
+        let visibleURL = panel?.isVisible == true ? shownURL : nil
+        for (url, page) in pages where url != visibleURL {
+            if shownURL == url {
+                content?.subviews.forEach { $0.removeFromSuperview() }
+                signInPrompt = nil
+                shownURL = nil
             }
+            pages.removeValue(forKey: url)
+            page.close()
         }
-        page.releaseWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.idleRelease, execute: work)
     }
 
     /// Releases every page (the window closed).
