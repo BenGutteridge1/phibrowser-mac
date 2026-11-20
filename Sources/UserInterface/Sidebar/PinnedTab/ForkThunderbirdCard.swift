@@ -136,14 +136,26 @@ struct ForkThunderbirdCardView: View {
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(mail.messages) { message in
-                            ForkMailRow(message: message, mail: mail)
-                            Divider().padding(.leading, 26)
-                        }
+                // A native list, for Apple Mail's swipe left to archive (a
+                // full swipe archives at once).
+                List {
+                    ForEach(mail.messages) { message in
+                        ForkMailRow(message: message, mail: mail)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button { mail.archive(message) } label: {
+                                    Label(ForkMailRow.archiveTitle, systemImage: "archivebox.fill")
+                                }
+                                // The unread dot's color.
+                                .tint(.accentColor)
+                            }
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .environment(\.defaultMinListRowHeight, 1)
             }
         case .connecting:
             VStack(spacing: 10) {
@@ -265,6 +277,7 @@ private struct ForkMailRow: View {
         .padding(.trailing, 14)
         .padding(.vertical, 8)
         .background(isHovering ? Color.primary.opacity(0.06) : Color.clear)
+        .overlay(alignment: .bottom) { Divider().padding(.leading, 26) }
         .contentShape(Rectangle())
         .onHover { isHovering = $0 }
         .onTapGesture { mail.read(message) }
@@ -284,12 +297,18 @@ private struct ForkMailRow: View {
                 comment: "Thunderbird mail card - button that opens Thunderbird's reply-to-all window for the message")) {
                 mail.reply(message, all: true)
             }
+            Button(Self.archiveTitle) { mail.archive(message) }
             Divider()
             Button(NSLocalizedString("pinnedPreview.mail.open", value: "Open in Thunderbird",
                 comment: "Thunderbird mail card - context menu item that opens the message in Thunderbird")) {
                 mail.open(message)
             }
         }
+    }
+
+    static var archiveTitle: String {
+        NSLocalizedString("pinnedPreview.mail.archive", value: "Archive",
+            comment: "Thunderbird mail card - swipe, menu and toolbar action that archives the message (Gmail: moves it to All Mail)")
     }
 
     /// Apple Mail's dates: a time today, "Yesterday", a weekday this week,
@@ -385,6 +404,8 @@ struct ForkMailReaderView: View {
             Button { mail.reply(message, all: true) } label: { Image(systemName: "arrowshape.turn.up.left.2") }
                 .help(NSLocalizedString("pinnedPreview.mail.replyAll", value: "Reply All",
                     comment: "Thunderbird mail card - button that opens Thunderbird's reply-to-all window for the message"))
+            Button { mail.archive(message) } label: { Image(systemName: "archivebox") }
+                .help(ForkMailRow.archiveTitle)
             Button {
                 mail.setRead(message, false)
                 mail.closeReader()

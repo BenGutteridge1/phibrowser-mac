@@ -58213,6 +58213,18 @@
         }
       }
     },
+    "pinnedPreview.mail.archive" : {
+      "comment" : "Thunderbird mail card - swipe, menu and toolbar action that archives the message (Gmail: moves it to All Mail)",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Archive"
+          }
+        }
+      }
+    },
     "pinnedPreview.mail.closed.button" : {
       "comment" : "Thunderbird mail card - button that opens Thunderbird",
       "extractionState" : "extracted_with_value",

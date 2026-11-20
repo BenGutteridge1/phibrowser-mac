@@ -63,7 +63,7 @@ final class ForkThunderbirdMail: ObservableObject {
     static let thunderbirdBundleId = "org.mozilla.thunderbird"
     /// The add-on version this Phi+ expects (its `hello` message). An older
     /// add-on keeps working for the list; the card asks to update it.
-    static let currentAddonVersion = 3
+    static let currentAddonVersion = 4
     static let hostName = "com.bengutteridge.phiplus.mail"
     static let addonId = "phiplus-mail@bengutteridge"
 
@@ -154,6 +154,14 @@ final class ForkThunderbirdMail: ObservableObject {
     func setRead(_ message: Message, _ read: Bool) {
         send(["cmd": "setRead", "id": message.id, "read": read])
         setLocalRead(message.id, read)
+    }
+
+    /// Archives `message` in Thunderbird (Gmail: to All Mail). It leaves the
+    /// list at once; the add-on's next snapshot confirms it.
+    func archive(_ message: Message) {
+        send(["cmd": "archive", "id": message.id])
+        messages.removeAll { $0.id == message.id }
+        if openedMessage?.id == message.id { closeReader() }
     }
 
     /// Opens Thunderbird's reply window for `message`, ready to type.
@@ -334,12 +342,12 @@ final class ForkThunderbirdMail: ObservableObject {
       "manifest_version": 2,
       "name": "Phi+ Mail",
       "description": "Shows your latest mail in the Gmail pinned tab's card in Phi+.",
-      "version": "1.3",
+      "version": "1.4",
       "browser_specific_settings": {
         "gecko": { "id": "phiplus-mail@bengutteridge", "strict_min_version": "128.0" }
       },
       "background": { "scripts": ["background.js"] },
-      "permissions": ["accountsRead", "messagesRead", "messagesUpdate", "compose", "nativeMessaging"]
+      "permissions": ["accountsRead", "messagesRead", "messagesUpdate", "messagesMove", "compose", "nativeMessaging"]
     }
     """#
 
@@ -370,7 +378,7 @@ final class ForkThunderbirdMail: ObservableObject {
         port = null;
         scheduleReconnect();
       });
-      port.postMessage({ type: "hello", version: 3 });
+      port.postMessage({ type: "hello", version: 4 });
       scheduleSnapshot(0);
     }
 
@@ -471,6 +479,22 @@ final class ForkThunderbirdMail: ObservableObject {
       }
     }
 
+    // Gmail's archive is a move to All Mail: the message leaves the Inbox and
+    // stays in All Mail. Other accounts use Thunderbird's own archive setting.
+    async function archiveMessage(id) {
+      const header = await messenger.messages.get(id);
+      const accountId = header.folder && header.folder.accountId;
+      if (accountId) {
+        const folders = await messenger.folders.query({ accountId });
+        const allMail = folders.find(f => /^\/\[(Gmail|Google Mail)\]\/All Mail$/i.test(f.path || ""));
+        if (allMail) {
+          await messenger.messages.move([id], allMail.id);
+          return;
+        }
+      }
+      await messenger.messages.archive([id]);
+    }
+
     async function onCommand(msg) {
       try {
         switch (msg && msg.cmd) {
@@ -491,6 +515,9 @@ final class ForkThunderbirdMail: ObservableObject {
             break;
           case "reply":
             await messenger.compose.beginReply(msg.id, msg.all ? "replyToAll" : "replyToSender");
+            break;
+          case "archive":
+            await archiveMessage(msg.id);
             break;
         }
       } catch (e) {
