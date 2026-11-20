@@ -1,96 +1,100 @@
 {
-  "fill" : {
-    "automatic-gradient" : "extended-gray:1.00000,1.00000"
+  "fill": {
+    "automatic-gradient": "extended-gray:1.00000,1.00000"
   },
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
-
-      ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
-      }
-    },
-    {
-      "layers" : [
+      "layers": [
         {
-          "glass" : false,
-          "image-name" : "Vector (1).png",
-          "name" : "Vector (1)",
-          "position" : {
-            "scale" : 1,
-            "translation-in-points" : [
+          "glass": true,
+          "image-name": "spiral.png",
+          "name": "spiral",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
               0,
               22.875
             ]
-          }
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ]
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
       }
     },
     {
-      "layers" : [
+      "layers": [
         {
-          "blend-mode-specializations" : [
+          "blend-mode-specializations": [
             {
-              "value" : "normal"
+              "value": "normal"
             },
             {
-              "appearance" : "dark",
-              "value" : "normal"
+              "appearance": "dark",
+              "value": "normal"
             }
           ],
-          "fill-specializations" : [
+          "fill-specializations": [
             {
-              "appearance" : "dark",
-              "value" : "automatic"
+              "appearance": "dark",
+              "value": "automatic"
             }
           ],
-          "glass" : false,
-          "hidden" : false,
-          "image-name" : "bg.png",
-          "name" : "bg",
-          "opacity-specializations" : [
+          "glass": false,
+          "hidden": false,
+          "image-name": "bg.png",
+          "name": "bg",
+          "opacity-specializations": [
             {
-              "appearance" : "dark",
-              "value" : 0
+              "appearance": "dark",
+              "value": 0
+            },
+            {
+              "appearance": "tinted",
+              "value": 0
             }
           ],
-          "position" : {
-            "scale" : 1.1,
-            "translation-in-points" : [
+          "position": {
+            "scale": 1.1,
+            "translation-in-points": [
               0,
               0
             ]
           }
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }
