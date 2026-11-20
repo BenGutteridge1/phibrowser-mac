@@ -5,6 +5,7 @@
 
 import AppKit
 import Combine
+import SwiftUI
 
 /// Fork: the Unified Inbox from Thunderbird, for the Gmail pinned tab's card
 /// (`ForkSettings.gmailCardSource == .thunderbird`).
@@ -160,9 +161,20 @@ final class ForkThunderbirdMail: ObservableObject {
     /// list at once; the add-on's next snapshot confirms it.
     func archive(_ message: Message) {
         send(["cmd": "archive", "id": message.id])
-        messages.removeAll { $0.id == message.id }
+        archivedAt[message.id] = Date()
+        // Animated, so the rows below slide up as the swipe finishes,
+        // instead of the gap closing in one jump.
+        withAnimation(Self.listAnimation) {
+            messages.removeAll { $0.id == message.id }
+        }
         if openedMessage?.id == message.id { closeReader() }
     }
+
+    /// Messages archived from the card in the last few seconds, kept out of
+    /// snapshots the add-on sent before Thunderbird finished moving them, so
+    /// a row never reappears and vanishes again.
+    private var archivedAt: [Int: Date] = [:]
+    private static let listAnimation = Animation.easeInOut(duration: 0.28)
 
     /// Opens Thunderbird's reply window for `message`, ready to type.
     func reply(_ message: Message, all: Bool) {
@@ -224,7 +236,9 @@ final class ForkThunderbirdMail: ObservableObject {
         switch type {
         case "snapshot":
             let list = json["messages"] as? [[String: Any]] ?? []
-            messages = list.compactMap { item in
+            let now = Date()
+            archivedAt = archivedAt.filter { now.timeIntervalSince($0.value) < 15 }
+            let incoming: [Message] = list.compactMap { item in
                 guard let id = (item["id"] as? NSNumber)?.intValue else { return nil }
                 let millis = (item["date"] as? NSNumber)?.doubleValue ?? 0
                 return Message(id: id, author: item["from"] as? String ?? "",
@@ -233,6 +247,13 @@ final class ForkThunderbirdMail: ObservableObject {
                                read: item["read"] as? Bool ?? true,
                                flagged: item["flagged"] as? Bool ?? false,
                                preview: item["preview"] as? String ?? "")
+            }.filter { archivedAt[$0.id] == nil }
+            // Rows that arrive or leave (new mail, changes in Thunderbird)
+            // slide in and out like an archived one, rather than jumping.
+            if hasSnapshot, incoming != messages {
+                withAnimation(Self.listAnimation) { messages = incoming }
+            } else {
+                messages = incoming
             }
             hasSnapshot = true
         case "hello":
