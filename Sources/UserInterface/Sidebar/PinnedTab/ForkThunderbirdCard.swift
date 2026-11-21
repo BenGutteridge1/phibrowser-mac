@@ -13,6 +13,9 @@ struct ForkThunderbirdCardView: View {
     /// Opens a link from a message in a new Phi+ tab.
     let openLink: (URL) -> Void
     @State private var isRefreshing = false
+    /// The native list takes a row's click for its selection, so a click
+    /// reaches the row as a selection; it opens the message and clears.
+    @State private var clickedMessageId: Int?
 
     var body: some View {
         ZStack {
@@ -138,7 +141,7 @@ struct ForkThunderbirdCardView: View {
             } else {
                 // A native list, for Apple Mail's swipe left to archive (a
                 // full swipe archives at once).
-                List {
+                List(selection: $clickedMessageId) {
                     ForEach(mail.messages) { message in
                         ForkMailRow(message: message, mail: mail)
                             .listRowInsets(EdgeInsets())
@@ -154,6 +157,11 @@ struct ForkThunderbirdCardView: View {
                     }
                 }
                 .listStyle(.plain)
+                .onChange(of: clickedMessageId) { _, id in
+                    guard let id else { return }
+                    clickedMessageId = nil
+                    if let message = mail.messages.first(where: { $0.id == id }) { mail.read(message) }
+                }
                 .scrollContentBackground(.hidden)
                 .environment(\.defaultMinListRowHeight, 1)
             }
@@ -280,7 +288,6 @@ private struct ForkMailRow: View {
         .overlay(alignment: .bottom) { Divider().padding(.leading, 26) }
         .contentShape(Rectangle())
         .onHover { isHovering = $0 }
-        .onTapGesture { mail.read(message) }
         .contextMenu {
             Button(message.read
                    ? NSLocalizedString("pinnedPreview.mail.markUnread", value: "Mark as Unread",
