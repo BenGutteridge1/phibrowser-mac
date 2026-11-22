@@ -461,6 +461,8 @@ private struct BrowsingSectionView: View {
                     ForkLastTabEmptyStateRow()
                     Divider()
                     ForkFullscreenHintRow()
+                    Divider()
+                    ForkVideoPiPButtonRow()
                 }
             }
         }

@@ -331,6 +331,7 @@
 		8E0B00022FC0000000000001 /* BrowserState+GroupOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00042FC0000000000001 /* BrowserState+GroupOverview.swift */; };
 		8E0B00052FC0000000000001 /* GroupOverviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00072FC0000000000001 /* GroupOverviewViewController.swift */; };
 		8E0B00062FC0000000000001 /* GroupOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00082FC0000000000001 /* GroupOverviewView.swift */; };
+		76B09BEFD5D99BBFF9EC9193 /* ForkVideoPiPButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */; };
 		9FD857F044371D7F9705FB99 /* ForkFullscreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07042F62990E5FC9B32B374 /* ForkFullscreen.swift */; };
 		5030903DF1515D030209915B /* ForkHistoryPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */; };
 		E9114B7679FAFCF153494F66 /* ForkEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */; };
@@ -1219,6 +1220,7 @@
 		8E0B00042FC0000000000001 /* BrowserState+GroupOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BrowserState+GroupOverview.swift"; sourceTree = "<group>"; };
 		8E0B00072FC0000000000001 /* GroupOverviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupOverviewViewController.swift; sourceTree = "<group>"; };
 		8E0B00082FC0000000000001 /* GroupOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupOverviewView.swift; sourceTree = "<group>"; };
+		D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkVideoPiPButton.swift; sourceTree = "<group>"; };
 		A07042F62990E5FC9B32B374 /* ForkFullscreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkFullscreen.swift; sourceTree = "<group>"; };
 		B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkHistoryPanel.swift; sourceTree = "<group>"; };
 		C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkEmptyStateView.swift; sourceTree = "<group>"; };
@@ -3331,6 +3333,7 @@
 			children = (
 				8EA1FD952FEB74530060DCFF /* RendererCrashViewController.swift */,
 				8E5D8B002FDFFAD30039CBE3 /* WebContentSnapshotter.swift */,
+				D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */,
 				A07042F62990E5FC9B32B374 /* ForkFullscreen.swift */,
 				B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */,
 				C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */,
@@ -3957,6 +3960,7 @@
 				8E0B00012FC0000000000001 /* GroupOverviewState.swift in Sources */,
 				8E0B00022FC0000000000001 /* BrowserState+GroupOverview.swift in Sources */,
 				8E8008D82FA1A59800EB24C5 /* WebContentGroupInfo.swift in Sources */,
+				76B09BEFD5D99BBFF9EC9193 /* ForkVideoPiPButton.swift in Sources */,
 				9FD857F044371D7F9705FB99 /* ForkFullscreen.swift in Sources */,
 				5030903DF1515D030209915B /* ForkHistoryPanel.swift in Sources */,
 				E9114B7679FAFCF153494F66 /* ForkEmptyStateView.swift in Sources */,

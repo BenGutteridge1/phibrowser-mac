@@ -75306,6 +75306,30 @@
         }
       }
     },
+    "settings.general.fork.videoPiPButton.description" : {
+      "comment" : "General settings - description under the toggle for the picture-in-picture button on videos",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hover a video to show the picture-in-picture icon in its corner. Applies to pages loaded after the change."
+          }
+        }
+      }
+    },
+    "settings.general.fork.videoPiPButton.title" : {
+      "comment" : "General settings - toggle for the picture-in-picture button shown when hovering a video",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Picture-in-picture button on videos"
+          }
+        }
+      }
+    },
     "settings.general.language.displayLanguageTitle" : {
       "comment" : "General settings - Row title for choosing Phi's native interface language",
       "extractionState" : "extracted_with_value",

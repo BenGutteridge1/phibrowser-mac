@@ -422,6 +422,8 @@ class Tab: WebContentRepresentable {
             .sink { [weak self] loading in
                 guard let self else { return }
                 self.isLoading = loading
+                // Fork: the picture-in-picture button over the page's videos.
+                if !loading { MainActor.assumeIsolated { ForkVideoPiPButton.pageLoaded(in: self) } }
                 if !loading, self.wantsTransparentChatCanvas {
                     MainActor.assumeIsolated { self.enableTransparentChatCanvas() }
                 }

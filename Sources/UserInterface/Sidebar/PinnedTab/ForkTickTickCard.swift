@@ -545,18 +545,43 @@ private struct ForkTickTickRow: View {
     private var editor: some View {
         VStack(alignment: .leading, spacing: 6) {
             titleField
-            TextField(NSLocalizedString("pinnedPreview.tasks.notes", value: "Notes",
-                comment: "TickTick task card - placeholder of a task's notes field"), text: $notes, axis: .vertical)
-                .textFieldStyle(.plain)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .lineLimit(1...10)
-                .focused($field, equals: .notes)
+            notesEditor
             checklist
             controls
         }
         .padding(.bottom, 2)
         .transition(.opacity)
+    }
+
+    /// The notes, in a text view so Return starts a new line (a text field's
+    /// Return ends editing). It grows with its text; the card scrolls.
+    private var notesEditor: some View {
+        ZStack(alignment: .topLeading) {
+            // Sizes the editor to its text, with room for a last empty line.
+            Text(notes.isEmpty || notes.hasSuffix("\n") ? notes + " " : notes)
+                .font(.system(size: 12))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .hidden()
+            if notes.isEmpty {
+                Text(NSLocalizedString("pinnedPreview.tasks.notes", value: "Notes",
+                    comment: "TickTick task card - placeholder of a task's notes field"))
+                    .font(.system(size: 12))
+                    .foregroundStyle(.tertiary)
+                    .allowsHitTesting(false)
+            }
+            TextEditor(text: $notes)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .scrollContentBackground(.hidden)
+                // Its own scrolling would hold on to the wheel over the
+                // notes; the card's list scrolls instead.
+                .scrollDisabled(true)
+                // The text view's line padding, so the text lines up with
+                // the title.
+                .padding(.horizontal, -5)
+                .focused($field, equals: .notes)
+        }
     }
 
     @ViewBuilder

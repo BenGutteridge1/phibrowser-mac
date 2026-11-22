@@ -592,6 +592,7 @@ final class ForkHistoryPanelController: NSObject {
         position()
         parent.addChildWindow(panel, ordered: .above)
         panel.makeKeyAndOrderFront(nil)
+        focusSearchField()
         guard !reducesMotion else { return }
         hosting.setFrameOrigin(NSPoint(x: container.bounds.width, y: 0))
         NSAnimationContext.runAnimationGroup { context in
@@ -600,6 +601,26 @@ final class ForkHistoryPanelController: NSObject {
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             hosting.animator().setFrameOrigin(.zero)
         }
+    }
+
+    /// Puts the cursor in the search field, so typing searches at once. The
+    /// view asks for focus when it appears, but that is before the panel is
+    /// key, so the request can be lost; this asks again once it is.
+    private func focusSearchField() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.panel.isVisible else { return }
+            if let field = Self.firstEditableField(in: self.hosting), self.panel.firstResponder !== field.currentEditor() {
+                self.panel.makeFirstResponder(field)
+            }
+        }
+    }
+
+    private static func firstEditableField(in view: NSView) -> NSTextField? {
+        if let field = view as? NSTextField, field.isEditable { return field }
+        for subview in view.subviews {
+            if let field = firstEditableField(in: subview) { return field }
+        }
+        return nil
     }
 
     /// Against the browser window's right edge, vertically centered.

@@ -82,6 +82,7 @@ enum ForkSettings {
         /// The Thunderbird card shows messages darkened in dark mode.
         static let mailMessagesDark = "fork.mailMessagesDark"
         static let hidesFullscreenExitHint = "fork.hidesFullscreenExitHint"
+        static let videoPiPButtonEnabled = "fork.videoPiPButtonEnabled"
         static let tickTickCardSource = "fork.tickTickCardSource"
         /// The list the TickTick card last showed ("today", "next7", "inbox", "project:<id>").
         static let tickTickCardView = "fork.tickTickCardView"
@@ -103,6 +104,9 @@ enum ForkSettings {
         get { UserDefaults.standard.bool(forKey: Key.thunderbirdAddonSeen) }
         set { UserDefaults.standard.set(newValue, forKey: Key.thunderbirdAddonSeen) }
     }
+
+    /// Videos show a picture-in-picture button on hover (`ForkVideoPiPButton`). On by default.
+    static var videoPiPButtonEnabled: Bool { bool(Key.videoPiPButtonEnabled, default: true) }
 
     /// Chromium's "Press Esc to exit full screen" bubble stays hidden. On by default.
     static var hidesFullscreenExitHint: Bool { bool(Key.hidesFullscreenExitHint, default: true) }

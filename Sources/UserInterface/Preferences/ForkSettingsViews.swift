@@ -102,6 +102,20 @@ struct ForkFullscreenHintRow: View {
     }
 }
 
+/// Settings → General → Browsing: the picture-in-picture button over videos.
+struct ForkVideoPiPButtonRow: View {
+    @AppStorage(ForkSettings.Key.videoPiPButtonEnabled) private var isEnabled = true
+
+    var body: some View {
+        ForkToggleRow(
+            title: NSLocalizedString("settings.general.fork.videoPiPButton.title", value: "Picture-in-picture button on videos",
+                comment: "General settings - toggle for the picture-in-picture button shown when hovering a video"),
+            description: NSLocalizedString("settings.general.fork.videoPiPButton.description", value: "Hover a video to show the picture-in-picture icon in its corner. Applies to pages loaded after the change.",
+                comment: "General settings - description under the toggle for the picture-in-picture button on videos"),
+            isOn: $isEnabled)
+    }
+}
+
 /// One labelled switch, in the style of the settings panes' toggle rows.
 private struct ForkToggleRow: View {
     let title: String

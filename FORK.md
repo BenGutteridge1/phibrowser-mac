@@ -24,6 +24,7 @@ All on the `phi-plus` branch, on top of Phi 2.18.0:
   list over TickTick's Open API (with a personal API token)
 - Bitwarden desktop bridge registration, so the extension can unlock with Touch ID
 - Circular download icon and progress ring
+- A picture-in-picture button on videos when you hover them (Settings → General)
 
 ## Build
 
