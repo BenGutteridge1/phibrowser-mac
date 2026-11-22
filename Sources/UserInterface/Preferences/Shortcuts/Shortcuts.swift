@@ -162,6 +162,9 @@ enum CommandWrapper: Int, Equatable {
     /// Fork: system-wide shortcut that opens the address bar from any app
     /// (`AppController.forkOpenAddressBarFromAnywhere`). A fork-only id range.
     case FORK_OPEN_ADDRESS_BAR_ANYWHERE = 99001
+    /// Fork: pops the current page's video out into picture in picture, or
+    /// back (`ForkPageScripts.togglePictureInPicture`).
+    case FORK_TOGGLE_PICTURE_IN_PICTURE = 99002
 
     // System Preserved
     case IDS_HIDE_OTHERS_MAC         = 110
@@ -727,6 +730,7 @@ extension Shortcuts {
         .PHI_TOGGLE_READER: .init(characters: "r", modifiers: [.command, .option]),
         .PHI_NEW_KIOSK_WINDOW: .init(characters: "n", modifiers: [.command, .option]),
         .FORK_OPEN_ADDRESS_BAR_ANYWHERE: .init(characters: " ", modifiers: [.option]),
+        .FORK_TOGGLE_PICTURE_IN_PICTURE: .init(characters: "p", modifiers: [.control, .command]),
         .PHI_NEW_INCOGNITO_SPACE: .init(characters: "n", modifiers: [.control, .shift]),
         .PHI_SHARE_PAGE: .init(characters: "s", modifiers: [.control, .option]),
         // Printable shortcuts store the shifted character, as shortcut recording does.

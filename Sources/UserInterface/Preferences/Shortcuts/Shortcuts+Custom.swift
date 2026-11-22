@@ -280,6 +280,7 @@ extension Shortcuts {
                         .PHI_TOGGLE_BALANCED_LAYOUT,
                         .PHI_TOGGLE_CHATBAR,
                         .PHI_TOGGLE_READER,
+                        .FORK_TOGGLE_PICTURE_IN_PICTURE,
                         .PHI_NEW_CONVERSATION]
             case .history:
                 return [.IDC_HOME,
@@ -761,6 +762,7 @@ extension CommandWrapper {
         .PHI_COPY_URL: .init(title: "Copy URL", keywords: ["copy url", "copy link", "url"]),
         .PHI_TOGGLE_READER: .init(title: "Toggle Reader View", keywords: ["reader", "reader view", "reading", "article", "distraction free"]),
         .PHI_NEW_KIOSK_WINDOW: .init(title: "New Kiosk Window", keywords: ["new kiosk window", "kiosk", "window"]),
+        .FORK_TOGGLE_PICTURE_IN_PICTURE: .init(title: "Picture in Picture", keywords: ["picture in picture", "pip", "video", "pop out", "float"]),
         .FORK_OPEN_ADDRESS_BAR_ANYWHERE: .init(title: "Open Address Bar from Any App", keywords: ["address bar", "omnibox", "global", "any app", "search"]),
         .PHI_NEW_INCOGNITO_SPACE: .init(title: "New Incognito Space", keywords: ["new incognito space", "incognito", "private", "space"]),
         .PHI_SHARE_PAGE: .init(title: "Share Page", keywords: ["share", "share page", "share link", "airdrop", "send"]),

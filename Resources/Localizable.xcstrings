@@ -90173,6 +90173,18 @@
         }
       }
     },
+    "settings.shortcuts.command.fork.pictureInPicture" : {
+      "comment" : "Shortcuts settings - Command title for popping the page's video out into picture in picture or back",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Picture in Picture"
+          }
+        }
+      }
+    },
     "settings.shortcuts.command.fullscreen" : {
       "comment" : "Shortcuts settings - Command title for entering or leaving full screen",
       "localizations" : {
@@ -97053,6 +97065,18 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Bring Phi forward and open the address bar, even while another app is active."
+          }
+        }
+      }
+    },
+    "settings.shortcuts.description.fork.pictureInPicture" : {
+      "comment" : "Shortcuts settings - Description of the picture-in-picture command",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pop the page's video out into picture in picture, or put it back."
           }
         }
       }

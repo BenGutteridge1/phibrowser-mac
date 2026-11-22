@@ -204,11 +204,23 @@ enum ForkPageScripts {
     /// which live in their own processes and DevTools targets.
     private static func addToEmbeddedFrames(of pageTargetId: String, pageSession: AppDevToolsPageSession,
                                             source: String) async {
+        for frameTarget in await embeddedFrameTargets(of: pageTargetId, pageSession: pageSession).prefix(12) {
+            guard let session = try? await AppDevToolsPageSession.open(targetId: frameTarget, timeout: 3) else { continue }
+            _ = try? await session.command("Runtime.evaluate", params: [
+                "expression": source, "returnByValue": true, "silent": true
+            ], timeout: 3)
+            session.close()
+        }
+    }
+
+    /// The DevTools targets of the page's cross-origin frames, outermost first.
+    private static func embeddedFrameTargets(of pageTargetId: String,
+                                             pageSession: AppDevToolsPageSession) async -> [String] {
         guard let tree = try? await pageSession.command("Page.getFrameTree", timeout: 3),
-              let browser = try? await AppDevToolsPageSession.openBrowser(timeout: 3) else { return }
+              let browser = try? await AppDevToolsPageSession.openBrowser(timeout: 3) else { return [] }
         defer { browser.close() }
         guard let reply = try? await browser.command("Target.getTargets", timeout: 3),
-              let infos = reply["targetInfos"] as? [[String: Any]] else { return }
+              let infos = reply["targetInfos"] as? [[String: Any]] else { return [] }
         var frames: Set<String> = [pageTargetId]
         func collect(_ node: [String: Any]) {
             if let id = (node["frame"] as? [String: Any])?["id"] as? String { frames.insert(id) }
@@ -230,14 +242,61 @@ enum ForkPageScripts {
                 return true
             }
         }
-        for frameTarget in embedded.prefix(12) {
-            guard let session = try? await AppDevToolsPageSession.open(targetId: frameTarget, timeout: 3) else { continue }
-            _ = try? await session.command("Runtime.evaluate", params: [
-                "expression": source, "returnByValue": true, "silent": true
-            ], timeout: 3)
-            session.close()
+        return embedded
+    }
+
+    // MARK: Picture in picture (the shortcut)
+
+    /// Pops the page's main video out into picture in picture, or puts it
+    /// back: the playing one first, then the largest on screen, looking in
+    /// shadow DOM and in frames, embedded players included. Run as a user
+    /// gesture, which picture in picture needs.
+    static func togglePictureInPicture(in tab: Tab) {
+        guard let targetId = tab.webContentWrapper?.devToolsTargetId else { return }
+        Task { @MainActor in
+            guard let session = try? await AppDevToolsPageSession.open(targetId: targetId, timeout: 3) else { return }
+            defer { session.close() }
+            if try await run(togglePictureInPictureScript, on: session) != "none" { return }
+            // No video in the page itself: try its embedded players.
+            for frameTarget in await embeddedFrameTargets(of: targetId, pageSession: session).prefix(12) {
+                guard let frameSession = try? await AppDevToolsPageSession.open(targetId: frameTarget, timeout: 3) else { continue }
+                let result = try? await run(togglePictureInPictureScript, on: frameSession)
+                frameSession.close()
+                if let result, result != "none" { return }
+            }
         }
     }
+
+    private static func run(_ script: String, on session: AppDevToolsPageSession) async throws -> String? {
+        let reply = try await session.command("Runtime.evaluate", params: [
+            "expression": script, "returnByValue": true, "awaitPromise": true, "userGesture": true, "silent": true
+        ], timeout: 5)
+        return (reply["result"] as? [String: Any])?["value"] as? String
+    }
+
+    private static let togglePictureInPictureScript = """
+    (async () => {
+      try {
+        if (document.pictureInPictureElement) { await document.exitPictureInPicture(); return 'exited'; }
+        const videos = [...document.querySelectorAll('video')];
+        const shadow = window[Symbol.for('phiPlus.shadowRoots')];
+        if (shadow) for (const root of shadow.roots()) videos.push(...root.querySelectorAll('video'));
+        for (const frame of document.querySelectorAll('iframe')) {
+          try { if (frame.contentDocument) videos.push(...frame.contentDocument.querySelectorAll('video')); } catch (_) {}
+        }
+        const score = (v) => {
+          const r = v.getBoundingClientRect();
+          return (v.paused ? 0 : 1e9) + (v.readyState > 0 ? 1e8 : 0) + Math.max(0, r.width) * Math.max(0, r.height);
+        };
+        const best = videos.filter((v) => v.readyState > 0 || v.currentSrc || v.srcObject).sort((a, b) => score(b) - score(a))[0];
+        if (!best) return 'none';
+        best.disablePictureInPicture = false;
+        best.removeAttribute('disablepictureinpicture');
+        await best.requestPictureInPicture();
+        return 'entered';
+      } catch (e) { return 'failed: ' + e.message; }
+    })()
+    """
 
     // MARK: Live changes (the autoplay menus)
 

@@ -29,6 +29,7 @@ struct CommandDispatcher {
         .PHI_CLEAR_ALL_TABS,
         .PHI_TOGGLE_BALANCED_LAYOUT,
         .PHI_COPY_URL,
+        .FORK_TOGGLE_PICTURE_IN_PICTURE,
         .PHI_TOGGLE_READER,
         .PHI_NEW_KIOSK_WINDOW,
         .PHI_NEW_INCOGNITO_SPACE,
@@ -266,6 +267,10 @@ struct CommandDispatcher {
                 return false
             }
             FarringdonOrganizer.organizeFocusedWindow()
+            return true
+        case .FORK_TOGGLE_PICTURE_IN_PICTURE:
+            guard let tab = windowController.browserState.focusingTab else { return false }
+            ForkPageScripts.togglePictureInPicture(in: tab)
             return true
         case .PHI_COPY_URL:
             let state = windowController.browserState
