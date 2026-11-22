@@ -19,7 +19,9 @@ All on the `phi-plus` branch, on top of Phi 2.18.0:
 - A floating history panel (⌘Y) over the page, with full-history search
 - Settings to keep pinned tabs and tabs in closed folders out of Ctrl-Tab and ⌘1–⌘8
 - A floating address bar over any app (⌥Space by default)
-- Live hover cards for Gmail and TickTick pinned tabs
+- Live hover cards for Gmail and TickTick pinned tabs; the Gmail card can show
+  Thunderbird's Unified Inbox natively, and the TickTick card a native task
+  list over TickTick's Open API (with a personal API token)
 - Bitwarden desktop bridge registration, so the extension can unlock with Touch ID
 - Circular download icon and progress ring
 

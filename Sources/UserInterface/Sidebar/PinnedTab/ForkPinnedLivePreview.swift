@@ -9,7 +9,8 @@ import SwiftUI
 
 /// Fork: an interactive live card for chosen pinned tabs (Gmail, TickTick),
 /// shown on hover beside the sidebar, like Arc's calendar preview. It shows
-/// the signed-in site itself, in the site's mobile layout, in a small panel
+/// either a native card (Thunderbird's inbox, TickTick's tasks) or the
+/// signed-in site itself, in the site's mobile layout, in a small panel
 /// the user can scroll, read and click in. Other pinned tabs keep Phi's own
 /// snapshot preview.
 ///
@@ -101,7 +102,7 @@ final class ForkPinnedLivePreview: NSObject {
     private static let readingCardSize = NSSize(width: 340, height: 600)
 
     private var currentCardSize: NSSize {
-        showsThunderbird && ForkThunderbirdMail.shared.openedMessage != nil ? Self.readingCardSize : Self.cardSize
+        nativeCard == .thunderbird && ForkThunderbirdMail.shared.openedMessage != nil ? Self.readingCardSize : Self.cardSize
     }
     /// The page lays out this much wider than the card, then is drawn scaled
     /// down to fit, so more of the inbox or task list fits.
@@ -139,7 +140,7 @@ final class ForkPinnedLivePreview: NSObject {
     private final class CardContentView: NSView {
         var onPointerInside: ((Bool) -> Void)?
         /// Whether the card's own content sets no pointer (the native
-        /// Thunderbird card), so this view keeps it visible.
+        /// Thunderbird and TickTick cards), so this view keeps it visible.
         var managesCursor: () -> Bool = { false }
         private var area: NSTrackingArea?
         override func updateTrackingAreas() {
@@ -180,8 +181,15 @@ final class ForkPinnedLivePreview: NSObject {
     private var pointerOverTab = false
     private var pointerOverCard = false
     private var scrollMonitor: Any?
-    /// Whether the card shows Thunderbird's inbox instead of a web page.
-    private var showsThunderbird = false
+    /// The native card shown instead of a web page, if any.
+    private var nativeCard: NativeCard?
+
+    private enum NativeCard {
+        /// Thunderbird's Unified Inbox, on the Gmail pinned tab.
+        case thunderbird
+        /// TickTick's tasks over its API, on the TickTick pinned tab.
+        case tickTick
+    }
 
     private init(state: BrowserState) {
         self.state = state
@@ -230,6 +238,12 @@ final class ForkPinnedLivePreview: NSObject {
         let work = DispatchWorkItem { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, !self.pointerOverTab, !self.pointerOverCard else { return }
+                // A menu, popover or text field the card has open keeps it
+                // up; look again shortly.
+                if self.isInUse {
+                    self.scheduleHide()
+                    return
+                }
                 self.hide()
             }
         }
@@ -237,27 +251,64 @@ final class ForkPinnedLivePreview: NSObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.hideDelay, execute: work)
     }
 
+    /// Whether the card is in use beyond the pointer: one of its menus is
+    /// open (`menuTracking`), it has a popover up (the date picker), or text
+    /// is being typed into it.
+    private var isInUse: Bool {
+        guard let panel, panel.isVisible else { return false }
+        if menuTracking, panel.frame.insetBy(dx: -400, dy: -400).contains(NSEvent.mouseLocation) { return true }
+        if panel.childWindows?.contains(where: \.isVisible) == true { return true }
+        return panel.isKeyWindow && panel.firstResponder is NSTextView
+    }
+
+    /// Set while any menu is open; the card's own menus open beside it.
+    private var menuTracking = false
+    private var menuObservers: [NSObjectProtocol] = []
+
+    private func watchMenus() {
+        guard menuObservers.isEmpty else { return }
+        let center = NotificationCenter.default
+        menuObservers = [
+            center.addObserver(forName: NSMenu.didBeginTrackingNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.menuTracking = true }
+            },
+            center.addObserver(forName: NSMenu.didEndTrackingNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.menuTracking = false }
+            }
+        ]
+    }
+
     // MARK: Card
 
     private func show(url: String, beside anchor: NSView) {
         guard let state, let parent = anchor.window else { return }
         let panel = self.panel ?? makePanel()
-        let usesThunderbird = Self.usesThunderbird(url)
-        if shownURL != url || showsThunderbird != usesThunderbird {
+        let native = Self.nativeCard(for: url)
+        if shownURL != url || nativeCard != native {
             content?.subviews.forEach { $0.removeFromSuperview() }
             signInPrompt = nil
             shownURL = url
-            showsThunderbird = usesThunderbird
-            if usesThunderbird {
+            nativeCard = native
+            switch native {
+            case .thunderbird:
                 mountThunderbirdCard()
-            } else {
+            case .tickTick:
+                mountTickTickCard()
+            case nil:
                 mount(page(for: url, state: state))
             }
+            // A native card needs no web page; free one left from before.
+            if native != nil { pages.removeValue(forKey: url)?.close() }
         }
-        if usesThunderbird {
+        switch native {
+        case .thunderbird:
             let mail = ForkThunderbirdMail.shared
             mail.start()
             if mail.status == .connected { mail.refresh() }
+        case .tickTick:
+            ForkTickTickTasks.shared.cardShown()
+        case nil:
+            break
         }
         // Follow the browser's light or dark appearance.
         let isDark = state.themeContext.currentAppearance.isDark
@@ -281,7 +332,7 @@ final class ForkPinnedLivePreview: NSObject {
         }
         panel.orderFront(nil)
         installScrollMonitor()
-        if !usesThunderbird, let page = pages[url] {
+        if native == nil, let page = pages[url] {
             if page.needsReload {
                 page.needsReload = false
                 page.wrapper.navigate(toURL: url)
@@ -294,6 +345,8 @@ final class ForkPinnedLivePreview: NSObject {
     private func hide() {
         hideWork?.cancel()
         guard let panel, panel.isVisible else { return }
+        // Ends typing, so the card saves an edit or drops an empty new task.
+        panel.makeFirstResponder(nil)
         panel.parent?.removeChildWindow(panel)
         panel.orderOut(nil)
         removeScrollMonitor()
@@ -355,18 +408,38 @@ final class ForkPinnedLivePreview: NSObject {
         content.layer?.borderColor = NSColor(white: 0.5, alpha: 0.25).cgColor
         content.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
         content.onPointerInside = { [weak self] inside in self?.pointerOverCardChanged(inside) }
-        content.managesCursor = { [weak self] in self?.showsThunderbird == true }
+        content.managesCursor = { [weak self] in self?.nativeCard != nil }
         panel.onPointerInside = { [weak self] _ in self?.hide() }
+        watchMenus()
         panel.contentView = content
         self.panel = panel
         self.content = content
         return panel
     }
 
-    /// The Gmail card shows Thunderbird's Unified Inbox when chosen in
-    /// Settings → Spaces (`ForkSettings.gmailCardSource`).
-    private static func usesThunderbird(_ url: String) -> Bool {
-        ForkSettings.gmailCardSource == .thunderbird && sites.first(where: { $0.url == url })?.host == "mail.google.com"
+    /// The Gmail card shows Thunderbird's Unified Inbox and the TickTick card
+    /// a native task list, as chosen in Settings → Spaces
+    /// (`ForkSettings.gmailCardSource`, `ForkSettings.tickTickCardSource`).
+    private static func nativeCard(for url: String) -> NativeCard? {
+        switch sites.first(where: { $0.url == url })?.host {
+        case "mail.google.com": return ForkSettings.gmailCardSource == .thunderbird ? .thunderbird : nil
+        case "ticktick.com": return ForkSettings.tickTickCardSource == .native ? .tickTick : nil
+        default: return nil
+        }
+    }
+
+    private func mountTickTickCard() {
+        guard let content else { return }
+        let view = NSHostingView(rootView: ForkTickTickCardView(tasks: .shared, openURL: { [weak self] url in
+            self?.hide()
+            self?.state?.createTab(url.absoluteString)
+        }, takeKeyboard: { [weak self] in
+            self?.panel?.makeKey()
+        }))
+        view.sizingOptions = []
+        content.addSubview(view)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.snp.remakeConstraints { make in make.edges.equalToSuperview() }
     }
 
     private var readingObserver: AnyCancellable?
@@ -391,7 +464,7 @@ final class ForkPinnedLivePreview: NSObject {
     }
 
     private func resizeForReading() {
-        guard showsThunderbird, let panel, panel.isVisible else { return }
+        guard nativeCard == .thunderbird, let panel, panel.isVisible else { return }
         let size = currentCardSize
         let visible = panel.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? panel.frame
         var frame = panel.frame

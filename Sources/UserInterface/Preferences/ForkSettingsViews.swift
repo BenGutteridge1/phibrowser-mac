@@ -215,6 +215,7 @@ struct ForkAddressBarShortcutSection: View {
 struct ForkPinnedPreviewSettingsRow: View {
     @AppStorage(ForkSettings.Key.pinnedTabLivePreviewsEnabled) private var isEnabled = true
     @AppStorage(ForkSettings.Key.gmailCardSource) private var gmailSource: GmailCardSource = .website
+    @AppStorage(ForkSettings.Key.tickTickCardSource) private var tickTickSource: TickTickCardSource = .native
 
     var body: some View {
         VStack(spacing: 0) {
@@ -241,6 +242,30 @@ struct ForkPinnedPreviewSettingsRow: View {
                     Spacer(minLength: 12)
                     Picker("", selection: $gmailSource) {
                         ForEach(GmailCardSource.allCases) { option in
+                            Text(option.displayName).tag(option)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .fixedSize()
+                }
+                .padding(.vertical, 12)
+                Divider()
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(NSLocalizedString("settings.spaces.fork.tickTickCardSource.title", value: "TickTick card shows",
+                            comment: "Spaces settings - picker for what the TickTick pinned tab's hover card shows"))
+                            .font(.system(size: 13))
+                            .themedForeground(.textPrimary)
+                        Text(NSLocalizedString("settings.spaces.fork.tickTickCardSource.description", value: "Task list shows your tasks natively, from TickTick's API with your API token. The TickTick app doesn't need to be open.",
+                            comment: "Spaces settings - description under the TickTick card source picker"))
+                            .font(.system(size: 11))
+                            .themedForeground(.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 12)
+                    Picker("", selection: $tickTickSource) {
+                        ForEach(TickTickCardSource.allCases) { option in
                             Text(option.displayName).tag(option)
                         }
                     }

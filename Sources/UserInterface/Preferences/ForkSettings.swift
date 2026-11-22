@@ -43,6 +43,25 @@ enum GmailCardSource: String, CaseIterable, Identifiable {
     }
 }
 
+/// What the TickTick pinned tab's hover card shows.
+enum TickTickCardSource: String, CaseIterable, Identifiable {
+    /// TickTick's mobile site, live in the card.
+    case website
+    /// A native task list, from TickTick's Open API (`ForkTickTickTasks`).
+    case native
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .website:
+            return NSLocalizedString("settings.spaces.fork.tickTickCardSource.website", value: "TickTick website", comment: "TickTick card source option - the card shows TickTick's mobile site")
+        case .native:
+            return NSLocalizedString("settings.spaces.fork.tickTickCardSource.native", value: "Task list", comment: "TickTick card source option - the card shows a native list of tasks from TickTick")
+        }
+    }
+}
+
 /// Preferences added by this fork. Kept in one place, separate from
 /// `PhiPreferences`, so upstream merges stay conflict-free. Every key is
 /// prefixed with `fork.` and read through `UserDefaults.standard`, which is
@@ -63,11 +82,19 @@ enum ForkSettings {
         /// The Thunderbird card shows messages darkened in dark mode.
         static let mailMessagesDark = "fork.mailMessagesDark"
         static let hidesFullscreenExitHint = "fork.hidesFullscreenExitHint"
+        static let tickTickCardSource = "fork.tickTickCardSource"
+        /// The list the TickTick card last showed ("today", "next7", "inbox", "project:<id>").
+        static let tickTickCardView = "fork.tickTickCardView"
     }
 
     /// What the Gmail pinned tab's card shows. The website by default.
     static var gmailCardSource: GmailCardSource {
         UserDefaults.standard.string(forKey: Key.gmailCardSource).flatMap(GmailCardSource.init(rawValue:)) ?? .website
+    }
+
+    /// What the TickTick pinned tab's card shows. The native task list by default.
+    static var tickTickCardSource: TickTickCardSource {
+        UserDefaults.standard.string(forKey: Key.tickTickCardSource).flatMap(TickTickCardSource.init(rawValue:)) ?? .native
     }
 
     /// Set once the Phi+ add-on in Thunderbird has connected, so the card

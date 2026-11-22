@@ -58657,6 +58657,582 @@
         }
       }
     },
+    "pinnedPreview.tasks.addDate" : {
+      "comment" : "TickTick task card - date button of a task without a date",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Add Date"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.addFailed" : {
+      "comment" : "TickTick task card - notice when adding a task fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn't add the task"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.chooseDate" : {
+      "comment" : "TickTick task card - date menu item that opens a calendar to pick a date and time",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose Date…"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.complete" : {
+      "comment" : "TickTick task card - context menu item that completes the task",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Complete"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.completeFailed" : {
+      "comment" : "TickTick task card - notice when completing a task fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn't complete the task"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.connect.button" : {
+      "comment" : "TickTick task card - button that checks and saves the API token",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Connect"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.connect.field" : {
+      "comment" : "TickTick task card - placeholder of the field for the TickTick API token",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API Token"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.connect.open" : {
+      "comment" : "TickTick task card - link that opens TickTick's website in a tab, to create a token",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open TickTick Settings"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.connect.refused" : {
+      "comment" : "TickTick task card - shown when TickTick refuses the API token",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "TickTick didn't accept the token. Create a new one and paste it here."
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.connect.steps" : {
+      "comment" : "TickTick task card - steps for creating a TickTick API token",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In TickTick on the web, open Settings ▸ Account ▸ API Token, create a token and paste it here. It stays on this Mac."
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.connect.title" : {
+      "comment" : "TickTick task card - title of the screen that asks for a TickTick API token",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Connect TickTick"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.connect.website" : {
+      "comment" : "TickTick task card - hint that the card can show the TickTick website instead",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Or show the TickTick website in this card in Settings → Spaces."
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.count" : {
+      "comment" : "TickTick task card - subtitle with the number of tasks in the list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%d tasks"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.delete" : {
+      "comment" : "TickTick task card - swipe, menu and button action that deletes the task",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.deleteFailed" : {
+      "comment" : "TickTick task card - notice when deleting a task fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn't delete the task"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.disconnect" : {
+      "comment" : "TickTick task card - menu item that forgets the TickTick API token",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Disconnect TickTick"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.empty" : {
+      "comment" : "TickTick task card - shown when the chosen list has no open tasks",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No Tasks"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.errorCode" : {
+      "comment" : "TickTick task card - appended to an error notice; %d is the HTTP status code",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : " (error %d)"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.inbox" : {
+      "comment" : "TickTick task card - the TickTick Inbox list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Inbox"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.list" : {
+      "comment" : "TickTick task card - fallback name for a list whose name has not loaded",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "List"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.moveFailed" : {
+      "comment" : "TickTick task card - notice when moving a task to another list fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn't move the task"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.new" : {
+      "comment" : "TickTick task card - placeholder of the field that adds a task",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Task"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.next7Days" : {
+      "comment" : "TickTick task card - view of tasks due in the coming week",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Next 7 Days"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.nextWeek" : {
+      "comment" : "TickTick task card - date menu item that moves a task a week ahead",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Next Week"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.noDate" : {
+      "comment" : "TickTick task card - date menu item that removes a task's date",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No Date"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.notes" : {
+      "comment" : "TickTick task card - placeholder of a task's notes field",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Notes"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.offline" : {
+      "comment" : "TickTick task card - slim notice above the list when the last refresh failed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn't reach TickTick."
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.openTask" : {
+      "comment" : "TickTick task card - opens the task on the TickTick website in a tab",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open in TickTick"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.openWebsite" : {
+      "comment" : "TickTick task card - menu item that opens the TickTick website in a tab",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open TickTick"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.overdue" : {
+      "comment" : "TickTick task card - section of tasks whose date has passed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Overdue"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.overdueCount" : {
+      "comment" : "TickTick task card - subtitle with the number of overdue tasks",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%d overdue"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.priority" : {
+      "comment" : "TickTick task card - menu that sets a task's priority",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Priority"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.priority.high" : {
+      "comment" : "TickTick task card - high priority",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "High"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.priority.low" : {
+      "comment" : "TickTick task card - low priority",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Low"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.priority.medium" : {
+      "comment" : "TickTick task card - medium priority",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Medium"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.priority.none" : {
+      "comment" : "TickTick task card - no priority",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.refresh" : {
+      "comment" : "TickTick task card - button that reloads the task list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Refresh"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.retry" : {
+      "comment" : "TickTick task card - link that retries loading the tasks",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Try Again"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.saveFailed" : {
+      "comment" : "TickTick task card - notice when editing a task fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn't save the change"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.setDate" : {
+      "comment" : "TickTick task card - button that applies the picked date",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.subtasks" : {
+      "comment" : "TickTick task card - button on a task that folds or unfolds its subtasks",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show or Hide Subtasks"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.subtitle" : {
+      "comment" : "TickTick task card - subtitle naming the app the tasks come from",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "TickTick"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.time" : {
+      "comment" : "TickTick task card - toggle that gives a task a time of day",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Time"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.today" : {
+      "comment" : "TickTick task card - section of tasks due today, and the Today view's name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Today"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.tomorrow" : {
+      "comment" : "TickTick task card - section of tasks due tomorrow",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tomorrow"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.untick" : {
+      "comment" : "TickTick task card - context menu item that unticks a task before it is completed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mark as Not Completed"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.untitled" : {
+      "comment" : "TickTick task card - shown for a task without a title",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Untitled"
+          }
+        }
+      }
+    },
+    "pinnedPreview.tasks.yesterday" : {
+      "comment" : "TickTick task card - date shown for a task that was due yesterday",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Yesterday"
+          }
+        }
+      }
+    },
     "profile.button.accessibilityLabel" : {
       "comment" : "Profile button - Opens the account and browser actions menu",
       "extractionState" : "extracted_with_value",
@@ -104048,6 +104624,54 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Tab Switcher skips pinned tabs"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.tickTickCardSource.description" : {
+      "comment" : "Spaces settings - description under the TickTick card source picker",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Task list shows your tasks natively, from TickTick's API with your API token. The TickTick app doesn't need to be open."
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.tickTickCardSource.native" : {
+      "comment" : "TickTick card source option - the card shows a native list of tasks from TickTick",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Task list"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.tickTickCardSource.title" : {
+      "comment" : "Spaces settings - picker for what the TickTick pinned tab's hover card shows",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "TickTick card shows"
+          }
+        }
+      }
+    },
+    "settings.spaces.fork.tickTickCardSource.website" : {
+      "comment" : "TickTick card source option - the card shows TickTick's mobile site",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "TickTick website"
           }
         }
       }
