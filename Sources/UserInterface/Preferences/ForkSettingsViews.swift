@@ -117,7 +117,7 @@ struct ForkVideoPiPButtonRow: View {
 }
 
 /// One labelled switch, in the style of the settings panes' toggle rows.
-private struct ForkToggleRow: View {
+struct ForkToggleRow: View {
     let title: String
     let description: String?
     @Binding var isOn: Bool

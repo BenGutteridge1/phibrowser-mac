@@ -332,6 +332,8 @@
 		8E0B00052FC0000000000001 /* GroupOverviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00072FC0000000000001 /* GroupOverviewViewController.swift */; };
 		8E0B00062FC0000000000001 /* GroupOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00082FC0000000000001 /* GroupOverviewView.swift */; };
 		76B09BEFD5D99BBFF9EC9193 /* ForkVideoPiPButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */; };
+		E8B6B19E4A482443294B4DE1 /* ForkPageScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC09BF91F9BD24694456E2A8 /* ForkPageScripts.swift */; };
+		3776773A3801FCD86F0A2D52 /* ForkAutoplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B4056840A15C8C2DBB33499 /* ForkAutoplay.swift */; };
 		9FD857F044371D7F9705FB99 /* ForkFullscreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07042F62990E5FC9B32B374 /* ForkFullscreen.swift */; };
 		5030903DF1515D030209915B /* ForkHistoryPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */; };
 		E9114B7679FAFCF153494F66 /* ForkEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */; };
@@ -468,6 +470,7 @@
 		AE5ACE0000000000000000B1 /* AgentSpaceManager+Shadow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE5ACE0000000000000000A1 /* AgentSpaceManager+Shadow.swift */; };
 		AE5ACE0000000000000000B2 /* AgentSpaceRouter+Shadow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE5ACE0000000000000000A2 /* AgentSpaceRouter+Shadow.swift */; };
 		AE8E3290D9DF13FF422A4948 /* PinKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E9284FAF9F3D97D76D7072 /* PinKind.swift */; };
+		9F08B1BDEEBC7CE7FCE1FFB1 /* ForkCrashRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52F9D2B79F6BC0658D096382 /* ForkCrashRestore.swift */; };
 		B001795A2E49CF84007B4635 /* PhiChromiumCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00179592E49CF84007B4635 /* PhiChromiumCoordinator.swift */; };
 		181700000000000000000002 /* OmniboxNativeSearchAuthority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181700000000000000000001 /* OmniboxNativeSearchAuthority.swift */; };
 		18170000000000000000000A /* OmniboxNativeSearchAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181700000000000000000009 /* OmniboxNativeSearchAdapter.swift */; };
@@ -1221,6 +1224,8 @@
 		8E0B00072FC0000000000001 /* GroupOverviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupOverviewViewController.swift; sourceTree = "<group>"; };
 		8E0B00082FC0000000000001 /* GroupOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupOverviewView.swift; sourceTree = "<group>"; };
 		D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkVideoPiPButton.swift; sourceTree = "<group>"; };
+		FC09BF91F9BD24694456E2A8 /* ForkPageScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkPageScripts.swift; sourceTree = "<group>"; };
+		2B4056840A15C8C2DBB33499 /* ForkAutoplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkAutoplay.swift; sourceTree = "<group>"; };
 		A07042F62990E5FC9B32B374 /* ForkFullscreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkFullscreen.swift; sourceTree = "<group>"; };
 		B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkHistoryPanel.swift; sourceTree = "<group>"; };
 		C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkEmptyStateView.swift; sourceTree = "<group>"; };
@@ -1366,6 +1371,7 @@
 		AE5ACE000000000000000009 /* AgentUserSpaceDriveRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUserSpaceDriveRegistry.swift; sourceTree = "<group>"; };
 		AE5ACE0000000000000000A1 /* AgentSpaceManager+Shadow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentSpaceManager+Shadow.swift"; sourceTree = "<group>"; };
 		AE5ACE0000000000000000A2 /* AgentSpaceRouter+Shadow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentSpaceRouter+Shadow.swift"; sourceTree = "<group>"; };
+		52F9D2B79F6BC0658D096382 /* ForkCrashRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkCrashRestore.swift; sourceTree = "<group>"; };
 		B00179592E49CF84007B4635 /* PhiChromiumCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhiChromiumCoordinator.swift; sourceTree = "<group>"; };
 		181700000000000000000001 /* OmniboxNativeSearchAuthority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OmniboxNativeSearchAuthority.swift; sourceTree = "<group>"; };
 		181700000000000000000009 /* OmniboxNativeSearchAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OmniboxNativeSearchAdapter.swift; sourceTree = "<group>"; };
@@ -2651,6 +2657,7 @@
 				8E571D4F30131FEF00E3FBE7 /* SessionRestorePreference.swift */,
 				ACDC00000000000000000C01 /* AgentCDP */,
 				8EC5A10A2E5C10AA00B41A01 /* ChromiumAnalyticsRelay.swift */,
+				52F9D2B79F6BC0658D096382 /* ForkCrashRestore.swift */,
 				B00179592E49CF84007B4635 /* PhiChromiumCoordinator.swift */,
 				181700000000000000000001 /* OmniboxNativeSearchAuthority.swift */,
 				181700000000000000000009 /* OmniboxNativeSearchAdapter.swift */,
@@ -3334,6 +3341,8 @@
 				8EA1FD952FEB74530060DCFF /* RendererCrashViewController.swift */,
 				8E5D8B002FDFFAD30039CBE3 /* WebContentSnapshotter.swift */,
 				D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */,
+				FC09BF91F9BD24694456E2A8 /* ForkPageScripts.swift */,
+				2B4056840A15C8C2DBB33499 /* ForkAutoplay.swift */,
 				A07042F62990E5FC9B32B374 /* ForkFullscreen.swift */,
 				B7530D0A5AC5B8879A51E299 /* ForkHistoryPanel.swift */,
 				C7AA77B774E5E1E6ED75583B /* ForkEmptyStateView.swift */,
@@ -3839,6 +3848,7 @@
 				CCBF8F352E61AB3A00B9A99E /* SideAddressBar.swift in Sources */,
 				CC24EF082E89251D00CE9DD7 /* AuthManager.swift in Sources */,
 				8EC70E162F0BBF3D009FE2CD /* BookmarkItemView.swift in Sources */,
+				9F08B1BDEEBC7CE7FCE1FFB1 /* ForkCrashRestore.swift in Sources */,
 				B001795A2E49CF84007B4635 /* PhiChromiumCoordinator.swift in Sources */,
 				181700000000000000000002 /* OmniboxNativeSearchAuthority.swift in Sources */,
 				18170000000000000000000A /* OmniboxNativeSearchAdapter.swift in Sources */,
@@ -3961,6 +3971,8 @@
 				8E0B00022FC0000000000001 /* BrowserState+GroupOverview.swift in Sources */,
 				8E8008D82FA1A59800EB24C5 /* WebContentGroupInfo.swift in Sources */,
 				76B09BEFD5D99BBFF9EC9193 /* ForkVideoPiPButton.swift in Sources */,
+				E8B6B19E4A482443294B4DE1 /* ForkPageScripts.swift in Sources */,
+				3776773A3801FCD86F0A2D52 /* ForkAutoplay.swift in Sources */,
 				9FD857F044371D7F9705FB99 /* ForkFullscreen.swift in Sources */,
 				5030903DF1515D030209915B /* ForkHistoryPanel.swift in Sources */,
 				E9114B7679FAFCF153494F66 /* ForkEmptyStateView.swift in Sources */,

@@ -234,6 +234,8 @@ struct ForkTickTickCardView: View {
     private func toggle(_ task: ForkTickTickTasks.TaskItem) {
         guard !ForkTickTickTasks.isDraft(task) else { return }
         endEditing()
+        // Opening a task puts the cursor in its title.
+        if expandedId != task.id { takeKeyboard() }
         withAnimation(.easeOut(duration: 0.2)) { expandedId = expandedId == task.id ? nil : task.id }
     }
 
@@ -289,7 +291,7 @@ private struct ForkTickTickSwipeScroller<Content: View>: View {
     @State private var deleted = false
 
     /// How much of Delete shows when the row stops open.
-    static var revealWidth: CGFloat { 74 }
+    static var revealWidth: CGFloat { 64 }
 
     var body: some View {
         ScrollView(.horizontal) {
@@ -306,20 +308,27 @@ private struct ForkTickTickSwipeScroller<Content: View>: View {
                     .frame(width: width, height: 1)
             }
             .background(alignment: .trailing) {
-                Color.red
-                    .frame(width: width)
-                    .overlay(alignment: .leading) {
-                        VStack(spacing: 2) {
+                // A red pill in the space the swipe opens, growing with it,
+                // as Mail's and Reminders' swipe actions (and the Thunderbird
+                // card's Archive) look.
+                HStack(spacing: 0) {
+                    Capsule(style: .continuous)
+                        .fill(Color.red)
+                        .overlay {
                             Image(systemName: "trash.fill")
-                                .font(.system(size: 13))
-                            Text(deleteTitle)
-                                .font(.system(size: 10, weight: .medium))
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .opacity(offset > 30 ? 1 : 0)
                         }
-                        .foregroundStyle(.white)
-                        .frame(width: Self.revealWidth)
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture(perform: delete)
+                        .frame(width: max(0, offset - 10))
+                        .padding(.vertical, 5)
+                        .contentShape(Capsule())
+                        .onTapGesture(perform: delete)
+                        .accessibilityLabel(deleteTitle)
+                    Spacer(minLength: 0)
+                }
+                .padding(.leading, 4)
+                .frame(width: width)
             }
         }
         .scrollIndicators(.never)
@@ -462,7 +471,20 @@ private struct ForkTickTickRow: View {
             if isTyping { DispatchQueue.main.async { field = .title } }
         }
         .onChange(of: isExpanded) { _, expanded in
-            if expanded { loadFields() } else { saveFields() }
+            if expanded {
+                loadFields()
+                // One click opens the task with its title ready to edit,
+                // the cursor at its end.
+                DispatchQueue.main.async {
+                    field = .title
+                    DispatchQueue.main.async {
+                        guard let view = NSApp.keyWindow?.firstResponder as? NSTextView else { return }
+                        view.setSelectedRange(NSRange(location: (view.string as NSString).length, length: 0))
+                    }
+                }
+            } else {
+                saveFields()
+            }
         }
         .onChange(of: field) { old, _ in
             guard old != nil else { return }
@@ -530,16 +552,51 @@ private struct ForkTickTickRow: View {
         }
     }
 
+    /// The title, in a text view like the notes: a multi-line text field's
+    /// selection highlight drew a line off from its text, and it cut long
+    /// titles short. Return ends editing (as in Reminders); Esc drops a new
+    /// task.
     private var titleField: some View {
-        TextField("", text: $title, axis: .vertical)
-            .textFieldStyle(.plain)
-            .font(.system(size: 13))
-            .focused($field, equals: .title)
-            .onSubmit { field = nil }
+        growingEditor($title, placeholder: nil, size: 13, secondary: false, field: .title)
+            .onKeyPress(.return) {
+                field = nil
+                return .handled
+            }
             .onExitCommand {
                 if isTyping { title = "" }
                 field = nil
             }
+    }
+
+    /// A text view that grows with its text (the card's list scrolls, not the
+    /// text view).
+    private func growingEditor(_ text: Binding<String>, placeholder: String?, size: CGFloat,
+                               secondary: Bool, field target: Field) -> some View {
+        ZStack(alignment: .topLeading) {
+            // Sizes the editor to its text, with room for a last empty line.
+            Text(text.wrappedValue.isEmpty || text.wrappedValue.hasSuffix("\n") ? text.wrappedValue + " " : text.wrappedValue)
+                .font(.system(size: size))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .hidden()
+            if let placeholder, text.wrappedValue.isEmpty {
+                Text(placeholder)
+                    .font(.system(size: size))
+                    .foregroundStyle(.tertiary)
+                    .allowsHitTesting(false)
+            }
+            TextEditor(text: text)
+                .font(.system(size: size))
+                .foregroundStyle(secondary ? Color.secondary : Color.primary)
+                .scrollContentBackground(.hidden)
+                // Its own scrolling would hold on to the wheel; the card's
+                // list scrolls instead.
+                .scrollDisabled(true)
+                // The text view's line padding, so the text lines up with
+                // the rest of the row.
+                .padding(.horizontal, -5)
+                .focused($field, equals: target)
+        }
     }
 
     private var editor: some View {
@@ -556,32 +613,8 @@ private struct ForkTickTickRow: View {
     /// The notes, in a text view so Return starts a new line (a text field's
     /// Return ends editing). It grows with its text; the card scrolls.
     private var notesEditor: some View {
-        ZStack(alignment: .topLeading) {
-            // Sizes the editor to its text, with room for a last empty line.
-            Text(notes.isEmpty || notes.hasSuffix("\n") ? notes + " " : notes)
-                .font(.system(size: 12))
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .hidden()
-            if notes.isEmpty {
-                Text(NSLocalizedString("pinnedPreview.tasks.notes", value: "Notes",
-                    comment: "TickTick task card - placeholder of a task's notes field"))
-                    .font(.system(size: 12))
-                    .foregroundStyle(.tertiary)
-                    .allowsHitTesting(false)
-            }
-            TextEditor(text: $notes)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .scrollContentBackground(.hidden)
-                // Its own scrolling would hold on to the wheel over the
-                // notes; the card's list scrolls instead.
-                .scrollDisabled(true)
-                // The text view's line padding, so the text lines up with
-                // the title.
-                .padding(.horizontal, -5)
-                .focused($field, equals: .notes)
-        }
+        growingEditor($notes, placeholder: NSLocalizedString("pinnedPreview.tasks.notes", value: "Notes",
+            comment: "TickTick task card - placeholder of a task's notes field"), size: 12, secondary: true, field: .notes)
     }
 
     @ViewBuilder

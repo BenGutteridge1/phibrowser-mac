@@ -129,7 +129,13 @@ struct ExtensionList<Manager: ExtensionManagerProtocol>: View {
                     .padding(.horizontal, 8)
 
                 }
-                .padding(.bottom, shouldShowWebsiteSection ? 0 : 12)
+                .padding(.bottom, shouldShowWebsiteSection || needSettings ? 0 : 12)
+            }
+
+            // Fork: autoplay control for the current page and site.
+            if needSettings {
+                ForkAutoplayMenuSection(tab: browserState.focusingTab, onRequestDismiss: onRequestDismiss)
+                    .padding(.bottom, shouldShowWebsiteSection ? 0 : 12)
             }
     
             if shouldShowWebsiteSection {

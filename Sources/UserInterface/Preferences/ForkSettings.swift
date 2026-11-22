@@ -62,6 +62,25 @@ enum TickTickCardSource: String, CaseIterable, Identifiable {
     }
 }
 
+/// A site's own autoplay rule, overriding the tab rules.
+enum AutoplaySiteRule: String, CaseIterable, Identifiable {
+    /// Never paused: excluded from the autoplay rules.
+    case allow
+    /// Always starts paused, wherever it opens.
+    case pause
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .allow:
+            return NSLocalizedString("settings.autoplay.siteRule.allow", value: "Always allow", comment: "Autoplay site rule - the site may always play media on its own")
+        case .pause:
+            return NSLocalizedString("settings.autoplay.siteRule.pause", value: "Always pause", comment: "Autoplay site rule - the site's media always starts paused")
+        }
+    }
+}
+
 /// Preferences added by this fork. Kept in one place, separate from
 /// `PhiPreferences`, so upstream merges stay conflict-free. Every key is
 /// prefixed with `fork.` and read through `UserDefaults.standard`, which is
@@ -83,6 +102,16 @@ enum ForkSettings {
         static let mailMessagesDark = "fork.mailMessagesDark"
         static let hidesFullscreenExitHint = "fork.hidesFullscreenExitHint"
         static let videoPiPButtonEnabled = "fork.videoPiPButtonEnabled"
+        static let autoplayControlEnabled = "fork.autoplay.enabled"
+        static let autoplayPausesLinkTabs = "fork.autoplay.pausesLinkTabs"
+        static let autoplayPausesRestoredTabs = "fork.autoplay.pausesRestoredTabs"
+        static let autoplayPausesBackgroundLoads = "fork.autoplay.pausesBackgroundLoads"
+        static let autoplayAllowsMuted = "fork.autoplay.allowsMuted"
+        static let autoplayUnlocksOnInteraction = "fork.autoplay.unlocksOnInteraction"
+        /// Sites with their own autoplay rule: host → `AutoplaySiteRule` raw value.
+        static let autoplaySiteRules = "fork.autoplay.siteRules"
+        static let showsCopyLinkButton = "fork.addressBar.showsCopyLink"
+        static let showsAutoplayButton = "fork.addressBar.showsAutoplay"
         static let tickTickCardSource = "fork.tickTickCardSource"
         /// The list the TickTick card last showed ("today", "next7", "inbox", "project:<id>").
         static let tickTickCardView = "fork.tickTickCardView"
@@ -107,6 +136,36 @@ enum ForkSettings {
 
     /// Videos show a picture-in-picture button on hover (`ForkVideoPiPButton`). On by default.
     static var videoPiPButtonEnabled: Bool { bool(Key.videoPiPButtonEnabled, default: true) }
+
+    // MARK: Autoplay control (`ForkAutoplay`)
+
+    /// Pages may be kept from playing media on their own. On by default.
+    static var autoplayControlEnabled: Bool { bool(Key.autoplayControlEnabled, default: true) }
+    /// Pages in tabs opened from a link (in the background or not) start paused. On by default.
+    static var autoplayPausesLinkTabs: Bool { bool(Key.autoplayPausesLinkTabs, default: true) }
+    /// Pages in unloaded (restored, discarded) tabs start paused when they load again. On by default.
+    static var autoplayPausesRestoredTabs: Bool { bool(Key.autoplayPausesRestoredTabs, default: true) }
+    /// Pages that load in a tab while it isn't the selected one start paused. On by default.
+    static var autoplayPausesBackgroundLoads: Bool { bool(Key.autoplayPausesBackgroundLoads, default: true) }
+    /// Muted media may still play on its own (previews, animated backgrounds). On by default.
+    static var autoplayAllowsMuted: Bool { bool(Key.autoplayAllowsMuted, default: true) }
+    /// After a click or key press on the page, it plays as normal. On by default.
+    static var autoplayUnlocksOnInteraction: Bool { bool(Key.autoplayUnlocksOnInteraction, default: true) }
+
+    static var autoplaySiteRules: [String: AutoplaySiteRule] {
+        get {
+            let raw = UserDefaults.standard.dictionary(forKey: Key.autoplaySiteRules) as? [String: String] ?? [:]
+            return raw.compactMapValues(AutoplaySiteRule.init(rawValue:))
+        }
+        set {
+            UserDefaults.standard.set(newValue.mapValues(\.rawValue), forKey: Key.autoplaySiteRules)
+        }
+    }
+
+    /// The sidebar address bar's Copy Link button. On by default.
+    static var showsCopyLinkButton: Bool { bool(Key.showsCopyLinkButton, default: true) }
+    /// The sidebar address bar's Autoplay button. On by default.
+    static var showsAutoplayButton: Bool { bool(Key.showsAutoplayButton, default: true) }
 
     /// Chromium's "Press Esc to exit full screen" bubble stays hidden. On by default.
     static var hidesFullscreenExitHint: Bool { bool(Key.hidesFullscreenExitHint, default: true) }

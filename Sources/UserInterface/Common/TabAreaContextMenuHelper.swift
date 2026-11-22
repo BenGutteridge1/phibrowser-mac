@@ -74,6 +74,14 @@ final class TabAreaContextMenuHelper: NSObject {
             )
             topButtonsItem.submenu = buildTopButtonsSubmenu()
             menu.addItem(topButtonsItem)
+            // Fork: the sidebar address bar's Copy Link and Autoplay buttons.
+            let addressBarItem = NSMenuItem(
+                title: NSLocalizedString("common.tabAreaContextMenu.addressBarButtonsSubmenu", value: "Address Bar Buttons", comment: "Tab area context menu - Submenu to choose which buttons the sidebar address bar shows"),
+                action: nil,
+                keyEquivalent: ""
+            )
+            addressBarItem.submenu = buildForkAddressBarButtonsSubmenu()
+            menu.addItem(addressBarItem)
         }
         let buttonsItem = NSMenuItem(
             title: isHorizontalLayout
@@ -239,6 +247,30 @@ final class TabAreaContextMenuHelper: NSObject {
         }
 
         return buildToggleSubmenu(entries)
+    }
+
+    /// Fork: the address bar buttons, stored as `ForkSettings` keys (on by default).
+    private func buildForkAddressBarButtonsSubmenu() -> NSMenu {
+        let submenu = NSMenu()
+        let entries = [
+            (ForkSettings.Key.showsCopyLinkButton,
+             NSLocalizedString("common.tabAreaContextMenu.addressBarButtons.copyLink", value: "Copy Link", comment: "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Copy Link button")),
+            (ForkSettings.Key.showsAutoplayButton,
+             NSLocalizedString("common.tabAreaContextMenu.addressBarButtons.autoplay", value: "Autoplay", comment: "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Autoplay button"))
+        ]
+        for (key, title) in entries {
+            let item = NSMenuItem(title: title, action: #selector(toggleForkButtonVisibility(_:)), keyEquivalent: "")
+            item.representedObject = key
+            item.target = self
+            item.state = (defaults.object(forKey: key) as? Bool ?? true) ? .on : .off
+            submenu.addItem(item)
+        }
+        return submenu
+    }
+
+    @objc private func toggleForkButtonVisibility(_ sender: NSMenuItem) {
+        guard let key = sender.representedObject as? String else { return }
+        defaults.set(!(defaults.object(forKey: key) as? Bool ?? true), forKey: key)
     }
 
     private func buildToggleSubmenu(_ entries: [(PhiPreferences.GeneralSettings, String)]) -> NSMenu {

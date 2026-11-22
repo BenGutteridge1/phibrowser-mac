@@ -190,6 +190,9 @@
                                error:nil];
 
                 [self appendLaunchCommandLineArgc:launchArgc argv:launchArgv toArguments:arguments];
+                // Fork: restore the last session even after a crash or a forced quit.
+                [ForkCrashRestore markProfilesCleanlyExitedInUserDataDirectory:
+                    FileSystemUtils.launchUserDataDirectory ?: applicationSupportDir];
                 if (FileSystemUtils.launchUserDataDirectory != nil) {
                     [arguments addObject:[@"--user-data-dir="
                         stringByAppendingString:FileSystemUtils.launchUserDataDirectory]];

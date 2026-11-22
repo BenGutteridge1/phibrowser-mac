@@ -23040,6 +23040,210 @@
         }
       }
     },
+    "autoplay.menu.control" : {
+      "comment" : "Autoplay menu - turns autoplay control on or off",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay Control"
+          }
+        }
+      }
+    },
+    "autoplay.menu.playHeld" : {
+      "comment" : "Autoplay menu - plays the media this page was kept from playing",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Play Paused Media"
+          }
+        }
+      }
+    },
+    "autoplay.menu.settings" : {
+      "comment" : "Autoplay menu - opens the autoplay settings",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay Settings…"
+          }
+        }
+      }
+    },
+    "autoplay.menu.siteTitle" : {
+      "comment" : "Autoplay menu - title naming the current site; %@ is the site",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay on %@"
+          }
+        }
+      }
+    },
+    "autoplay.menu.title" : {
+      "comment" : "Autoplay menu - title",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay"
+          }
+        }
+      }
+    },
+    "autoplay.menu.useRules" : {
+      "comment" : "Autoplay menu - the site follows the tab rules",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Follow Autoplay Rules"
+          }
+        }
+      }
+    },
+    "autoplay.section.allow" : {
+      "comment" : "Extensions menu - the site may always autoplay",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allow"
+          }
+        }
+      }
+    },
+    "autoplay.section.allowed" : {
+      "comment" : "Extensions menu - this page's media may start on its own",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Plays on this page"
+          }
+        }
+      }
+    },
+    "autoplay.section.control" : {
+      "comment" : "Extensions menu - switch that turns autoplay control on or off",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay control"
+          }
+        }
+      }
+    },
+    "autoplay.section.held" : {
+      "comment" : "Extensions menu - how many media items this page was kept from playing; %d is the number",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Paused %d on this page"
+          }
+        }
+      }
+    },
+    "autoplay.section.off" : {
+      "comment" : "Extensions menu - autoplay control is turned off",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay control is off"
+          }
+        }
+      }
+    },
+    "autoplay.section.pause" : {
+      "comment" : "Extensions menu - the site always starts paused",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pause"
+          }
+        }
+      }
+    },
+    "autoplay.section.paused" : {
+      "comment" : "Extensions menu - this page's media can't start on its own",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Paused on this page"
+          }
+        }
+      }
+    },
+    "autoplay.section.play" : {
+      "comment" : "Extensions menu - plays the media this page was kept from playing",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Play"
+          }
+        }
+      }
+    },
+    "autoplay.section.rules" : {
+      "comment" : "Extensions menu - the site follows the autoplay rules",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rules"
+          }
+        }
+      }
+    },
+    "autoplay.section.settings" : {
+      "comment" : "Extensions menu - opens the autoplay settings",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay Settings"
+          }
+        }
+      }
+    },
+    "autoplay.section.title" : {
+      "comment" : "Extensions menu - Autoplay section title",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay"
+          }
+        }
+      }
+    },
     "Bitwarden" : {
       "comment" : "Onboarding password manager - Bitwarden option",
       "localizations" : {
@@ -38940,6 +39144,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "確定要結束 Phi 嗎？"
+          }
+        }
+      }
+    },
+    "common.tabAreaContextMenu.addressBarButtons.autoplay" : {
+      "comment" : "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Autoplay button",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay"
+          }
+        }
+      }
+    },
+    "common.tabAreaContextMenu.addressBarButtons.copyLink" : {
+      "comment" : "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Copy Link button",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Copy Link"
+          }
+        }
+      }
+    },
+    "common.tabAreaContextMenu.addressBarButtonsSubmenu" : {
+      "comment" : "Tab area context menu - Submenu to choose which buttons the sidebar address bar shows",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Address Bar Buttons"
           }
         }
       }
@@ -66976,6 +67216,246 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Use Live Mode in Sidecar"
+          }
+        }
+      }
+    },
+    "settings.autoplay.backgroundLoads.description" : {
+      "comment" : "Autoplay settings - description of the background-load rule",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A page that loads while its tab isn't selected starts paused. Pages you open in the selected tab play as usual."
+          }
+        }
+      }
+    },
+    "settings.autoplay.backgroundLoads.title" : {
+      "comment" : "Autoplay settings - rule for pages loading in a tab that isn't selected",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pause pages that load in the background"
+          }
+        }
+      }
+    },
+    "settings.autoplay.enabled.description" : {
+      "comment" : "Autoplay settings - description of the master switch",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep pages from starting video and audio on their own. Clicking play or pressing Space always works."
+          }
+        }
+      }
+    },
+    "settings.autoplay.enabled.title" : {
+      "comment" : "Autoplay settings - master switch",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay control"
+          }
+        }
+      }
+    },
+    "settings.autoplay.linkTabs.description" : {
+      "comment" : "Autoplay settings - description of the link-tab rule",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A link opened in a new tab, in the background or not, starts paused."
+          }
+        }
+      }
+    },
+    "settings.autoplay.linkTabs.title" : {
+      "comment" : "Autoplay settings - rule for tabs opened from a link",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pause in tabs opened from links"
+          }
+        }
+      }
+    },
+    "settings.autoplay.muted.description" : {
+      "comment" : "Autoplay settings - description of the muted-media option",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Silent previews and backgrounds keep playing. A video that unmutes itself is paused."
+          }
+        }
+      }
+    },
+    "settings.autoplay.muted.title" : {
+      "comment" : "Autoplay settings - muted media may still autoplay",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Let muted videos play"
+          }
+        }
+      }
+    },
+    "settings.autoplay.restoredTabs.description" : {
+      "comment" : "Autoplay settings - description of the unloaded-tab rule",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A restored or unloaded tab starts paused when it loads again, even when you select it."
+          }
+        }
+      }
+    },
+    "settings.autoplay.restoredTabs.title" : {
+      "comment" : "Autoplay settings - rule for unloaded (restored or discarded) tabs",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pause in unloaded tabs"
+          }
+        }
+      }
+    },
+    "settings.autoplay.sectionTitle" : {
+      "comment" : "General settings - Autoplay section title",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay"
+          }
+        }
+      }
+    },
+    "settings.autoplay.siteRule.allow" : {
+      "comment" : "Autoplay site rule - the site may always play media on its own",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always allow"
+          }
+        }
+      }
+    },
+    "settings.autoplay.siteRule.pause" : {
+      "comment" : "Autoplay site rule - the site's media always starts paused",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always pause"
+          }
+        }
+      }
+    },
+    "settings.autoplay.sites.add" : {
+      "comment" : "Autoplay settings - adds a site rule",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Add"
+          }
+        }
+      }
+    },
+    "settings.autoplay.sites.description" : {
+      "comment" : "Autoplay settings - site rules description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sites here don't follow the rules above. Subdomains are included."
+          }
+        }
+      }
+    },
+    "settings.autoplay.sites.placeholder" : {
+      "comment" : "Autoplay settings - placeholder for a new site",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "example.com"
+          }
+        }
+      }
+    },
+    "settings.autoplay.sites.remove" : {
+      "comment" : "Autoplay settings - removes a site rule",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove"
+          }
+        }
+      }
+    },
+    "settings.autoplay.sites.title" : {
+      "comment" : "Autoplay settings - site rules title",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sites"
+          }
+        }
+      }
+    },
+    "settings.autoplay.unlock.description" : {
+      "comment" : "Autoplay settings - description of the unlock-on-interaction option",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "After a click or key press on a paused page, it plays as usual, such as the next video in a playlist."
+          }
+        }
+      }
+    },
+    "settings.autoplay.unlock.title" : {
+      "comment" : "Autoplay settings - a click or key press on the page lets it play",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allow after you use the page"
           }
         }
       }
@@ -106194,6 +106674,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "顏色"
+          }
+        }
+      }
+    },
+    "sidebar.addressBar.autoplayAllowedTooltip" : {
+      "comment" : "Sidebar address bar - Autoplay button tooltip when the site may always autoplay; a click returns it to the autoplay rules",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Autoplay allowed on this site"
+          }
+        }
+      }
+    },
+    "sidebar.addressBar.autoplayRulesTooltip" : {
+      "comment" : "Sidebar address bar - Autoplay button tooltip when the site follows the autoplay rules; a click allows it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allow autoplay on this site"
           }
         }
       }

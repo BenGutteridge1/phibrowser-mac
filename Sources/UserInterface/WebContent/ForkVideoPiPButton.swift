@@ -11,35 +11,22 @@ import Foundation
 /// replaces); clicking it pops the video out, or back in.
 /// `ForkSettings.videoPiPButtonEnabled`, on by default.
 ///
-/// Phi Framework has no user-script API, so when a tab's page finishes
-/// loading, a short-lived app-owned DevTools session (`AppDevToolsPageSession`,
-/// as Reader View uses) runs the button's script in the page once and closes.
-/// The script installs itself once per document and survives in-page (SPA)
-/// navigation. It runs in the page's main world, so it builds its DOM without
-/// `innerHTML` (Trusted Types sites such as YouTube refuse it). Videos in
-/// cross-origin frames (embedded players) are out of its reach.
-@MainActor
+/// `ForkPageScripts` adds the script to every frame of a page, embedded
+/// players included. It installs itself once per document and survives
+/// in-page (SPA) navigation. It runs in the page's main world, so it builds
+/// its DOM without `innerHTML` (Trusted Types sites such as YouTube refuse
+/// it), and finds videos inside shadow DOM through `ForkPageScripts`'s
+/// shadow-root registry as well as in the document.
 enum ForkVideoPiPButton {
-    /// Called when a tab's page stops loading.
-    static func pageLoaded(in tab: Tab) {
-        guard ForkSettings.videoPiPButtonEnabled,
-              let scheme = tab.url.flatMap(URL.init(string:))?.scheme?.lowercased(),
-              scheme == "http" || scheme == "https",
-              let targetId = tab.webContentWrapper?.devToolsTargetId else { return }
-        Task { @MainActor in
-            guard let session = try? await AppDevToolsPageSession.open(targetId: targetId) else { return }
-            defer { session.close() }
-            _ = try? await session.command("Runtime.evaluate", params: [
-                "expression": script, "returnByValue": true, "silent": true
-            ])
-        }
-    }
-
-    private static let script = """
+    static let script = """
     (() => {
       const KEY = Symbol.for('phiPlus.videoPiPButton');
-      if (window[KEY] || !document.documentElement) return;
+      if (window[KEY] || !/^https?:$/.test(location.protocol)) return;
       window[KEY] = true;
+      // Added as the document starts: build the button once there is a page.
+      const start = (install) => document.documentElement
+        ? install() : document.addEventListener('DOMContentLoaded', install, { once: true });
+      start(() => {
 
       const SIZE = 44, ICON = 26, INSET = 10, HIDE_AFTER = 3000;
       const SVG = 'http://www.w3.org/2000/svg';
@@ -106,11 +93,18 @@ enum ForkVideoPiPButton {
         return r;
       };
 
+      const allVideos = () => {
+        const found = [...document.querySelectorAll('video')];
+        const shadow = window[Symbol.for('phiPlus.shadowRoots')];
+        if (shadow) for (const root of shadow.roots()) found.push(...root.querySelectorAll('video'));
+        return found;
+      };
+
       const visibleVideoAt = (x, y) => {
         let best = null, bestArea = 0;
-        for (const v of document.querySelectorAll('video')) {
+        for (const v of allVideos()) {
           const r = videoRect(v);
-          if (r.width < 160 || r.height < 90) continue;
+          if (r.width < 120 || r.height < 68) continue;
           if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
           const area = r.width * r.height;
           if (area > bestArea) { best = v; bestArea = area; }
@@ -189,6 +183,7 @@ enum ForkVideoPiPButton {
         } catch (_) {}
         hide();
       }, true);
+      });
     })();
     """
 }

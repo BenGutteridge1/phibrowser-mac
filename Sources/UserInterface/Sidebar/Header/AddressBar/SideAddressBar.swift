@@ -53,6 +53,75 @@ class SideAddressBar: NSView {
         return button
     }()
 
+    /// Fork: autoplay for the current site (`ForkAutoplay`). A click
+    /// allows the site to autoplay, or returns it to the autoplay rules; a
+    /// right-click shows every option. Two buttons, one per look (allowed:
+    /// play; otherwise: play crossed out), as the button's symbol is fixed.
+    private lazy var autoplayAllowedButton = makeAutoplayButton(symbol: "play")
+    private lazy var autoplayRulesButton = makeAutoplayButton(symbol: "play.slash")
+
+    private func makeAutoplayButton(symbol: String) -> HoverableButtonNSView {
+        let config = HoverableButtonConfig(
+            imageSize: .init(width: 13, height: 13),
+            systemName: symbol,
+            symbolWeight: .medium,
+            hoverBackgroundColor: .hover,
+            cornerRadius: 4
+        )
+        let button = HoverableButtonNSView(config: config) { [weak self] in
+            self?.toggleSiteAutoplay()
+        }
+        button.secondaryAction = { [weak self] in self?.showAutoplayMenu() }
+        button.snp.makeConstraints { make in
+            make.size.equalTo(CGSize(width: 24, height: 24))
+        }
+        return button
+    }
+
+    private func toggleSiteAutoplay() {
+        window?.customTooltipController.dismissAll()
+        guard let tab = currentTab, let site = ForkAutoplay.site(of: tab.url) else { return }
+        if ForkAutoplay.rule(for: site) == .allow {
+            ForkAutoplay.setRule(nil, for: site, applyingTo: tab)
+        } else {
+            ForkAutoplay.setRule(.allow, for: site, applyingTo: tab)
+        }
+        updateForkButtonVisibility()
+    }
+
+    private func showAutoplayMenu() {
+        window?.customTooltipController.dismissAll()
+        let tab = currentTab
+        let anchor = ForkAutoplay.rule(for: ForkAutoplay.site(of: tab?.url) ?? "") == .allow
+            ? autoplayAllowedButton : autoplayRulesButton
+        Task { @MainActor in
+            let pageStatus = tab == nil ? nil : await ForkAutoplay.status(of: tab!)
+            let menu = ForkAutoplay.menu(for: tab, status: pageStatus)
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: anchor.bounds.maxY + 4), in: anchor)
+        }
+    }
+
+    /// Fork: the Copy Link and Autoplay buttons can be turned off from the
+    /// sidebar's right-click menu (Address Bar Buttons); the Autoplay button
+    /// shows whether the current site may autoplay.
+    private func updateForkButtonVisibility() {
+        let isPlaceholder = sessionBrowserState?.isInPlaceholderMode ?? false
+        copyURLButton.isHidden = isPlaceholder || !ForkSettings.showsCopyLinkButton
+        let site = ForkAutoplay.site(of: currentTab?.url)
+        let showsAutoplay = !isPlaceholder && ForkSettings.showsAutoplayButton
+            && ForkSettings.autoplayControlEnabled && site != nil
+        let allowed = site.map { ForkAutoplay.rule(for: $0) == .allow } ?? false
+        autoplayAllowedButton.isHidden = !showsAutoplay || !allowed
+        autoplayRulesButton.isHidden = !showsAutoplay || allowed
+        let tooltip = allowed
+            ? NSLocalizedString("sidebar.addressBar.autoplayAllowedTooltip", value: "Autoplay allowed on this site", comment: "Sidebar address bar - Autoplay button tooltip when the site may always autoplay; a click returns it to the autoplay rules")
+            : NSLocalizedString("sidebar.addressBar.autoplayRulesTooltip", value: "Allow autoplay on this site", comment: "Sidebar address bar - Autoplay button tooltip when the site follows the autoplay rules; a click allows it")
+        autoplayAllowedButton.toolTip = tooltip
+        autoplayRulesButton.toolTip = tooltip
+        autoplayAllowedButton.setAccessibilityLabel(tooltip)
+        autoplayRulesButton.setAccessibilityLabel(tooltip)
+    }
+
     private lazy var memoryMenuButton: HoverableButtonNSView = {
         let title = NSLocalizedString("browser.webContentAddressBar.manageSiteMemoriesTooltip", value: "Manage Site Memories", comment: "Address bar - Button tooltip for opening memory controls for the current website")
         let config = HoverableButtonConfig(
@@ -305,6 +374,12 @@ class SideAddressBar: NSView {
             }
             .store(in: &cancellables)
 
+        // Fork: the Copy Link and Autoplay buttons follow their settings.
+        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.updateForkButtonVisibility() }
+            .store(in: &cancellables)
+
         // Placeholder-mode sink: blank text on enter, restore on exit.
         // Also hide the trailing accessory buttons (copy link, extension menu)
         // and any in-bar extension icons — there's no tab context to act on.
@@ -318,7 +393,7 @@ class SideAddressBar: NSView {
                 } else {
                     self.updateDisplayedURL(self.displayedTab?.url)
                 }
-                self.copyURLButton.isHidden = isPlaceholder
+                self.updateForkButtonVisibility()
                 self.extensionMenuHostingView.isHidden = isPlaceholder
                 self.extensionIconsStackView.isHidden = isPlaceholder
                 self.updateReaderButtonVisibility()
@@ -479,6 +554,7 @@ class SideAddressBar: NSView {
     }
 
     private func updateDisplayedURL(_ url: String?) {
+        updateForkButtonVisibility()
         guard sessionBrowserState?.groupOverviewState == nil,
               let url,
               !url.isNTP else {
@@ -720,6 +796,8 @@ class SideAddressBar: NSView {
         rightStackView.addArrangedSubview(extensionIconsStackView)
         rightStackView.addArrangedSubview(readerButton)
         rightStackView.addArrangedSubview(memoryMenuButton)
+        rightStackView.addArrangedSubview(autoplayAllowedButton)
+        rightStackView.addArrangedSubview(autoplayRulesButton)
         rightStackView.addArrangedSubview(copyURLButton)
         rightStackView.addArrangedSubview(extensionMenuHostingView)
         extensionMenuHostingView.snp.makeConstraints { make in

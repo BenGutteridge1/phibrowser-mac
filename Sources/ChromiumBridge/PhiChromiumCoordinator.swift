@@ -3136,6 +3136,10 @@ extension PhiChromiumCoordinator: PhiChromiumBridgeDelegate {
 
         let (tab, creationContext) = makeTab(fromBridgeInfo: tabInfo, windowId: windowId)
         let id = tab.guid
+        // Fork: a tab opened from a link starts its page paused (autoplay control).
+        if Thread.isMainThread {
+            MainActor.assumeIsolated { ForkPageScripts.tabCreated(tab, kind: creationContext.creationKind) }
+        }
         AppLogDebug(
             "[NativeTab] mac newTabCreated " +
             "tabId=\(id) windowId=\(windowId) index=\(tab.index) " +

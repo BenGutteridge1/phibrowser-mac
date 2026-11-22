@@ -422,8 +422,8 @@ class Tab: WebContentRepresentable {
             .sink { [weak self] loading in
                 guard let self else { return }
                 self.isLoading = loading
-                // Fork: the picture-in-picture button over the page's videos.
-                if !loading { MainActor.assumeIsolated { ForkVideoPiPButton.pageLoaded(in: self) } }
+                // Fork: the picture-in-picture button and autoplay control.
+                MainActor.assumeIsolated { ForkPageScripts.loadingChanged(self, isLoading: loading) }
                 if !loading, self.wantsTransparentChatCanvas {
                     MainActor.assumeIsolated { self.enableTransparentChatCanvas() }
                 }
@@ -435,10 +435,26 @@ class Tab: WebContentRepresentable {
             .assign(to: \.isDiscarded, on: self)
             .store(in: &cancellables)
 
+        // Fork: an unloaded tab's next page starts paused (autoplay control).
+        wrapper.publisher(for: \.isDiscarded)
+            .filter { $0 }
+            .sink { [weak self] _ in
+                guard let self else { return }
+                MainActor.assumeIsolated { ForkPageScripts.tabUnloaded(self) }
+            }
+            .store(in: &cancellables)
+
         if wrapper.responds(to: Self.isUnloadedSelector) {
             wrapper.publisher(for: \.isUnloaded)
                 .removeDuplicates()
                 .assign(to: \.isUnloaded, on: self)
+                .store(in: &cancellables)
+            wrapper.publisher(for: \.isUnloaded)
+                .filter { $0 }
+                .sink { [weak self] _ in
+                    guard let self else { return }
+                    MainActor.assumeIsolated { ForkPageScripts.tabUnloaded(self) }
+                }
                 .store(in: &cancellables)
         }
         

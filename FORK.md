@@ -24,7 +24,11 @@ All on the `phi-plus` branch, on top of Phi 2.18.0:
   list over TickTick's Open API (with a personal API token)
 - Bitwarden desktop bridge registration, so the extension can unlock with Touch ID
 - Circular download icon and progress ring
-- A picture-in-picture button on videos when you hover them (Settings → General)
+- A picture-in-picture button on videos when you hover them, embedded players included (Settings → General)
+- Autoplay control: pages in tabs opened from links, unloaded tabs and background loads start paused,
+  with per-site rules (Settings → General → Autoplay, the extensions menu, and the address bar button)
+- Copy Link and Autoplay address bar buttons, toggled from the sidebar's right-click menu
+- The last session restores after a crash or a forced quit
 
 ## Build
 

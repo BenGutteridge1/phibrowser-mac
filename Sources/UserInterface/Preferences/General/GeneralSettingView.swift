@@ -43,6 +43,8 @@ struct GeneralSettingView: View {
 
     var body: some View {
         let _ = companionRevision
+        // Fork: a ScrollViewReader so "Autoplay Settings" lands on its section.
+        ScrollViewReader { proxy in
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 24) {
                 LanguageSectionView()
@@ -51,6 +53,8 @@ struct GeneralSettingView: View {
                 }
                 AppearanceSectionView()
                 BrowsingSectionView()
+                ForkAutoplaySettingsSection()
+                    .id(ForkAutoplay.settingsAnchor)
                 if SaveForLaterService.featureEnabled {
                     SaveForLaterSectionView()
                 }
@@ -59,6 +63,11 @@ struct GeneralSettingView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 36)
             .padding(.horizontal, 36)
+        }
+        .onAppear { ForkAutoplay.scrollToSettingsIfAsked(proxy) }
+        .onReceive(NotificationCenter.default.publisher(for: ForkAutoplay.showSettingsNotification)) { _ in
+            ForkAutoplay.scrollToSettingsIfAsked(proxy)
+        }
         }
         .themedBackground(PhiPreferences.fixedWindowBackground)
         .frame(width: 680, height: 561)
@@ -664,7 +673,7 @@ private struct ProfileSectionView: View {
     }
 }
 
-private struct GeneralSectionView<Content: View>: View {
+struct GeneralSectionView<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
 
@@ -679,7 +688,7 @@ private struct GeneralSectionView<Content: View>: View {
     }
 }
 
-private struct GeneralContainerView<Content: View>: View {
+struct GeneralContainerView<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
