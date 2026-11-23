@@ -61,7 +61,8 @@ final class ForkHistoryPanelModel: ObservableObject {
         }
     }
     /// Nil shows all history.
-    @Published var range: Range? = .week {
+    /// Opens with no filter: all history.
+    @Published var range: Range? = nil {
         didSet { if range != oldValue { reload(debounced: false) } }
     }
     @Published private(set) var sections: [Section] = []
@@ -216,7 +217,7 @@ final class ForkHistoryPanelModel: ObservableObject {
                 absorb(page.entries)
             }
             if mode != .refresh { self.reachedEnd = page.finished }
-            if mode == .fresh, text.isEmpty, range == .week {
+            if mode == .fresh, text.isEmpty, range == nil {
                 self.service.lastOpeningResults = rows
             }
             if mode != .more {
