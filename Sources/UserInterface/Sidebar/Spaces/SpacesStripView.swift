@@ -453,6 +453,12 @@ struct SpacesStripView: View {
     static var usesDots: Bool { ForkSettings.spaceSwitcherUsesDots }
     private static let activeDotSize: CGFloat = 7
     private static let inactiveDotSize: CGFloat = 6
+    /// Fork dot style: an agent Space's brand glyph is drawn this size (its
+    /// ink) inside the 14pt dot slot, leaving a margin on both sides; at the
+    /// full `iconSize` it filled the slot and met the group divider.
+    private static let dotsAgentIconSize: CGFloat = 10
+    /// The agent glyph's ink size in the current style.
+    private static var agentIconSize: CGFloat { usesDots ? dotsAgentIconSize : iconSize }
     /// How long a pip must stay hovered before its card appears, so brushing
     /// the cursor across the strip doesn't flash cards.
     private static let hoverCardDelay: TimeInterval = 0.3
@@ -1177,8 +1183,19 @@ struct SpacesStripView: View {
         RoundedRectangle(cornerRadius: 0.5, style: .continuous)
             .fill(Color(nsColor: .separatorColor))
             .frame(width: 1, height: 14)
-            .offset(x: -(Self.stripSpacing + 1) / 2)
+            .offset(x: Self.agentGroupDividerOffset)
             .allowsHitTesting(false)
+    }
+
+    /// Fork: the divider centered between the last user pip's glyph and the
+    /// first agent glyph, not just in the gap between their slots, so it has
+    /// the same space on both sides whatever the agent's icon and in either
+    /// switcher style. Measured from the first agent pip's leading edge.
+    private static var agentGroupDividerOffset: CGFloat {
+        let userGlyph = usesDots ? inactiveDotSize : iconSize
+        let userGlyphEnd = -(stripSpacing + (stripItemWidth - userGlyph) / 2)
+        let agentGlyphStart = (stripItemWidth - agentIconSize) / 2
+        return (userGlyphEnd + agentGlyphStart) / 2 - 0.5
     }
 
     /// `stripStartIndex` clamped so the window never runs past the end of the
@@ -1420,11 +1437,11 @@ struct SpacesStripView: View {
                     // `assetInkRatio`); widen the frame so the INK matches the
                     // neighboring pips' SF Symbol glyphs at `iconSize`.
                     Image(asset).renderingMode(.template).resizable().scaledToFit()
-                        .frame(width: Self.iconSize / AgentDriverBadge.assetInkRatio,
-                               height: Self.iconSize / AgentDriverBadge.assetInkRatio)
+                        .frame(width: Self.agentIconSize / AgentDriverBadge.assetInkRatio,
+                               height: Self.agentIconSize / AgentDriverBadge.assetInkRatio)
                 } else {
                     Image(systemName: badge.symbol).resizable().scaledToFit()
-                        .frame(width: Self.iconSize, height: Self.iconSize)
+                        .frame(width: Self.agentIconSize, height: Self.agentIconSize)
                 }
             }
             .foregroundStyle(Color.primary)

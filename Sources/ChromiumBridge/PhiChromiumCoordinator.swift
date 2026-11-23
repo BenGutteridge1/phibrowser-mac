@@ -1999,6 +1999,8 @@ extension PhiChromiumCoordinator: PhiChromiumBridgeDelegate {
     func downloadEventOccurred(_ eventType: DownloadEventType, guid: String,
                                downloadItem: (any DownloadItemWrapper)?, profileId: String,
                                isOffTheRecord: Bool) {
+        // Fork: Chromium's download Dock icon replaces the system-drawn one.
+        if Thread.isMainThread { MainActor.assumeIsolated { ForkDockIcon.restoreSystemIcon() } }
         let eventName: String
         switch eventType {
         case .created: eventName = "CREATED"
@@ -3176,6 +3178,10 @@ extension PhiChromiumCoordinator: PhiChromiumBridgeDelegate {
         let infos = (snapshot["tabs"] as? [[AnyHashable: Any]]) ?? []
         let items = infos.map { makeTab(fromBridgeInfo: $0, windowId: windowId) }
         guard !items.isEmpty else { return }
+        // Fork: restored tabs' first pages start paused (autoplay control).
+        if Thread.isMainThread {
+            MainActor.assumeIsolated { items.forEach { ForkPageScripts.tabRestored($0.tab) } }
+        }
         var payload = BrowserState.RestoredWindowSnapshot(
             tabs: items,
             activeTabId: NativeTabCreationContext.intValue(snapshot["activeTabId"]),
@@ -3202,6 +3208,10 @@ extension PhiChromiumCoordinator: PhiChromiumBridgeDelegate {
         let tabInfos = (snapshot["tabs"] as? [[AnyHashable: Any]]) ?? []
         let items = tabInfos.map { makeTab(fromBridgeInfo: $0, windowId: windowId) }
         let activeTabId = snapshot["activeTabId"] as? Int
+        // Fork: restored tabs' first pages start paused (autoplay control).
+        if Thread.isMainThread {
+            MainActor.assumeIsolated { items.forEach { ForkPageScripts.tabRestored($0.tab) } }
+        }
         let splitActions = parseSplitActions(fromBridgeEvents: snapshot["splitEvents"])
 
         guard !items.isEmpty else { return }

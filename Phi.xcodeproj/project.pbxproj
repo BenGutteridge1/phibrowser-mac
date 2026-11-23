@@ -477,6 +477,7 @@
 		18170000000000000000000C /* PhiChromiumCoordinator+OmniboxV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18170000000000000000000B /* PhiChromiumCoordinator+OmniboxV2.swift */; };
 		18170000000000000000000E /* OmniboxNativeUIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18170000000000000000000D /* OmniboxNativeUIClient.swift */; };
 		B02586F52E42FD97001B08FC /* ChromiumLauncher.m in Sources */ = {isa = PBXBuildFile; fileRef = B02586EE2E42FD97001B08FC /* ChromiumLauncher.m */; };
+		D295ED815809A045DF1F8E53 /* ForkDockIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 721307691C34E1455027009C /* ForkDockIcon.swift */; };
 		B02586F62E42FD97001B08FC /* AppController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B02586F02E42FD97001B08FC /* AppController.swift */; };
 		B02586F72E42FD97001B08FC /* SpaceSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B02586F12E42FD97001B08FC /* SpaceSessionController.swift */; };
 		B02586F82E42FD97001B08FC /* PhiApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = B02586F32E42FD97001B08FC /* PhiApplication.m */; };
@@ -1380,6 +1381,7 @@
 		B02586EC2E42FD97001B08FC /* PhiBrowser-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PhiBrowser-Bridging-Header.h"; sourceTree = "<group>"; };
 		B02586ED2E42FD97001B08FC /* ChromiumLauncher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChromiumLauncher.h; sourceTree = "<group>"; };
 		B02586EE2E42FD97001B08FC /* ChromiumLauncher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ChromiumLauncher.m; sourceTree = "<group>"; };
+		721307691C34E1455027009C /* ForkDockIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkDockIcon.swift; sourceTree = "<group>"; };
 		B02586F02E42FD97001B08FC /* AppController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppController.swift; sourceTree = "<group>"; };
 		B02586F12E42FD97001B08FC /* SpaceSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceSessionController.swift; sourceTree = "<group>"; };
 		B02586F22E42FD97001B08FC /* PhiApplication.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PhiApplication.h; sourceTree = "<group>"; };
@@ -2834,6 +2836,7 @@
 				B02586F22E42FD97001B08FC /* PhiApplication.h */,
 				B02586F32E42FD97001B08FC /* PhiApplication.m */,
 				A17400000000000000000001 /* PhiApplication+PictureInPicture.swift */,
+				721307691C34E1455027009C /* ForkDockIcon.swift */,
 				B02586F02E42FD97001B08FC /* AppController.swift */,
 				4B4C00000000000000000002 /* ExternalOpenSender.swift */,
 				CC288A8B2E534230004A6C1C /* AppController+Menu.swift */,
@@ -4034,6 +4037,7 @@
 				B0F370DA2E433F0E000B51F9 /* OverlayWindowController.swift in Sources */,
 				A7E1C0020000000000000002 /* PageOverlayView.swift in Sources */,
 				CCBF8FA22E698A7400B9A99E /* SpaceSessionControllersManager.swift in Sources */,
+				D295ED815809A045DF1F8E53 /* ForkDockIcon.swift in Sources */,
 				B02586F62E42FD97001B08FC /* AppController.swift in Sources */,
 				4B4C00000000000000000001 /* ExternalOpenSender.swift in Sources */,
 				9AA2A84E14E5FED7B177F8A4 /* AppController+Fork.swift in Sources */,

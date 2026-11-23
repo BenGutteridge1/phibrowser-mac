@@ -30,6 +30,7 @@ All on the `phi-plus` branch, on top of Phi 2.18.0:
 - Copy Link and Autoplay address bar buttons, toggled from the sidebar's right-click menu
 - A Picture in Picture shortcut (⌃⌘P by default)
 - The last session restores after a crash or a forced quit
+- The Dock icon stays the one macOS draws (Chromium's download drawing is removed)
 
 ## Build
 

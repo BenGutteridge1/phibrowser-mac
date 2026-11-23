@@ -46,6 +46,20 @@ enum ForkPageScripts {
         state(for: tab).wasUnloaded = true
     }
 
+    /// The tab came back with a restored session (reopening Phi+, or a
+    /// window reopened). Its first page counts as an unloaded tab loading,
+    /// even the selected tab, which loads at once instead of staying
+    /// unloaded until selected.
+    static func tabRestored(_ tab: Tab) {
+        let state = state(for: tab)
+        state.wasUnloaded = true
+        // Its load can start before Phi hears of the restore: judge again.
+        if tab.isLoading || state.session != nil, isEnabled {
+            state.inheritUntil = nil
+            loadStarted(tab)
+        }
+    }
+
     static func loadingChanged(_ tab: Tab, isLoading: Bool) {
         guard isEnabled else {
             states.removeValue(forKey: tab.guid)?.end()
