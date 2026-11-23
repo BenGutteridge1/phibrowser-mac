@@ -142,8 +142,8 @@ final class ForkHistoryService {
     private func fetch(_ call: String, since: Date?,
                        on session: AppDevToolsPageSession) async throws -> (entries: [ForkHistoryEntry], finished: Bool) {
         let script = """
-        (async()=>{const m=await import('chrome://history/history.js');\
-        const h=m.BrowserProxyImpl.getInstance().handler;\
+        (async()=>{const h=window.__phiHistoryHandler||(window.__phiHistoryHandler=\
+        (await import('chrome://history/history.js')).BrowserProxyImpl.getInstance().handler);\
         const r=await \(call);\
         return {rows:r.results.value.map(e=>[e.url,e.title,e.domain,e.time,e.dateTimeOfDay,e.fallbackFaviconText]),\
         finished:!!(r.results.info&&r.results.info.finished)};})()

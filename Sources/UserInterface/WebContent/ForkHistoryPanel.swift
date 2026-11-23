@@ -53,7 +53,12 @@ final class ForkHistoryPanelModel: ObservableObject {
     }
 
     @Published var searchText = "" {
-        didSet { if searchText != oldValue { reload(debounced: true) } }
+        didSet {
+            guard searchText != oldValue else { return }
+            // Answer at once from what's already here, then ask Chromium.
+            showProvisionalMatches()
+            reload(debounced: true)
+        }
     }
     /// Nil shows all history.
     @Published var range: Range? = .week {
@@ -70,6 +75,51 @@ final class ForkHistoryPanelModel: ObservableObject {
     private var entries: [ForkHistoryEntry] = []
     private var reachedEnd = false
     private var queryTask: Task<Void, Never>?
+
+    /// Recent results by search and range, so going back to one (deleting a
+    /// letter, switching the chip back) paints at once while it refreshes.
+    private struct CacheKey: Hashable {
+        let text: String
+        let range: Range?
+    }
+    private struct CachedResult {
+        let rows: [ForkHistoryEntry]
+        let complete: Bool
+    }
+    private var cache: [CacheKey: CachedResult] = [:]
+    private var cacheOrder: [CacheKey] = []
+    private static let cacheLimit = 24
+
+    private func remember(_ rows: [ForkHistoryEntry], complete: Bool, for key: CacheKey) {
+        cache[key] = CachedResult(rows: rows, complete: complete)
+        cacheOrder.removeAll { $0 == key }
+        cacheOrder.append(key)
+        while cacheOrder.count > Self.cacheLimit { cache.removeValue(forKey: cacheOrder.removeFirst()) }
+    }
+
+    /// While a search is on its way: the rows of the closest search already
+    /// answered (this one, or a shorter one it extends) that match the new
+    /// text. Exact when that search had all of history's matches.
+    private func showProvisionalMatches() {
+        let text = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let cached = cache[CacheKey(text: text, range: range)] {
+            apply(cached.rows)
+            return
+        }
+        let lowered = text.lowercased()
+        var source = entries
+        var prefix = lowered
+        while !prefix.isEmpty {
+            prefix.removeLast()
+            if let cached = cache[CacheKey(text: prefix, range: range)] { source = cached.rows; break }
+        }
+        guard !lowered.isEmpty else { return }
+        let terms = lowered.split(whereSeparator: \.isWhitespace).map(String.init)
+        apply(source.filter { entry in
+            let haystack = (entry.title + " " + entry.url).lowercased()
+            return terms.allSatisfy { haystack.contains($0) }
+        }, provisional: true)
+    }
     let onOpen: (ForkHistoryEntry, ForkHistoryOpenMode) -> Void
     let onShowFullHistory: () -> Void
     let onClose: () -> Void
@@ -95,7 +145,13 @@ final class ForkHistoryPanelModel: ObservableObject {
 
     func reload(debounced: Bool) {
         reachedEnd = false
-        runQuery(delay: debounced ? 0.12 : 0, mode: .fresh)
+        if !debounced, let cached = cache[CacheKey(text: searchText.trimmingCharacters(in: .whitespacesAndNewlines),
+                                                   range: range)] {
+            apply(cached.rows)
+        }
+        // A short pause lets a burst of typing become one query; what's
+        // typed shows at once from `showProvisionalMatches`.
+        runQuery(delay: debounced ? 0.04 : 0, mode: .fresh)
     }
 
     /// Re-reads the newest page so new visits appear; rows already loaded
@@ -135,11 +191,16 @@ final class ForkHistoryPanelModel: ObservableObject {
             func absorb(_ page: [ForkHistoryEntry]) {
                 for entry in page where keeps(entry) && seen.insert(entry.id).inserted { rows.append(entry) }
             }
+            let started = Date()
             var page = mode == .more
                 ? await self.service.continueQuery(since: since)
                 : await self.service.query(text, since: since, limit: Self.pageSize)
             guard !Task.isCancelled else { return }
             absorb(page.entries)
+            let firstPageMs = Int(Date().timeIntervalSince(started) * 1000)
+            // A new search shows its first page at once; any more it needs
+            // to fill the list arrive behind it.
+            if mode == .fresh, !rows.isEmpty { self.apply(rows) }
             if mode == .refresh, let boundary = page.entries.last?.time {
                 absorb(existing.filter { $0.time < boundary })
             }
@@ -158,16 +219,28 @@ final class ForkHistoryPanelModel: ObservableObject {
             if mode == .fresh, text.isEmpty, range == .week {
                 self.service.lastOpeningResults = rows
             }
+            if mode != .more {
+                self.remember(rows, complete: page.finished, for: CacheKey(text: text, range: range))
+            }
+            AppLogDebug("[ForkHistory] \(mode) query (\(text.count) chars): first page \(firstPageMs) ms, "
+                + "\(rows.count) rows in \(Int(Date().timeIntervalSince(started) * 1000)) ms")
             self.apply(rows)
             self.queryTask = nil
         }
     }
 
-    private func apply(_ results: [ForkHistoryEntry]) {
-        entries = results
-        let calendar = Calendar.current
+    private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("EEEEdMMMM")
+        return formatter
+    }()
+
+    /// `provisional` rows (filtered from earlier results while a search is
+    /// on its way) don't replace the loaded list the next page builds on.
+    private func apply(_ results: [ForkHistoryEntry], provisional: Bool = false) {
+        if !provisional { entries = results }
+        let calendar = Calendar.current
+        let formatter = Self.dayFormatter
         var built: [Section] = []
         var current: (day: Date, entries: [ForkHistoryEntry])?
         func flush() {
@@ -343,8 +416,10 @@ struct ForkHistoryPanelView: View {
                             .foregroundStyle(muted)
                             .padding(EdgeInsets(top: 8, leading: 8, bottom: 2, trailing: 8))
                         ForEach(section.entries) { entry in
-                            ForkHistoryRow(entry: entry, model: model, isSelected: model.selectedId == entry.id,
-                                           accent: accent, text: text, muted: muted, field: field)
+                            ForkHistoryRow(entry: entry, isSelected: model.selectedId == entry.id,
+                                           accent: accent, text: text, muted: muted, field: field,
+                                           actions: rowActions)
+                                .equatable()
                                 .id(entry.id)
                                 .onAppear { model.loadMoreIfNeeded(after: entry) }
                         }
@@ -367,6 +442,20 @@ struct ForkHistoryPanelView: View {
         }
     }
 
+    /// What a row needs from the model, without observing it: a row then
+    /// redraws only when its own entry or selection changes, not on every
+    /// keystroke or selection move elsewhere in the list.
+    private var rowActions: ForkHistoryRow.Actions {
+        let model = model
+        return ForkHistoryRow.Actions(
+            open: { entry in
+                model.selectedId = entry.id
+                model.onOpen(entry, ForkHistoryOpenMode.current.resolved())
+            },
+            cachedFavicon: { model.favicon(for: $0) },
+            loadFavicon: { model.loadFavicon(for: $0, completion: $1) })
+    }
+
     private var footer: some View {
         Button(action: model.onShowFullHistory) {
             Text(NSLocalizedString("history.floatingPanel.showAll", value: "Show full history",
@@ -381,21 +470,31 @@ struct ForkHistoryPanelView: View {
     }
 }
 
-private struct ForkHistoryRow: View {
+private struct ForkHistoryRow: View, Equatable {
+    struct Actions {
+        let open: (ForkHistoryEntry) -> Void
+        let cachedFavicon: (ForkHistoryEntry) -> NSImage?
+        let loadFavicon: (ForkHistoryEntry, @escaping (NSImage?) -> Void) -> Void
+    }
+
     let entry: ForkHistoryEntry
-    @ObservedObject var model: ForkHistoryPanelModel
     let isSelected: Bool
     let accent: Color
     let text: Color
     let muted: Color
     let field: Color
+    let actions: Actions
     @State private var favicon: NSImage?
     @State private var isHovered = false
 
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.entry == rhs.entry && lhs.isSelected == rhs.isSelected && lhs.accent == rhs.accent
+            && lhs.text == rhs.text && lhs.muted == rhs.muted && lhs.field == rhs.field
+    }
+
     var body: some View {
         Button {
-            model.selectedId = entry.id
-            model.onOpen(entry, ForkHistoryOpenMode.current.resolved())
+            actions.open(entry)
         } label: {
             HStack(spacing: 8) {
                 ZStack {
@@ -431,9 +530,9 @@ private struct ForkHistoryRow: View {
         .onHover { isHovered = $0 }
         .help(entry.url)
         .onAppear {
-            favicon = model.favicon(for: entry)
+            favicon = actions.cachedFavicon(entry)
             guard favicon == nil else { return }
-            model.loadFavicon(for: entry) { favicon = $0 }
+            actions.loadFavicon(entry) { favicon = $0 }
         }
     }
 }
@@ -581,7 +680,7 @@ final class ForkHistoryPanelController: NSObject {
                 })
             }
             .switchToLatest()
-            .debounce(for: .milliseconds(600), scheduler: DispatchQueue.main)
+            .debounce(for: .milliseconds(250), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in self?.model.refresh() }
     }
 
