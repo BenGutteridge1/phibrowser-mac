@@ -50,7 +50,12 @@ enum ForkAutoplay {
     (() => {
       if (!/^https?:$/.test(location.protocol)) return;
       const KEY = Symbol.for('phiPlus.autoplay');
-      if (window[KEY]) { window[KEY].update(__CONFIG__); return; }
+      // Run again on a page that has it (each load event, the polling while
+      // a paused page loads): a page that started paused stays paused. A
+      // later load of the same page (YouTube's own loads, in-page
+      // navigation) is judged as the selected tab and would otherwise let
+      // it play; only the user (playing, or allowing the site) lifts it.
+      if (window[KEY]) { window[KEY].rerun(__CONFIG__); return; }
       let cfg = __CONFIG__;
       const host = location.hostname.replace(/^www\\./, '');
       const listed = (list) => (list || []).some((site) => host === site || host.endsWith('.' + site));
@@ -103,6 +108,7 @@ enum ForkAutoplay {
       else document.addEventListener('DOMContentLoaded', stopPlaying, { once: true });
       window[KEY] = {
         update(next) { cfg = Object.assign({}, cfg, next); guard = guarded(); if (!guard) resume(); },
+        rerun(next) { this.update(Object.assign({}, next, { pause: cfg.pause || next.pause })); },
         playHeld() { resume(); },
         status() {
           return { guard, held: [...held].filter((m) => m.isConnected && m.paused).length };
