@@ -15,7 +15,7 @@ leading edge:
 | Hide Top Bar, back, forward, reload | `TopBarNavigationButtons` | After the window's lights; the sidebar header's Top Buttons settings |
 | Spaces | `SpacesStripView` in `TopBarSpacesRowView` | The sidebar's strip, icons or dots per Settings › Spaces, clipped to its Spaces and sliding open to the "+" under the pointer. The strip always draws its "+" here (`alwaysShowsAddButton`): the slot's row-hover state is checked against the sidebar's row, which Comfortable never shows. Hidden with one Space, as in the sidebar |
 | Pinned extensions and pinned tabs | `PinnedTabViewController`, `style: .row` | The sidebar's own tiles and live cards (open below); extensions always as tiles here |
-| Space pins and folders | `BookmarkBar` | Pills with the sidebar's folder icons; a top-level folder opens in place, its bookmarks beside it in one wash (`BookmarkFolderGroupView`); overflow goes to the More menu |
+| Space pins and folders | `BookmarkBar` | Pills with the sidebar's folder icons. A folder, at any depth, opens in place, its bookmarks beside it in one wash (`BookmarkFolderGroupView`): they are built once, laid out at rest behind a clip, and the clip widens on the zone's clock while they fade in, so nothing is rebuilt or flies in. Overflow goes to the More menu |
 | Address field | `TopBarAddressField` | The sidebar's `SideAddressBar` (`isInTopBar`), as wide as the sidebar's (the sidebar width the user set, less its insets): its look and buttons, no extensions. It never publishes where pinned extensions go, though it exists, hidden, in the sidebar layouts |
 | Tabs, groups, splits | `TabStrip` | Pills; no pinned zone (pinned tabs are tiles) |
 | Mini player | `SidebarMediaPlayerView`, `Surface.Kind.topBar` | Compact transport row only |
@@ -65,6 +65,11 @@ and bookmarks to their bound tabs. `LayoutMode.isTraditional` now only means
 "horizontal chrome": no docked sidebar column.
 
 ## Theme
+
+The bar's controls (address field, pinned tiles, Space pins, folder washes)
+use stronger fills than the sidebar's (`topBarControlFill`,
+`topBarControlFillHovered`): the sidebar's 4% wash barely shows on 26–28pt
+controls on the bar's glass.
 
 The bar paints nothing while docked. It sits on the shell's page-area backdrop
 (`ShellContentHostViewController`), the same frosted, Space-tinted surface as

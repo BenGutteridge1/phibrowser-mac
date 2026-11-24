@@ -209,6 +209,14 @@ class PinnedTabItem: NSCollectionViewItem, NSMenuDelegate {
         return menu
     }()
 
+    /// The Comfortable top bar's stronger fills: the tile sits on the bar's
+    /// glass in a 28pt row, where the sidebar's 4% wash barely shows.
+    func setUsesTopBarFills(_ topBar: Bool) {
+        backgroundView.backgroundColor = topBar ? .topBarControlFill : .sidebarTabHovered
+        backgroundView.hoveredColor = topBar ? .topBarControlFillHovered : .sidebarTabHoveredColorEmphasized
+        backgroundView.needsDisplay = true
+    }
+
     override func loadView() {
         view = PinnedItemRootView()
         setupUI()

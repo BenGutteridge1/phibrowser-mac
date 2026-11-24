@@ -67,6 +67,7 @@ class PinnedTabViewController: NSViewController {
                                                               staticIcon: model.icon),
                                      manager: manager)
                 pinnedItem.setContextMenuClickRoutingEnabled(self.contextMenuClickRoutingEnabled)
+                pinnedItem.setUsesTopBarFills(self.style == .row)
                 pinnedItem.itemClicked = { [weak self] model, view in
                     self?.handleExtensionClicked(model, anchor: view)
                 }
@@ -86,6 +87,7 @@ class PinnedTabViewController: NSViewController {
                     browserState: browserState,
                     themeProvider: browserState?.themeContext ?? ThemeManager.shared
                 )
+                tabItem.setUsesTopBarFills(self.style == .row)
                 tabItem.itemClicked = { [weak self] tab, modifierFlags in
                     guard let tab else { return }
                     self?.handleTabClicked(tab, modifierFlags: modifierFlags)
@@ -106,6 +108,7 @@ class PinnedTabViewController: NSViewController {
                     browserState: browserState,
                     themeProvider: browserState?.themeContext ?? ThemeManager.shared
                 )
+                splitItem.setUsesTopBarFills(self.style == .row)
                 splitItem.itemClicked = { [weak self] tab in
                     self?.handleSplitCellClicked(group: group, preferredTab: tab)
                 }

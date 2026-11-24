@@ -359,6 +359,7 @@ class BookmarkItemView: NSView {
         isShowingSecondaryFavicon = visible
         secondaryFaviconImageView.isHidden = !visible
         secondaryFaviconImageView.snp.updateConstraints { make in
+            make.leading.equalTo(faviconImageView.snp.trailing).offset(visible ? 2 : 0)
             make.width.equalTo(visible ? self.faviconSize : 0)
         }
     }
@@ -413,11 +414,12 @@ class BookmarkItemView: NSView {
         }
     }
 
-    /// The sidebar's pinned-tile surfaces: a resting wash, a stronger one
-    /// under the pointer, and the selected-row plate for the bookmark on screen.
+    /// The top bar's control surfaces (stronger than the sidebar's, which
+    /// barely show on the bar's glass): a resting wash, a stronger one under
+    /// the pointer, and the selected-row plate for the bookmark on screen.
     private func updateAppearance() {
         let color: NSColor = isActive ? .sidebarTabSelected
-            : (isHovered ? .sidebarTabHoveredColorEmphasized : .sidebarTabHovered)
+            : (isHovered ? .topBarControlFillHovered : .topBarControlFill)
         effectiveAppearance.performAsCurrentDrawingAppearance { [self] in
             layer?.backgroundColor = color.cgColor
             openIndicator.layer?.backgroundColor = NSColor.secondaryLabelColor.cgColor
@@ -452,13 +454,12 @@ class BookmarkItemView: NSView {
             make.width.height.equalTo(self.faviconSize)
         }
 
-        // Sits flush against the primary favicon when visible. The 2pt gap
-        // matches the eye-spacing used by the edit-dialog SplitFaviconView.
-        // Starts with width=0 so non-split bookmarks lay out unchanged from
-        // before this view supported a second favicon; `applySplitState`
-        // grows the width when the bookmark turns out to be a split.
+        // Sits 2pt after the primary favicon when visible, the eye-spacing
+        // used by the edit-dialog SplitFaviconView. Starts with no width and
+        // no gap, so a non-split pill lays out exactly as `width(showingTitle:)`
+        // measures it; `setSecondaryFavicon` adds both for a split.
         secondaryFaviconImageView.snp.makeConstraints { make in
-            make.leading.equalTo(faviconImageView.snp.trailing).offset(2)
+            make.leading.equalTo(faviconImageView.snp.trailing).offset(0)
             make.centerY.equalToSuperview()
             make.height.equalTo(self.faviconSize)
             make.width.equalTo(0)

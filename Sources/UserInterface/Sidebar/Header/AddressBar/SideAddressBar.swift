@@ -746,7 +746,10 @@ class SideAddressBar: NSView {
         containerView = HoverableView()
         containerView.wantsLayer = true
         containerView.layer?.cornerRadius = 8
-        containerView.hoveredColor = .sidebarTabHoveredColorEmphasized
+        // The top bar's field sits on the bar's glass among 28pt controls,
+        // where the sidebar's 4% wash barely shows; it takes the bar's
+        // stronger fills.
+        containerView.hoveredColor = isInTopBar ? .topBarControlFillHovered : .sidebarTabHoveredColorEmphasized
         containerView.postsFrameChangedNotifications = true
         addSubview(containerView)
         updateBackgroundAppearance()
@@ -754,7 +757,7 @@ class SideAddressBar: NSView {
 
     private func updateBackgroundAppearance() {
         if showBackgroundWhenInactive {
-            containerView?.backgroundColor = .sidebarTabHovered
+            containerView?.backgroundColor = isInTopBar ? .topBarControlFill : .sidebarTabHovered
         } else {
             containerView?.backgroundColor = .clear
         }

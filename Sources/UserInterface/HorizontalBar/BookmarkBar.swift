@@ -9,7 +9,9 @@ import SnapKit
 
 /// The Space's pins in the Comfortable top bar: the Space's bookmarks and
 /// folders, as pills between the pinned tiles and the tabs. Bookmarks that
-/// do not fit go into the More menu; folders open as menus.
+/// do not fit go into the More menu. A folder opens in place, its bookmarks
+/// sliding out beside it in one wash; folders inside it open the same way
+/// (`BookmarkFolderGroupView`).
 class BookmarkBar: NSView {
     // MARK: - Properties
     private let state: BrowserState
@@ -42,6 +44,7 @@ class BookmarkBar: NSView {
         didSet {
             guard showsTitles != oldValue else { return }
             items.forEach { $0.showsTitle = showsTitles }
+            refreshFolderWidths()
             reportPreferredWidth()
             needsLayout = true
         }
@@ -56,17 +59,23 @@ class BookmarkBar: NSView {
     var titledWidth: CGFloat { contentWidth(showingTitles: true) }
     var iconOnlyWidth: CGFloat { contentWidth(showingTitles: false) }
 
-    /// Every pill, open folders' bookmarks included.
+    /// Every pill built, folders' bookmarks included.
     private var items: [BookmarkItemView] {
         stackView.arrangedSubviews.flatMap { view -> [BookmarkItemView] in
             if let item = view as? BookmarkItemView { return [item] }
-            if let group = view as? BookmarkFolderGroupView { return group.items }
+            if let group = view as? BookmarkFolderGroupView { return group.allItems }
             return []
         }
     }
 
-    /// Folders open in the bar: their bookmarks show beside them, in one
-    /// wash. The bar's own state, apart from the sidebar's expanded rows.
+    /// The bookmark a unit of the row stands for: a pill's, or a folder's.
+    private static func bookmark(of unit: NSView) -> Bookmark? {
+        (unit as? BookmarkItemView)?.bookmark ?? (unit as? BookmarkFolderGroupView)?.folderItem.bookmark
+    }
+
+    /// Folders open in the bar, at any depth: their bookmarks show beside
+    /// them, in one wash. The bar's own state, apart from the sidebar's
+    /// expanded rows.
     private var openFolderGuids: Set<String> = []
 
     /// True while a folder is opening or shutting: the width reported then
@@ -193,23 +202,50 @@ class BookmarkBar: NSView {
         AppLogDebug("Bookmarks updated bookmarks: \(bookmarkCount)")
 
         stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        let liveGuids = Set(bookmarks.filter(\.isFolder).map(\.guid))
-        openFolderGuids.formIntersection(liveGuids)
+        openFolderGuids.formIntersection(Self.folderGuids(in: bookmarks))
 
         for bookmark in bookmarks {
-            let itemView = makeItem(for: bookmark)
-            if bookmark.isFolder, openFolderGuids.contains(bookmark.guid) {
-                itemView.isFolderOpen = true
-                let children = bookmark.children.map { makeItem(for: $0) }
-                stackView.addArrangedSubview(BookmarkFolderGroupView(
-                    folderItem: itemView, childItems: children, spacing: itemSpacing))
-            } else {
-                stackView.addArrangedSubview(itemView)
-            }
+            stackView.addArrangedSubview(makeUnit(for: bookmark, nested: false))
         }
 
+        refreshFolderWidths()
         reportPreferredWidth()
         self.needsLayout = true
+    }
+
+    private static func folderGuids(in bookmarks: [Bookmark]) -> Set<String> {
+        var guids = Set<String>()
+        for bookmark in bookmarks where bookmark.isFolder {
+            guids.insert(bookmark.guid)
+            guids.formUnion(folderGuids(in: bookmark.children))
+        }
+        return guids
+    }
+
+    /// A bookmark's pill, or a folder's group: its pill and, built when it
+    /// first opens, its bookmarks.
+    private func makeUnit(for bookmark: Bookmark, nested: Bool) -> NSView {
+        let item = makeItem(for: bookmark)
+        guard bookmark.isFolder else { return item }
+        let group = BookmarkFolderGroupView(folderItem: item, spacing: itemSpacing, isNested: nested) { [weak self] child in
+            self?.makeUnit(for: child, nested: true) ?? NSView()
+        }
+        item.onClick = { [weak self, weak group] _ in
+            guard let self, let group else { return }
+            self.toggleFolder(group)
+        }
+        if openFolderGuids.contains(bookmark.guid) {
+            group.setOpen(true)
+            group.setContentShown(true)
+        }
+        return group
+    }
+
+    /// Folders' widths follow their bookmarks', innermost first.
+    private func refreshFolderWidths() {
+        for case let group as BookmarkFolderGroupView in stackView.arrangedSubviews {
+            group.updateWidths(showingTitles: showsTitles)
+        }
     }
 
     private func makeItem(for bookmark: Bookmark) -> BookmarkItemView {
@@ -245,6 +281,7 @@ class BookmarkBar: NSView {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.preferredWidthReportScheduled = false
+            self.refreshFolderWidths()
             self.reportPreferredWidth()
             self.needsLayout = true
         }
@@ -349,10 +386,8 @@ class BookmarkBar: NSView {
             }
             if hasOverflowed {
                 unit.isHidden = true
-                if let item = unit as? BookmarkItemView {
-                    newOverflow.append(item.bookmark)
-                } else if let group = unit as? BookmarkFolderGroupView {
-                    newOverflow.append(group.folderItem.bookmark)
+                if let bookmark = Self.bookmark(of: unit) {
+                    newOverflow.append(bookmark)
                 }
             } else {
                 unit.isHidden = false
@@ -491,7 +526,7 @@ class BookmarkBar: NSView {
         }
 
         let locationInStack = stackView.convert(sender.draggingLocation, from: nil)
-        let visibleItems = stackView.arrangedSubviews.compactMap { $0 as? BookmarkItemView }.filter { !$0.isHidden }
+        let visibleItems = stackView.arrangedSubviews.filter { !$0.isHidden }
 
         var targetX: CGFloat = horizontalPadding
         var insertIndex: Int = 0
@@ -579,14 +614,14 @@ class BookmarkBar: NSView {
     /// Translates `lastDropIndex` (visible-row index) back into a position in
     /// the canonical `bookmarks` array used for insertion / move.
     private func resolvedDropIndex() -> Int {
-        let visibleItems = stackView.arrangedSubviews.compactMap { $0 as? BookmarkItemView }.filter { !$0.isHidden }
-        let hiddenItems = stackView.arrangedSubviews.compactMap { $0 as? BookmarkItemView }.filter { $0.isHidden }
-        if lastDropIndex < visibleItems.count {
-            let anchorBookmark = visibleItems[lastDropIndex].bookmark
+        let units = stackView.arrangedSubviews
+        let visibleItems = units.filter { !$0.isHidden }
+        let hiddenItems = units.filter { $0.isHidden }
+        if lastDropIndex < visibleItems.count, let anchorBookmark = Self.bookmark(of: visibleItems[lastDropIndex]) {
             return bookmarks.firstIndex(of: anchorBookmark) ?? 0
         }
-        if let firstHidden = hiddenItems.first {
-            return bookmarks.firstIndex(of: firstHidden.bookmark) ?? bookmarks.count
+        if let firstHidden = hiddenItems.first, let hiddenBookmark = Self.bookmark(of: firstHidden) {
+            return bookmarks.firstIndex(of: hiddenBookmark) ?? bookmarks.count
         }
         return bookmarks.count
     }
@@ -635,49 +670,50 @@ class BookmarkBar: NSView {
 
     private func handleBookmarkClick(_ bookmark: Bookmark, itemView: NSView) {
         AppLogDebug("Bookmark clicked: \(bookmark.title)")
-        if bookmark.isFolder {
-            if bookmarks.contains(where: { $0 === bookmark }) {
-                toggleFolder(bookmark)
-            } else {
-                // A folder inside an open folder opens as a menu.
-                showFolderMenu(for: bookmark, relativeTo: itemView)
-            }
-        } else {
-            openBookmark(bookmark)
-        }
+        // Folders open in place (`makeUnit` routes their clicks).
+        guard !bookmark.isFolder else { return }
+        openBookmark(bookmark)
     }
 
-    /// Opens a top-level folder in place, or shuts it.
-    private func toggleFolder(_ folder: Bookmark) {
-        if openFolderGuids.contains(folder.guid) {
-            openFolderGuids.remove(folder.guid)
+    /// Opens a folder in place, or shuts it. Nothing is rebuilt: the
+    /// folder's bookmarks are laid out at rest behind a clip that widens or
+    /// narrows on the same clock as the zone and the tabs after it, and they
+    /// fade in or out as it does.
+    private func toggleFolder(_ group: BookmarkFolderGroupView) {
+        let opening = !group.isOpen
+        let guid = group.folderItem.bookmark.guid
+        if opening {
+            openFolderGuids.insert(guid)
+            // Built and laid out at rest behind the shut clip before anything
+            // moves, so the bookmarks slide out from behind the folder
+            // instead of flying in from nowhere.
+            group.setOpen(true)
+            group.setContentShown(false)
+            group.layoutSubtreeIfNeeded()
+            refreshFolderWidths()
         } else {
-            openFolderGuids.insert(folder.guid)
+            openFolderGuids.remove(guid)
+            group.setOpen(false)
+            refreshFolderWidths()
         }
+
+        let animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         isTogglingFolder = true
-        updateBookmarks(bookmarks)
+        reportPreferredWidth()
         isTogglingFolder = false
-        // The newly shown bookmarks fade up as the zone widens.
-        if let group = stackView.arrangedSubviews.lazy
-            .compactMap({ $0 as? BookmarkFolderGroupView })
-            .first(where: { $0.folderItem.bookmark.guid == folder.guid }),
-           !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-            group.childItems.forEach { $0.alphaValue = 0 }
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.22
-                group.childItems.forEach { $0.animator().alphaValue = 1 }
-            }
+        guard animates else {
+            group.setContentShown(opening)
+            return
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = BookmarkFolderGroupView.toggleDuration
+            context.timingFunction = BookmarkFolderGroupView.toggleTiming
+            group.setContentShown(opening, animated: true)
         }
     }
 
     private func openBookmark(_ bookmark: Bookmark) {
         state.openBookmark(bookmark)
-    }
-
-    private func showFolderMenu(for folder: Bookmark, relativeTo itemView: NSView) {
-        let menu = createMenu(for: folder)
-        let origin = NSPoint(x: 0, y: -6)
-        menu.popUp(positioning: nil, at: origin, in: itemView)
     }
 
     @objc private func menuItemClicked(_ sender: NSMenuItem) {
@@ -719,37 +755,91 @@ class BookmarkBar: NSView {
     }
 }
 
-/// An open folder in the bar: its pill and its bookmarks in one rounded
-/// wash, so where the folder ends reads at a glance.
+/// A folder in the bar: its pill and, while it is open, its bookmarks
+/// beside it in one wash. Folders inside it are groups of their own and open
+/// the same way. Its bookmarks are built the first time it opens and kept,
+/// laid out at rest behind a clip; opening and shutting only change the
+/// clip's width (`updateWidths`), which the bar animates with the zone, and
+/// fade the bookmarks and the wash (`setContentShown`).
 final class BookmarkFolderGroupView: NSView {
+    /// The wash's margin beside the pills; above and below it is half that,
+    /// so a top-level folder fills the row's 28pt.
     static let inset: CGFloat = 2
+    static let pillHeight: CGFloat = 26
+    static let toggleDuration: TimeInterval = 0.22
+    static let toggleTiming = CAMediaTimingFunction(controlPoints: 0.2, 0.8, 0.2, 1)
+
     let folderItem: BookmarkItemView
-    let childItems: [BookmarkItemView]
     private let spacing: CGFloat
-    private let stack = NSStackView()
+    private let makeUnit: (Bookmark) -> NSView
+    private(set) var isOpen = false
+    /// The folder's bookmarks and folders, once built.
+    private(set) var units: [NSView] = []
+    private var hasBuiltUnits = false
 
-    var items: [BookmarkItemView] { [folderItem] + childItems }
+    private let wash = NSView()
+    private let clip = NSView()
+    private let childStack = NSStackView()
+    private var leadingPad: NSLayoutConstraint!
+    private var trailingPad: NSLayoutConstraint!
+    private var clipWidth: NSLayoutConstraint!
 
-    init(folderItem: BookmarkItemView, childItems: [BookmarkItemView], spacing: CGFloat) {
+    /// Every pill built in this folder, its own included.
+    var allItems: [BookmarkItemView] {
+        [folderItem] + units.flatMap { unit -> [BookmarkItemView] in
+            if let item = unit as? BookmarkItemView { return [item] }
+            return (unit as? BookmarkFolderGroupView)?.allItems ?? []
+        }
+    }
+
+    init(folderItem: BookmarkItemView, spacing: CGFloat, isNested: Bool,
+         makeUnit: @escaping (Bookmark) -> NSView) {
         self.folderItem = folderItem
-        self.childItems = childItems
         self.spacing = spacing
+        self.makeUnit = makeUnit
         super.init(frame: .zero)
-        wantsLayer = true
-        layer?.cornerRadius = 10
-        layer?.cornerCurve = .continuous
-        stack.orientation = .horizontal
-        stack.alignment = .centerY
-        stack.spacing = spacing
-        stack.detachesHiddenViews = true
-        items.forEach { stack.addArrangedSubview($0) }
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
+        translatesAutoresizingMaskIntoConstraints = false
+
+        wash.wantsLayer = true
+        wash.layer?.cornerRadius = isNested ? 8 : 10
+        wash.layer?.cornerCurve = .continuous
+        wash.alphaValue = 0
+        wash.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(wash)
+
+        folderItem.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(folderItem)
+
+        clip.wantsLayer = true
+        clip.layer?.masksToBounds = true
+        clip.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(clip)
+
+        childStack.orientation = .horizontal
+        childStack.alignment = .centerY
+        childStack.spacing = spacing
+        childStack.translatesAutoresizingMaskIntoConstraints = false
+        clip.addSubview(childStack)
+
+        leadingPad = folderItem.leadingAnchor.constraint(equalTo: leadingAnchor)
+        trailingPad = trailingAnchor.constraint(equalTo: clip.trailingAnchor)
+        clipWidth = clip.widthAnchor.constraint(equalToConstant: 0)
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Self.inset),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Self.inset),
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: Self.inset),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.inset),
+            heightAnchor.constraint(equalToConstant: Self.pillHeight + (isNested ? 0 : Self.inset)),
+            wash.leadingAnchor.constraint(equalTo: leadingAnchor),
+            wash.trailingAnchor.constraint(equalTo: trailingAnchor),
+            wash.topAnchor.constraint(equalTo: topAnchor),
+            wash.bottomAnchor.constraint(equalTo: bottomAnchor),
+            leadingPad,
+            folderItem.centerYAnchor.constraint(equalTo: centerYAnchor),
+            folderItem.heightAnchor.constraint(equalToConstant: Self.pillHeight),
+            clip.leadingAnchor.constraint(equalTo: folderItem.trailingAnchor),
+            clip.topAnchor.constraint(equalTo: topAnchor),
+            clip.bottomAnchor.constraint(equalTo: bottomAnchor),
+            clipWidth,
+            trailingPad,
+            childStack.leadingAnchor.constraint(equalTo: clip.leadingAnchor, constant: spacing),
+            childStack.centerYAnchor.constraint(equalTo: clip.centerYAnchor),
         ])
         updateWash()
     }
@@ -758,25 +848,74 @@ final class BookmarkFolderGroupView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// Opens or shuts the folder: builds its bookmarks the first time and
+    /// marks its pill. Widths follow on `updateWidths`.
+    func setOpen(_ open: Bool) {
+        if open, !hasBuiltUnits {
+            hasBuiltUnits = true
+            units = folderItem.bookmark.children.map(makeUnit)
+            for unit in units {
+                unit.translatesAutoresizingMaskIntoConstraints = false
+                childStack.addArrangedSubview(unit)
+                if unit is BookmarkItemView {
+                    unit.heightAnchor.constraint(equalToConstant: Self.pillHeight).isActive = true
+                }
+            }
+        }
+        isOpen = open
+        folderItem.isFolderOpen = open
+    }
+
+    /// Shows or hides the wash and the bookmarks; animated inside the
+    /// caller's animation group.
+    func setContentShown(_ shown: Bool, animated: Bool = false) {
+        let alpha: CGFloat = shown ? 1 : 0
+        let views = [wash] + units
+        for view in views {
+            if animated {
+                view.animator().alphaValue = alpha
+            } else {
+                view.alphaValue = alpha
+            }
+        }
+    }
+
+    /// Sets the clip to the bookmarks' width while open, and to nothing
+    /// while shut; folders inside it first.
+    func updateWidths(showingTitles: Bool) {
+        for case let group as BookmarkFolderGroupView in units {
+            group.updateWidths(showingTitles: showingTitles)
+        }
+        let pad = isOpen ? Self.inset : 0
+        leadingPad.constant = pad
+        trailingPad.constant = pad
+        clipWidth.constant = isOpen ? spacing + childrenWidth(showingTitles: showingTitles) : 0
+    }
+
+    func width(showingTitles: Bool) -> CGFloat {
+        let folderWidth = folderItem.width(showingTitle: showingTitles)
+        guard isOpen else { return folderWidth }
+        return folderWidth + 2 * Self.inset + spacing + childrenWidth(showingTitles: showingTitles)
+    }
+
+    private func childrenWidth(showingTitles: Bool) -> CGFloat {
+        let widths = units.map { unit -> CGFloat in
+            if let item = unit as? BookmarkItemView { return item.width(showingTitle: showingTitles) }
+            return (unit as? BookmarkFolderGroupView)?.width(showingTitles: showingTitles) ?? 0
+        }
+        return widths.reduce(0, +) + spacing * CGFloat(max(0, widths.count - 1))
+    }
+
     /// The wash between and around the pills belongs to the group, not the
     /// window: a press there doesn't move the window, and a quick double
     /// press while the folder opens or shuts doesn't zoom it.
     override func hitTest(_ point: NSPoint) -> NSView? {
         guard let hit = super.hitTest(point) else { return nil }
-        return hit is BookmarkItemView ? hit : self
+        return hit is BookmarkItemView || hit is BookmarkFolderGroupView ? hit : self
     }
 
     override var mouseDownCanMoveWindow: Bool { false }
     override var acceptsFirstResponder: Bool { true }
-
-    func width(showingTitles: Bool) -> CGFloat {
-        let widths = items.map { $0.width(showingTitle: showingTitles) }
-        return Self.inset * 2 + widths.reduce(0, +) + spacing * CGFloat(max(0, widths.count - 1))
-    }
-
-    override var intrinsicContentSize: NSSize {
-        NSSize(width: width(showingTitles: folderItem.showsTitle), height: NSView.noIntrinsicMetric)
-    }
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
@@ -785,7 +924,7 @@ final class BookmarkFolderGroupView: NSView {
 
     private func updateWash() {
         effectiveAppearance.performAsCurrentDrawingAppearance { [self] in
-            layer?.backgroundColor = NSColor.sidebarTabHovered.cgColor
+            wash.layer?.backgroundColor = NSColor.topBarControlFill.cgColor
         }
     }
 }
