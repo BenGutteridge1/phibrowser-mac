@@ -203,6 +203,14 @@ final class KioskLaunchOmniBoxPanelController: NSObject, NSWindowDelegate {
         panel.delegate = self
     }
 
+    /// Fork: draws the panel in `source`'s theme (the address-bar
+    /// shortcut's current Space). The panel is its own window, not a browser
+    /// window, so its views would otherwise resolve the global theme. Call
+    /// before `present`, which puts the views in the window.
+    func pinTheme(_ source: ThemeStateProvider) {
+        backgroundView.subtreeThemeSource = source
+    }
+
     /// `centered` (fork): the address-bar shortcut's placement instead of
     /// Kiosk's top-right one.
     func present(on screen: NSScreen?, centered: Bool = false) {

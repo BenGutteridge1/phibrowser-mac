@@ -57,6 +57,8 @@ extension AppController {
                 }
             }
             ForkAddressBarPanel.current = panel
+            // The current Space's look, not the global theme.
+            panel.pinTheme(host.browserState.themeContext)
             panel.present(on: screen, centered: true)
         }
     }
