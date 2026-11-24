@@ -274,7 +274,7 @@ final class PeekPanelSizeTests: XCTestCase {
         PhiPreferences.GeneralSettings.saveLayoutMode(.comfortable)
         let fixture = try makeSessionWithPeek()
         let page = try XCTUnwrap(fixture.container.currentPageCardView)
-        let bar = try XCTUnwrap(fixture.container.children.compactMap { $0 as? TabStripBarController }.first).view
+        let bar = try XCTUnwrap(fixture.container.children.compactMap { $0 as? TopBarController }.first).view
         let originalPage = screenFrame(of: page)
         let originalBar = screenFrame(of: bar)
         let originalPeek = screenFrame(of: fixture.panel.pageCardView)

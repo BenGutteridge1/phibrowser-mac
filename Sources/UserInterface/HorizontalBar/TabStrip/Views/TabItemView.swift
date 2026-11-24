@@ -414,6 +414,20 @@ final class TabItemView: NSView {
 
     // MARK: - Layout
 
+    /// Grown to its titled width under the pointer (`TabStrip`'s hover
+    /// expansion). It clips to its rounded bounds while it is, so its title
+    /// and close button are revealed as the frame grows rather than drawn
+    /// at the full width at once. Its corner badge is clipped meanwhile.
+    private var isHoverExpanded = false
+
+    func setHoverExpanded(_ expanded: Bool) {
+        guard isHoverExpanded != expanded else { return }
+        isHoverExpanded = expanded
+        layer?.cornerRadius = expanded ? TabStripMetrics.Tab.cornerRadius : 0
+        layer?.cornerCurve = .continuous
+        layer?.masksToBounds = expanded
+    }
+
     override func layout() {
         super.layout()
 

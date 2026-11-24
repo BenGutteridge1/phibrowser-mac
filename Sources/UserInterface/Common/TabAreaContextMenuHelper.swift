@@ -66,7 +66,9 @@ final class TabAreaContextMenuHelper: NSObject {
         appendActiveSpaceItems(to: menu, includesEditTheme: true)
 
         menu.addItem(.separator())
-        if !isHorizontalLayout {
+        // Comfortable's top bar has the sidebar header's buttons and the
+        // sidebar's own address bar, so it takes both submenus too.
+        do {
             let topButtonsItem = NSMenuItem(
                 title: NSLocalizedString("common.tabAreaContextMenu.topButtonsSubmenu", value: "Top Buttons", comment: "Tab area context menu - Submenu to choose which buttons the sidebar header shows"),
                 action: nil,
@@ -205,13 +207,13 @@ final class TabAreaContextMenuHelper: NSObject {
 
     // MARK: - Private
 
-    /// The sidebar header's buttons. Search Tabs is listed only in the layout
-    /// whose header shows it, and Back, Forward and Reload only in the one
-    /// whose header holds them.
+    /// The sidebar header's buttons, which Comfortable's top bar shares. Search
+    /// Tabs is listed only in the layout whose header shows it, and Back,
+    /// Forward and Reload only in the ones whose header or bar holds them.
     private func buildTopButtonsSubmenu() -> NSMenu {
         typealias Setting = PhiPreferences.GeneralSettings
         var entries: [(Setting, String)] = []
-        if browserState?.layoutMode == .performance {
+        if browserState?.layoutMode == .performance || browserState?.layoutMode == .comfortable {
             entries.append((.sidebarHeaderShowsBack,
                             NSLocalizedString("common.tabAreaContextMenu.topButtons.back", value: "Back", comment: "Tab area context menu - Top Buttons submenu item that shows or hides the sidebar header's Back button")))
             entries.append((.sidebarHeaderShowsForward,
@@ -223,8 +225,9 @@ final class TabAreaContextMenuHelper: NSObject {
             entries.append((.sidebarHeaderShowsSearchTabs,
                             NSLocalizedString("common.tabAreaContextMenu.topButtons.searchTabs", value: "Search Tabs", comment: "Tab area context menu - Top Buttons submenu item that shows or hides the sidebar header's Search Tabs button")))
         }
-        entries.append((.sidebarHeaderShowsSidebarToggle,
-                        NSLocalizedString("common.tabAreaContextMenu.topButtons.sidebarToggle", value: "Toggle Sidebar", comment: "Tab area context menu - Top Buttons submenu item that shows or hides the sidebar header's button that shows or hides the sidebar")))
+        entries.append((.sidebarHeaderShowsSidebarToggle, browserState?.layoutMode == .comfortable
+            ? NSLocalizedString("common.tabAreaContextMenu.topButtons.hideTopBar", value: "Hide Top Bar", comment: "Tab area context menu - Top Buttons submenu item, in the Comfortable layout, that shows or hides the top bar's button that hides the top bar")
+            : NSLocalizedString("common.tabAreaContextMenu.topButtons.sidebarToggle", value: "Toggle Sidebar", comment: "Tab area context menu - Top Buttons submenu item that shows or hides the sidebar header's button that shows or hides the sidebar")))
         return buildToggleSubmenu(entries)
     }
 

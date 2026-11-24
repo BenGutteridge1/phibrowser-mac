@@ -8,8 +8,11 @@ import AppKit
 enum TabStripMetrics {
     // Global constants for the tab strip container.
     enum Strip {
-        static let tabHeight: CGFloat = 32
-        static let bottomSpacing: CGFloat = 4
+        /// Tabs are 28pt pills centered in the 40pt top bar: the strip's
+        /// tab container sits on the bar's bottom edge, `bottomSpacing` below
+        /// the pills.
+        static let tabHeight: CGFloat = 28
+        static let bottomSpacing: CGFloat = 6
         static let height: CGFloat = tabHeight + bottomSpacing
         static let insets = NSEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
         static let backgroundColor = NSColor.clear
@@ -92,9 +95,11 @@ enum TabStripMetrics {
     }
 
     enum NewTabButton {
-        static let size: CGSize = CGSize(width: 32, height: 32)
+        /// As tall as the tab pills, with their corners, so its hover plate
+        /// lines up with them in the top bar.
+        static let size: CGSize = CGSize(width: 28, height: Strip.tabHeight)
         static let insets = NSEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
-        static let cornerRadius: CGFloat = 4
+        static let cornerRadius: CGFloat = Tab.cornerRadius
     }
 
     // MARK: - Active-tab outline geometry

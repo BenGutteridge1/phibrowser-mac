@@ -4012,12 +4012,10 @@ extension PhiChromiumCoordinator {
     }
 
     // Synchronous query from Chromium's context-menu build: "Open Link in
-    // Peek View" is offered only while the Peek feature toggle (Settings ›
-    // General) is on and a sidebar layout is active — Peek is a
-    // sidebar-layout surface.
+    // Peek View" is offered while the Peek feature toggle (Settings ›
+    // General) is on, in every layout.
     func isPeekLinkSurfaceEnabled() -> Bool {
         PhiPreferences.GeneralSettings.peekViewEnabled.loadValue()
-            && !PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
     }
 
     // Synchronous query from Chromium as it creates the new foreground tab of

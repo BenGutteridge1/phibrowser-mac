@@ -237,12 +237,6 @@ extension BrowserState {
 
         localStore.updateLastSeen(bookmark.guid)
         if bookmark.secondaryUrl?.isEmpty == false {
-            if layoutMode.isTraditional {
-                detachBookmarkTabsForComfortableLayout(bookmarkGuids: [bookmark.guid])
-                openURLsAsSplit(bookmark.splitPaneURLs,
-                                layout: bookmark.layout ?? .vertical)
-                return
-            }
             if let splitId = splitBookmarkBindings[bookmark.guid],
                let group = splits.first(where: { $0.id == splitId }),
                let primaryTab = tabs.first(where: { $0.guid == group.firstTabId }),
@@ -261,12 +255,6 @@ extension BrowserState {
 
         guard let realBookmark = bookmarkManager.bookmark(withGuid: bookmark.guid) else {
             createTab(url, customGuid: nil, focusAfterCreate: true)
-            return
-        }
-
-        if layoutMode.isTraditional {
-            detachBookmarkTabsForComfortableLayout(bookmarkGuids: [realBookmark.guid])
-            createTab(URLProcessor.processUserInput(url), customGuid: nil, focusAfterCreate: true)
             return
         }
 
@@ -578,8 +566,8 @@ extension BrowserState {
 
     /// Binds a split a session restore is bringing back to the bookmark it
     /// was bound to: when the previous run ended, or, for a window closed and
-    /// reopened without a quit, when that window closed. A split restored in
-    /// the comfortable layout, whose bookmark is gone, or whose bookmark
+    /// reopened without a quit, when that window closed. A split whose
+    /// bookmark is gone, or whose bookmark
     /// already holds another split in this window, stays a normal split;
     /// `handleSplitCreated` then drops its saved binding.
     func bindRestoredSplitToItsBookmark(splitId: String) {
@@ -590,7 +578,7 @@ extension BrowserState {
         guard let bookmarkGuid = savedSplitBookmarkBindings[splitId] ?? fromPreviousRun else { return }
         let isBookmarkGone = bookmarkManager.didApplyFirstStoreDelivery
             && bookmarkManager.bookmark(withGuid: bookmarkGuid) == nil
-        guard !layoutMode.isTraditional, !isBookmarkGone,
+        guard !isBookmarkGone,
               splitBookmarkBindings[bookmarkGuid] == nil else { return }
         if !bookmarkManager.didApplyFirstStoreDelivery {
             // The bookmarks are not loaded yet: bind now so the panes never

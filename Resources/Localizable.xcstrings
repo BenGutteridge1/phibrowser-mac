@@ -23040,6 +23040,18 @@
         }
       }
     },
+    "app.viewMenu.toggleTopBar" : {
+      "comment" : "View menu - Menu item, in the Comfortable layout, that shows or hides the top bar",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Toggle Top Bar"
+          }
+        }
+      }
+    },
     "autoplay.menu.control" : {
       "comment" : "Autoplay menu - turns autoplay control on or off",
       "extractionState" : "extracted_with_value",
@@ -32428,6 +32440,42 @@
         }
       }
     },
+    "browser.topBar.moreMenu.cardsAction" : {
+      "comment" : "Comfortable layout top bar - Menu item, shown when the bar is short of room, that opens the latest notification cards",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cards"
+          }
+        }
+      }
+    },
+    "browser.topBar.moreMenu.chatAction" : {
+      "comment" : "Comfortable layout top bar - Menu item, shown when the bar is short of room, that opens the AI chat",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chat"
+          }
+        }
+      }
+    },
+    "browser.topBar.toggleButton.accessibilityLabel" : {
+      "comment" : "Comfortable layout top bar - Tooltip and accessibility label of the button that hides the top bar",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide Top Bar"
+          }
+        }
+      }
+    },
     "browser.webContentAddressBar.copyURLTooltip" : {
       "comment" : "Copy URL shortcut tooltip title",
       "extractionState" : "extracted_with_value",
@@ -39960,6 +40008,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前進"
+          }
+        }
+      }
+    },
+    "common.tabAreaContextMenu.topButtons.hideTopBar" : {
+      "comment" : "Tab area context menu - Top Buttons submenu item, in the Comfortable layout, that shows or hides the top bar's button that hides the top bar",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide Top Bar"
           }
         }
       }
@@ -136116,66 +136176,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用 AI 整理分頁"
-          }
-        }
-      }
-    },
-    "toolbar.searchTabs.accessibilityLabel" : {
-      "comment" : "Search Tabs - Button tooltip and accessibility label",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tabs suchen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Search Tabs"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Buscar pestañas"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rechercher des onglets"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "タブを検索"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "탭 검색"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Doorzoek tabbladen"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "搜索标签页"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "搜尋分頁"
           }
         }
       }

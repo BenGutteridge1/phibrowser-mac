@@ -168,20 +168,32 @@ final class TabBackgroundLayer: CAShapeLayer {
             return
         }
 
+        // The sidebar's row surfaces: the selected-row plate for the active
+        // tab and its hover wash, so tabs read the same over any theme
+        // transparency.
         switch tabState {
             case .active:
-                setFill((activeFillColor
-                    ?? ThemedColor.extensionSurfaceBackground.resolve(in: sourceView)).cgColor)
+                setFill(Self.resolved(.sidebarTabSelected, in: sourceView))
             case .subSelected:
                 setFill(ThemedColor.tabSubSelectionBackground.resolve(in: sourceView).cgColor)
             case .hovered:
-                setFill(ThemedColor.hover.resolve(in: sourceView).cgColor)
+                setFill(Self.resolved(.sidebarTabHoveredColorEmphasized, in: sourceView))
             case .inactive:
                 setFill(NSColor.clear.cgColor)
         }
         strokeColor = NSColor.clear.cgColor
         lineWidth = 0
         CATransaction.commit()
+    }
+
+    /// Resolves a dynamic sidebar color under the view's appearance: layers
+    /// don't follow appearance changes on their own.
+    private static func resolved(_ color: NSColor, in view: NSView?) -> CGColor {
+        var cgColor = color.cgColor
+        (view?.effectiveAppearance ?? NSApp.effectiveAppearance).performAsCurrentDrawingAppearance {
+            cgColor = color.cgColor
+        }
+        return cgColor
     }
 
     func refreshAppearance() {
@@ -202,22 +214,9 @@ final class TabBackgroundLayer: CAShapeLayer {
                                    position: position)
         }
 
-        if isPinned || state != .active {
-            return NSBezierPath(roundedRect: bounds, xRadius: cornerRadius, yRadius: cornerRadius).cgPath
-        }
-
-        // Active normal tab: outer outline traced by the shared helper, then
-        // closed along the apex y so the fill region matches the original path.
-        let path = CGMutablePath()
-        TabStripMetrics.appendActiveTabOutline(
-            to: path,
-            leftX: 0,
-            rightX: bounds.width,
-            apexY: -TabStripMetrics.Strip.bottomSpacing,
-            tabTopY: bounds.height
-        )
-        path.closeSubpath()
-        return path
+        // Every tab is a pill in the top bar, the active one included: it
+        // sits on the bar like a sidebar row, not joined to the page.
+        return NSBezierPath(roundedRect: bounds, xRadius: cornerRadius, yRadius: cornerRadius).cgPath
     }
 
     /// Segment path for a split pane: round the corners on the bar's outer

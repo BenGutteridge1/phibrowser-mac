@@ -40,6 +40,29 @@ class MainSplitViewController: NSViewController, BrowserThemeContextProviding {
         return item.viewController.view.frame.width
     }
 
+    /// Comfortable: whether this window's top bar is hidden (⌘S). Hosted
+    /// windows keep it on the shell, standalone ones here.
+    @Published private var standaloneTopBarHidden = ForkSettings.topBarHidden
+
+    var isTopBarHidden: Bool {
+        isHosted ? (shellSplit?.isTopBarHidden ?? false) : standaloneTopBarHidden
+    }
+
+    var topBarHiddenPublisher: AnyPublisher<Bool, Never> {
+        if isHosted, let shellSplit { return shellSplit.topBarHiddenPublisher }
+        return $standaloneTopBarHidden.removeDuplicates().eraseToAnyPublisher()
+    }
+
+    func setTopBarHidden(_ hidden: Bool) {
+        if isHosted {
+            shellSplit?.setTopBarHidden(hidden)
+            return
+        }
+        guard standaloneTopBarHidden != hidden else { return }
+        standaloneTopBarHidden = hidden
+        ForkSettings.topBarHidden = hidden
+    }
+
     var sidebarCollapsedPublisher: AnyPublisher<Bool, Never> {
         if isHosted, let shellSplit { return shellSplit.sidebarCollapsedPublisher }
         return sidebarGeometryChanges
@@ -66,6 +89,7 @@ class MainSplitViewController: NSViewController, BrowserThemeContextProviding {
     func useMediaController(_ controller: SidebarMediaController) {
         guard sidebarMediaController !== controller else { return }
         sidebarMediaController = controller
+        webContentContainerViewController.mediaController = controller
         verticalTabListViewController.useMediaController(controller)
         floatingSidebarContent.useMediaController(controller)
     }
@@ -99,6 +123,7 @@ class MainSplitViewController: NSViewController, BrowserThemeContextProviding {
         self.isHosted = hosted
         self.webContentContainerViewController = WebContentContainerViewController(state: state)
         super.init(nibName: nil, bundle: nil)
+        webContentContainerViewController.mediaController = sidebarMediaController
     }
 
     required init?(coder: NSCoder) {
@@ -256,8 +281,11 @@ class MainSplitViewController: NSViewController, BrowserThemeContextProviding {
     }
 
     func toggleSidebar(_ sender: Any?) {
-        // Sidebar is always collapsed in traditional layout.
-        guard !PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional else { return }
+        // Comfortable has no sidebar column: the shortcut hides the top bar.
+        if PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional {
+            setTopBarHidden(!isTopBarHidden)
+            return
+        }
         if isHosted {
             shellSplit?.toggleSidebar()
             return

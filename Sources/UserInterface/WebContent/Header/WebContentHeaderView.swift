@@ -219,7 +219,7 @@ struct WebContentHeaderView: View {
     }
 }
 
-private struct RefreshStopNavigationButton: View {
+struct RefreshStopNavigationButton: View {
     let isProgressVisible: Bool
     let onRefreshTap: () -> Void
     let onStopLoadingTap: () -> Void

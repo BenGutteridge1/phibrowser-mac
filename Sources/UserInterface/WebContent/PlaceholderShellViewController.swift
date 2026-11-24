@@ -182,12 +182,13 @@ final class PlaceholderShellViewController: NSViewController {
         let navigationAtTop = layoutMode.showsNavigationAtTop
         let traditionalLayout = layoutMode.isTraditional
 
-        if traditionalLayout || navigationAtTop {
+        if navigationAtTop && !traditionalLayout {
             headerView.isHidden = false
             headerHeightConstraint?.update(offset: WebContentConstant.headerHeight)
         } else {
-            // .performance — address bar lives in the sidebar; hide the
-            // shell's header (would otherwise duplicate the sidebar address).
+            // .performance — address bar lives in the sidebar; Comfortable —
+            // in the top bar. Hide the shell's header (would otherwise
+            // duplicate the address bar).
             headerView.isHidden = true
             headerHeightConstraint?.update(offset: 0)
         }

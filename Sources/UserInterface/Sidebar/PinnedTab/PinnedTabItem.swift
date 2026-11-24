@@ -252,7 +252,9 @@ class PinnedTabItem: NSCollectionViewItem, NSMenuDelegate {
                ForkPinnedLivePreview.controller(for: state).hoverChanged(isHovered, tab: tab, anchor: self.view) {
                 return
             }
-            self.tabPreviewRegistration.setHovering(isHovered)
+            // Fork: otherwise a pinned tab shows nothing on hover — no tab
+            // preview card and no title tooltip — so nothing covers what is
+            // under it. Its title stays in the accessibility label.
         }
         tabPreviewRegistration.onEligibilityChanged = { [weak self] isEligible in
             self?.showsTabPreview = isEligible
@@ -595,12 +597,9 @@ class PinnedTabItem: NSCollectionViewItem, NSMenuDelegate {
         }
     }
 
+    /// Fork: pinned tabs show no tooltip (see the hover handler).
     private func updateToolTip() {
-        guard let tab, !showsTabPreview else {
-            view.toolTip = nil
-            return
-        }
-        view.toolTip = "\(tab.title)\n\(tab.url ?? "")"
+        view.toolTip = nil
     }
 
     func cancelTabPreviewForInteraction() {

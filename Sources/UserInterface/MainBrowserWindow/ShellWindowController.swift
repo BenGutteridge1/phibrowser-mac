@@ -547,8 +547,8 @@ final class ShellWindowController: NSObject, NSWindowDelegate {
         trafficLightPositioner?.stop(restoringPlacement: true)
         let positioner = TrafficLightPositioner(
             window: window,
-            centerFromWindowTop: layout.sidebarOnRight ? FloatingTrafficLightMetrics.bandHeight / 2 : SpaceSessionController.chromeRowCenter(for: layoutMode, edgeToEdgeEnabled: layout.edgeToEdgeEnabled),
-            centerFromWindowLeading: layout.sidebarOnRight ? 20 : (layoutMode == .balanced ? 22 : nil)
+            centerFromWindowTop: layout.sidebarOnRight ? FloatingTrafficLightMetrics.bandHeight / 2 : SpaceSessionController.chromeRowCenter(for: layoutMode, edgeToEdgeEnabled: layout.edgeToEdgeEnabled, topBarHidden: layout.topBarHidden),
+            centerFromWindowLeading: SpaceSessionController.chromeRowLeading(for: layout)
         )
         trafficLightPositioner = positioner
         trafficLightLayout = layout

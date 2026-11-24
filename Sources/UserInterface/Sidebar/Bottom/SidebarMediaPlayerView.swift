@@ -34,6 +34,14 @@ final class SidebarMediaHostingView: ThemedHostingView {
 
     override var mouseDownCanMoveWindow: Bool { false }
 
+    /// The top bar's player sits in titlebar space, whose safe-area inset
+    /// would push it below the bar.
+    var ignoresSafeAreaInsets = false
+
+    override var safeAreaInsets: NSEdgeInsets {
+        ignoresSafeAreaInsets ? NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) : super.safeAreaInsets
+    }
+
     /// Update the actual host bounds so SwiftUI lays out every animation frame.
     /// Layer-only resizing can leave the hosted content at its final size.
     func animateHeight(to height: CGFloat, update: @escaping (CGFloat) -> Void) {
@@ -269,6 +277,8 @@ struct SidebarMediaPlayerView: View {
 
     @ObservedObject var controller: SidebarMediaController
     let surface: SidebarMediaController.Surface
+    /// Top bar only: previous, next and volume, which a narrow bar drops.
+    var showsTrackControls = true
     @Environment(\.phiTheme) private var theme
     @Environment(\.phiAppearance) private var appearance
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -293,6 +303,34 @@ struct SidebarMediaPlayerView: View {
     }
 
     var body: some View {
+        if surface.kind == .topBar {
+            topBarBody
+        } else {
+            sidebarBody
+        }
+    }
+
+    /// The Comfortable top bar's player: the compact transport row alone, at
+    /// the bar's size. It never expands.
+    @ViewBuilder
+    private var topBarBody: some View {
+        if let item = controller.item, controller.isEnabled,
+           !controller.isRevalidating,
+           !controller.isSourceVisible, !controller.isDismissed {
+            transportRow(item)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color(.sidebarTabHovered)))
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("sidebarMedia.card")
+                .allowsHitTesting(controller.activeSurface == surface)
+                .accessibilityHidden(controller.activeSurface != surface)
+                .onChange(of: controller.activeSurface) { _, activeSurface in
+                    if activeSurface != surface { resetInteraction() }
+                }
+                .onDisappear { resetInteraction() }
+        }
+    }
+
+    private var sidebarBody: some View {
         Group {
             // Resident cards keep drawing while the active sidebar changes.
             if let item = controller.item, controller.isEnabled,
@@ -454,7 +492,9 @@ struct SidebarMediaPlayerView: View {
     /// Keep the transport in one view at the card's bottom so the buttons do
     /// not move or change identity when pointer hover reveals the details.
     private func transportRow(_ item: SidebarMediaController.Item) -> some View {
-        HStack(spacing: 4) {
+        let isTopBar = surface.kind == .topBar
+        let showsTrackControls = !isTopBar || self.showsTrackControls
+        return HStack(spacing: 4) {
             Button(action: {
                 SidebarMediaAnalytics.capture("show_tab")
                 controller.showTab(for: item, from: surface)
@@ -477,37 +517,46 @@ struct SidebarMediaPlayerView: View {
 
             Spacer(minLength: 0)
             HStack(spacing: 2) {
-                controlButton("backward.end.fill", label: previousTrackLabel,
-                              enabled: item.playback.canPreviousTrack) {
-                    SidebarMediaAnalytics.capture("previous_track")
-                    controller.perform(.previousTrack, for: item, from: surface)
+                if showsTrackControls {
+                    controlButton("backward.end.fill", label: previousTrackLabel,
+                                  enabled: item.playback.canPreviousTrack) {
+                        SidebarMediaAnalytics.capture("previous_track")
+                        controller.perform(.previousTrack, for: item, from: surface)
+                    }
+                    .accessibilityIdentifier("sidebarMedia.previousTrack")
                 }
-                .accessibilityIdentifier("sidebarMedia.previousTrack")
                 playPauseButton(item)
-                controlButton("forward.end.fill", label: nextTrackLabel,
-                              enabled: item.playback.canNextTrack) {
-                    SidebarMediaAnalytics.capture("next_track")
-                    controller.perform(.nextTrack, for: item, from: surface)
+                if showsTrackControls {
+                    controlButton("forward.end.fill", label: nextTrackLabel,
+                                  enabled: item.playback.canNextTrack) {
+                        SidebarMediaAnalytics.capture("next_track")
+                        controller.perform(.nextTrack, for: item, from: surface)
+                    }
+                    .accessibilityIdentifier("sidebarMedia.nextTrack")
                 }
-                .accessibilityIdentifier("sidebarMedia.nextTrack")
             }
             Spacer(minLength: 0)
-            controlButton(item.playback.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill",
-                          label: volumeLabel,
-                          enabled: true, isSelected: controller.isVolumeExpanded, action: {
-                              let optionPressed = NSEvent.modifierFlags.contains(.option)
-                              SidebarMediaAnalytics.capture(optionPressed || item.playback.isMuted
-                                  ? "toggle_mute" : "toggle_volume")
-                              controller.volumeButtonClicked(for: item, from: surface,
-                                  optionPressed: optionPressed)
-                          })
-                .frame(width: 24)
-                .accessibilityIdentifier("sidebarMedia.volumeButton")
-                .accessibilityAddTraits(controller.isVolumeExpanded ? .isSelected : [])
-                .accessibilityValue(item.playback.isMuted ? mutedStatusLabel : unmutedStatusLabel)
+            if showsTrackControls {
+                controlButton(item.playback.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill",
+                              label: volumeLabel,
+                              enabled: true, isSelected: controller.isVolumeExpanded, action: {
+                                  // The volume slider opens below the player,
+                                  // which the top bar has no room for: there
+                                  // the button mutes, as Option-click does.
+                                  let optionPressed = NSEvent.modifierFlags.contains(.option) || isTopBar
+                                  SidebarMediaAnalytics.capture(optionPressed || item.playback.isMuted
+                                      ? "toggle_mute" : "toggle_volume")
+                                  controller.volumeButtonClicked(for: item, from: surface,
+                                      optionPressed: optionPressed)
+                              })
+                    .frame(width: 24)
+                    .accessibilityIdentifier("sidebarMedia.volumeButton")
+                    .accessibilityAddTraits(controller.isVolumeExpanded ? .isSelected : [])
+                    .accessibilityValue(item.playback.isMuted ? mutedStatusLabel : unmutedStatusLabel)
+            }
         }
-        .padding(.horizontal, 8)
-        .frame(height: 32)
+        .padding(.horizontal, isTopBar ? 3 : 8)
+        .frame(height: isTopBar ? 28 : 32)
         .contentShape(Rectangle())
         .simultaneousGesture(cardDragGesture(item))
     }

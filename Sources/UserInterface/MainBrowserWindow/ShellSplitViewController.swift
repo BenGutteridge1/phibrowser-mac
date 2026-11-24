@@ -241,6 +241,22 @@ final class ShellSplitViewController: NSViewController {
 
     var isSidebarCollapsed: Bool { sidebarSplitViewItem?.isCollapsed ?? false }
 
+    // MARK: - Top bar
+
+    /// Comfortable: whether the window's top bar is hidden (⌘S). Window
+    /// state, like the sidebar's collapse: it holds across Space switches.
+    @Published private(set) var isTopBarHidden = ForkSettings.topBarHidden
+
+    var topBarHiddenPublisher: AnyPublisher<Bool, Never> {
+        $isTopBarHidden.removeDuplicates().eraseToAnyPublisher()
+    }
+
+    func setTopBarHidden(_ hidden: Bool) {
+        guard isTopBarHidden != hidden else { return }
+        isTopBarHidden = hidden
+        ForkSettings.topBarHidden = hidden
+    }
+
     var sidebarWidth: CGFloat {
         guard let item = sidebarSplitViewItem, !item.isCollapsed else { return 0 }
         return item.viewController.view.frame.width
@@ -635,6 +651,24 @@ final class ShellContentHostViewController: NSViewController, BrowserThemeContex
         view.blendingMode = .behindWindow
         view.autoresizesSubviews = true
         self.view = view
+        followLayoutMode()
+        layoutModeObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.followLayoutMode() }
+        }
+    }
+
+    private var layoutModeObserver: NSObjectProtocol?
+
+    deinit {
+        if let layoutModeObserver { NotificationCenter.default.removeObserver(layoutModeObserver) }
+    }
+
+    /// Comfortable's top bar sits on this backdrop, so the Space's palette
+    /// runs along it, as it runs down the sidebar in the other layouts.
+    private func followLayoutMode() {
+        backdrop.runsPaletteHorizontally = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
     }
 
     /// Points the backdrop at `session`'s theme.

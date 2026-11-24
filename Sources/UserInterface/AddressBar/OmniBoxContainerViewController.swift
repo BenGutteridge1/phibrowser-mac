@@ -493,14 +493,18 @@ final class OmniBoxContainerViewController: NSViewController {
         let anchoredHeight = min(maxOmniBoxHeight, parentBounds.height)
         let actualHeight = min(size.height, anchoredHeight)
 
-        let navigationAtTop = PhiPreferences.GeneralSettings.loadLayoutMode().showsNavigationAtTop
+        let layoutMode = PhiPreferences.GeneralSettings.loadLayoutMode()
+        // Balanced keeps the box to its header address bar's width. The
+        // sidebar's address bar and Comfortable's tab-sized field are too
+        // narrow to type in, so the box grows past them from their leading
+        // edge, over the row, which never lays out again.
+        let matchesAddressWidth = layoutMode == .balanced
 
-        // Keep the legacy layout aligned to the address bar width.
         var actualWidth: CGFloat
-        if navigationAtTop {
+        if matchesAddressWidth {
             actualWidth = min(addressFrameInParent.width, parentBounds.width)
         } else {
-            let minOmniBoxWidth: CGFloat = 460
+            let minOmniBoxWidth: CGFloat = layoutMode.isTraditional ? 560 : 460
             actualWidth = min(max(addressFrameInParent.width, minOmniBoxWidth), parentBounds.width)
             if actualWidth >= minOmniBoxWidth {
                 actualWidth = actualWidth + 2

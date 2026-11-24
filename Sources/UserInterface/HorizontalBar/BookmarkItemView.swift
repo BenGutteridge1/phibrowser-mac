@@ -6,13 +6,14 @@
 import AppKit
 import SnapKit
 import Combine
+import SwiftUI
 
 class BookmarkItemView: NSView {
     // MARK: - Constants
     let maxWidth: CGFloat = 160
     let cornerRadius: CGFloat = 8
 
-    let horizontalPadding: CGFloat = 6
+    let horizontalPadding: CGFloat = 7
     let spacing: CGFloat = 4
     let faviconSize: CGFloat = 16
 
@@ -24,6 +25,14 @@ class BookmarkItemView: NSView {
     private var secondaryFaviconLoadHandle: ProfileScopedFaviconLoadHandle?
     // Reports the clicked bookmark to the container view.
     var onClick: ((Bookmark) -> Void)?
+    /// Reports a change of width (a title arriving or changing), so the bar
+    /// can size itself to its pills.
+    var onWidthChange: (() -> Void)?
+
+    override func invalidateIntrinsicContentSize() {
+        super.invalidateIntrinsicContentSize()
+        onWidthChange?()
+    }
 
     // Tracks hover state for background updates.
     private var isHovered = false {
@@ -31,6 +40,74 @@ class BookmarkItemView: NSView {
             updateAppearance()
         }
     }
+
+    /// The top bar drops Space pins' titles when it is short of room; the
+    /// pill then keeps its favicons alone.
+    var showsTitle = true {
+        didSet {
+            guard showsTitle != oldValue else { return }
+            titleLabel.isHidden = !showsTitle
+            invalidateIntrinsicContentSize()
+        }
+    }
+
+    /// The bookmark's tab is the one on screen: the pill wears the sidebar's
+    /// selected-row plate.
+    private var isActive = false {
+        didSet { if isActive != oldValue { updateAppearance() } }
+    }
+
+    /// Folders only: the folder is open in the bar, its bookmarks beside it.
+    var isFolderOpen = false {
+        didSet {
+            guard isFolderOpen != oldValue else { return }
+            updateFolderIcon()
+        }
+    }
+
+    /// The folder icon's host. In the top bar it sits in the window's
+    /// titlebar band, whose safe-area inset would push the icon down out of
+    /// its 16pt box, so it ignores safe areas.
+    private final class FolderIconHostingView: ThemedHostingView {
+        override var safeAreaInsets: NSEdgeInsets { NSEdgeInsets() }
+    }
+
+    private var folderIconHost: ThemedHostingView?
+
+    private func mountFolderIcon() {
+        guard folderIconHost == nil else { return }
+        let host = FolderIconHostingView(rootView: folderIconContent)
+        host.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(host)
+        NSLayoutConstraint.activate([
+            host.centerXAnchor.constraint(equalTo: faviconImageView.centerXAnchor),
+            host.centerYAnchor.constraint(equalTo: faviconImageView.centerYAnchor),
+            host.widthAnchor.constraint(equalToConstant: faviconSize),
+            host.heightAnchor.constraint(equalToConstant: faviconSize),
+        ])
+        faviconImageView.isHidden = true
+        folderIconHost = host
+    }
+
+    private var folderIconContent: some View {
+        BookmarkFolderIconView(icon: BookmarkFolderIcon.resolve(bookmark.folderIconName),
+                               isExpanded: isFolderOpen)
+            .frame(width: faviconSize, height: faviconSize)
+            .allowsHitTesting(false)
+    }
+
+    private func updateFolderIcon() {
+        folderIconHost?.setThemedContent(folderIconContent)
+    }
+
+    /// A dot under the favicon while the bookmark has a tab open.
+    private lazy var openIndicator: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.cornerRadius = 2
+        view.isHidden = true
+        return view
+    }()
 
     // Drag gesture state.
     private var mouseDownPoint: CGPoint?
@@ -119,12 +196,30 @@ class BookmarkItemView: NSView {
 
     // MARK: - Data Binding
     private func bindData() {
+        bookmark.$isActive
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] active in self?.isActive = active }
+            .store(in: &cancellables)
+        bookmark.$isOpened
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] opened in self?.openIndicator.isHidden = !opened }
+            .store(in: &cancellables)
         if bookmark.isFolder {
-            self.faviconImageView.image = NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
+            // The sidebar's folder icon, in the Space's colours, opening and
+            // closing with the folder.
+            mountFolderIcon()
+            bookmark.$folderIconName
+                .removeDuplicates()
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in self?.updateFolderIcon() }
+                .store(in: &cancellables)
             bookmark.$title
                 .receive(on: DispatchQueue.main)
                 .sink { [weak self] title in
                     self?.titleLabel.stringValue = title
+                    self?.invalidateIntrinsicContentSize()
                 }
                 .store(in: &cancellables)
             return
@@ -318,12 +413,20 @@ class BookmarkItemView: NSView {
         }
     }
 
+    /// The sidebar's pinned-tile surfaces: a resting wash, a stronger one
+    /// under the pointer, and the selected-row plate for the bookmark on screen.
     private func updateAppearance() {
-        if isHovered {
-            layer?.backgroundColor = ThemedColor.hover.resolve(in: self).cgColor
-        } else {
-            layer?.backgroundColor = NSColor.clear.cgColor
+        let color: NSColor = isActive ? .sidebarTabSelected
+            : (isHovered ? .sidebarTabHoveredColorEmphasized : .sidebarTabHovered)
+        effectiveAppearance.performAsCurrentDrawingAppearance { [self] in
+            layer?.backgroundColor = color.cgColor
+            openIndicator.layer?.backgroundColor = NSColor.secondaryLabelColor.cgColor
         }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateAppearance()
     }
 
     // MARK: - Setup
@@ -336,6 +439,12 @@ class BookmarkItemView: NSView {
         addSubview(secondaryFaviconImageView)
         extraFaviconImageViews.forEach { addSubview($0) }
         addSubview(titleLabel)
+        addSubview(openIndicator)
+        openIndicator.snp.makeConstraints { make in
+            make.centerX.equalTo(faviconImageView)
+            make.bottom.equalToSuperview().offset(-2)
+            make.width.height.equalTo(4)
+        }
 
         faviconImageView.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(self.horizontalPadding)
@@ -376,7 +485,7 @@ class BookmarkItemView: NSView {
             // and collapses back when the secondary is hidden via the
             // intrinsic-size update below.
             make.leading.equalTo(rightmostFavicon.snp.trailing).offset(self.spacing)
-            make.trailing.equalToSuperview().offset(-1 * self.horizontalPadding)
+            make.trailing.equalToSuperview().offset(-1 * self.horizontalPadding).priority(.high)
             make.centerY.equalToSuperview()
         }
 
@@ -459,13 +568,19 @@ class BookmarkItemView: NSView {
     }
 
     override var intrinsicContentSize: NSSize {
+        NSSize(width: width(showingTitle: showsTitle), height: NSView.noIntrinsicMetric)
+    }
+
+    /// The pill's width with or without its title, without changing it.
+    func width(showingTitle: Bool) -> CGFloat {
         let titleWidth = titleLabel.intrinsicContentSize.width
         // Secondary favicon adds 2pt gap + 16pt icon when it's visible.
         let secondaryFaviconWidth: CGFloat = isShowingSecondaryFavicon ? (2 + self.faviconSize) : 0
         // Each further pane's favicon adds the same.
         let extraFaviconsWidth = CGFloat(extraFaviconImageViews.filter { !$0.isHidden }.count) * (2 + self.faviconSize)
-        let totalWidth = self.horizontalPadding + self.faviconSize + secondaryFaviconWidth + extraFaviconsWidth + self.spacing + titleWidth + self.horizontalPadding
-        return NSSize(width: min(totalWidth, maxWidth), height: NSView.noIntrinsicMetric)
+        let titleRun = showingTitle ? self.spacing + titleWidth : 0
+        let totalWidth = self.horizontalPadding + self.faviconSize + secondaryFaviconWidth + extraFaviconsWidth + titleRun + self.horizontalPadding
+        return min(totalWidth, maxWidth)
     }
 }
 

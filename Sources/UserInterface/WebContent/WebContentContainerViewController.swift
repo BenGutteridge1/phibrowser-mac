@@ -271,12 +271,12 @@ class WebContentContainerViewController: NSViewController {
     /// in contentContainer at a time).
     private var placeholderShell: PlaceholderShellViewController?
 
-    /// Shared bookmark bar owned once per window and moved between controllers.
-    private var sharedBookmarkBar: BookmarkBar?
-    /// Current host for the shared bookmark bar.
-    private weak var sharedBookmarkBarHostController: WebContentViewController?
-
     var addressBarAnchorView: NSView? {
+        // Comfortable: the top bar's address field, while it is in view.
+        if PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional, let bar = topBarController {
+            return browserState?.topBarHidden == true && !topBarReveal.isRevealed
+                ? nil : bar.addressFieldAnchorView
+        }
         // In placeholder mode the shell owns the anchor — needed for the
         // omnibox popup when invoked via cmd+L.
         if let shell = placeholderShell {
@@ -335,11 +335,27 @@ class WebContentContainerViewController: NSViewController {
 
     /// Global TabStrip bar controller - only visible in traditional layout mode
     /// Contains TabStrip and right-side buttons (CardEntryButton, etc.)
-    private var tabStripBarController: TabStripBarController?
-    var tabStripView: TabStrip? { tabStripBarController?.tabStrip }
-    /// See `TabStripBarController.bindSpacesPickerToSession`.
+    private var topBarController: TopBarController?
+
+    /// Brings a hidden top bar back from the window's top edge.
+    private let topBarReveal = TopBarRevealController()
+
+    /// Whether a hidden top bar is showing as its floating panel.
+    var isTopBarRevealed: Bool { topBarReveal.isRevealed }
+
+    /// The top bar is hidden (⌘S) and floats over the page when revealed.
+    private var topBarFloats: Bool {
+        PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional && browserState?.topBarHidden == true
+    }
+
+    /// The window's media controller, which the top bar's mini player uses.
+    var mediaController: SidebarMediaController? {
+        didSet { topBarController?.mediaController = mediaController }
+    }
+    var tabStripView: TabStrip? { topBarController?.tabStrip }
+    /// See `TopBarController.bindSpacesPickerToSession`.
     func bindSpacesPickerToSession() {
-        tabStripBarController?.bindSpacesPickerToSession()
+        topBarController?.bindSpacesPickerToSession()
     }
 
     private var topBarHeightConstraint: Constraint?
@@ -413,25 +429,6 @@ class WebContentContainerViewController: NSViewController {
     private let outerBorderLayer = CAShapeLayer()
     private var outerBorderThemeObservation: AnyObject?
 
-    /// Per-group colored stroke that traces a single unified path:
-    /// horizontal underline from the chip's leading edge → up-and-over
-    /// the active tab's outline (when the active tab is in this group)
-    /// → horizontal underline to the last member tab's trailing edge.
-    /// One layer per visible expanded group, keyed by token.
-    ///
-    /// Replaces what would otherwise be (a) a separate filled band in
-    /// `TabStrip.normalContainer.layer` and (b) a separate stroke
-    /// covering the active tab outline. Two-shape rendering creates a
-    /// perpendicular seam at the inverse-curve apex that no padding /
-    /// corner-radius tweak can fully eliminate; one path eliminates it
-    /// by construction.
-    private var groupBoundaryLayers: [String: CAShapeLayer] = [:]
-
-    /// Per-group `objectWillChange` subscriptions — needed because the
-    /// active tab's group color and the active tab's groupToken can both
-    /// flip without `BrowserState.$focusingTab` or `$groups` republishing.
-    /// Mirrors the pattern used in `TabStrip.bindData`.
-    private var groupChangeCancellables: [String: AnyCancellable] = [:]
 
     enum LayerZIndex {
         /// Stacks above every sibling sublayer in `view.layer` so the active
@@ -531,12 +528,6 @@ class WebContentContainerViewController: NSViewController {
     /// Test-only view of the panel's frame-interior fill.
     var extensionSidePanelFrameBackdropForTesting: NSView? { extensionSidePanelFrameBackdrop }
 
-    /// Test-only view of the unified content outline, in `view` coordinates.
-    var contentOuterBorderPathForTesting: CGPath? { outerBorderLayer.path }
-
-    /// Test-only: called with each outline the container draws; a recompute
-    /// that clears the outline instead does not report.
-    var contentOuterBorderDidUpdateForTesting: ((CGPath) -> Void)?
     
     // MARK: - Initialization
     
@@ -552,9 +543,6 @@ class WebContentContainerViewController: NSViewController {
     deinit {
         if let statusURLMouseMonitor {
             NSEvent.removeMonitor(statusURLMouseMonitor)
-        }
-        if let hostController = sharedBookmarkBarHostController {
-            hostController.detachBookmarkBarIfAttached()
         }
     }
     
@@ -648,17 +636,6 @@ class WebContentContainerViewController: NSViewController {
         outerBorderThemeObservation = view.subscribe { [weak self] _, _ in
             guard let self else { return }
             self.outerBorderLayer.strokeColor = ThemedColor.border.resolve(in: self.view).cgColor
-            // Group boundary layers use `group.color.nsColor.cgColor`,
-            // which doesn't auto-rebind on appearance change. Refresh
-            // each live layer here so the underline tracks the system
-            // theme. Wrap in `performAsCurrentDrawingAppearance` to
-            // ensure resolution picks the correct asset variant.
-            self.view.effectiveAppearance.performAsCurrentDrawingAppearance {
-                for (token, layer) in self.groupBoundaryLayers {
-                    guard let group = self.browserState?.groups[token] else { continue }
-                    layer.strokeColor = group.color.nsColor.cgColor
-                }
-            }
         }
 
         // Add titlebar aware area
@@ -709,21 +686,18 @@ class WebContentContainerViewController: NSViewController {
     }
 
     private func setupTopBarIfNeeded() {
-        guard tabStripBarController == nil, let state = browserState else { return }
+        guard topBarController == nil, let state = browserState else { return }
 
-        let barController = TabStripBarController(browserState: state)
-        tabStripBarController = barController
+        let barController = TopBarController(browserState: state)
+        barController.mediaController = mediaController
+        topBarController = barController
         let pageColorPresentation = currentWebContentController?.tabStripPageColorPresentation
             ?? .inherited
         barController.setActivePageStyle(
             backgroundColor: pageColorPresentation.backgroundColor,
             appearance: pageColorPresentation.appearance
         )
-        barController.onTabStripLayoutChanged = { [weak self] in
-            self?.updateContentOuterBorder()
-        }
-        
-        // Note: CardEntryButton tap is now handled internally by TabStripBarController
+        // Note: CardEntryButton tap is now handled internally by TopBarController
         // which manages the NotificationCardPanel directly
         
         // Add as child view controller
@@ -737,6 +711,13 @@ class WebContentContainerViewController: NSViewController {
             topBarTopConstraint = make.top.equalToSuperview().inset(contentLayout.topEdgeSpacing).constraint
             topBarHeightConstraint = make.height.equalTo(0).constraint
         }
+        topBarReveal.install(in: view, bar: barController.view)
+        topBarReveal.isHeldOpen = { [weak self] in
+            self?.browserState?.windowController?.omniBoxContainerViewController?.hasShown == true
+        }
+        topBarReveal.onRevealChange = { [weak self] revealed, animated in
+            self?.moveFloatingTopBar(revealed: revealed, animated: animated)
+        }
         
         // Update content container constraints to be below topBar
         remakeContentLayout()
@@ -749,12 +730,12 @@ class WebContentContainerViewController: NSViewController {
     private func bindCurrentHeaderPageColorPresentation() {
         currentHeaderPageColorCancellable = nil
         guard let controller = currentWebContentController else {
-            tabStripBarController?.setActivePageStyle(backgroundColor: nil, appearance: nil)
+            topBarController?.setActivePageStyle(backgroundColor: nil, appearance: nil)
             return
         }
 
         let pageColorPresentation = controller.tabStripPageColorPresentation
-        tabStripBarController?.setActivePageStyle(
+        topBarController?.setActivePageStyle(
             backgroundColor: pageColorPresentation.backgroundColor,
             appearance: pageColorPresentation.appearance
         )
@@ -763,7 +744,7 @@ class WebContentContainerViewController: NSViewController {
             .sink { [weak self, weak controller] presentation in
                 guard let self, let controller,
                       self.currentWebContentController === controller else { return }
-                self.tabStripBarController?.setActivePageStyle(
+                self.topBarController?.setActivePageStyle(
                     backgroundColor: presentation.backgroundColor,
                     appearance: presentation.appearance,
                     animated: presentation.animatesChange
@@ -829,7 +810,11 @@ class WebContentContainerViewController: NSViewController {
         let panelView = extensionSidePanelView?.superview === view
             ? extensionSidePanelView : nil
         contentContainer.snp.remakeConstraints { make in
-            if let bar = tabStripBarController?.view, bar.superview === view {
+            if topBarFloats {
+                // The hidden bar floats over the page when revealed and never
+                // pushes it down.
+                make.top.equalToSuperview().inset(contentLayout.topEdgeSpacing)
+            } else if let bar = topBarController?.view, bar.superview === view {
                 make.top.equalTo(bar.snp.bottom)
             } else {
                 make.top.equalToSuperview()
@@ -1057,25 +1042,20 @@ class WebContentContainerViewController: NSViewController {
             }
             .store(in: &cancellables)
 
+        browserState?.topBarHiddenPublisher
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateLayoutForMode()
+                self?.currentWebContentController?.refreshLayoutForTopBar()
+            }
+            .store(in: &cancellables)
+
         // Listen to targetURL changes to update status bubble
         browserState?.$targetURL
             .receive(on: DispatchQueue.main)
             .sink { [weak self] url in
                 self?.updateStatusURL(url)
-            }
-            .store(in: &cancellables)
-
-        // Active-tab outline tinting follows group state. `$groups` only
-        // fires on dict add/remove, so we (re)subscribe to each group's
-        // `objectWillChange` to catch color flips and active-tab join/
-        // leave events that nudge `info.objectWillChange.send()`. This
-        // mirrors `TabStrip.rebuildGroupChangeSubscriptions`.
-        browserState?.$groups
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] groups in
-                guard let self else { return }
-                self.rebuildGroupChangeSubscriptions(groups: groups)
-                self.updateContentOuterBorder()
             }
             .store(in: &cancellables)
 
@@ -1087,15 +1067,6 @@ class WebContentContainerViewController: NSViewController {
             .store(in: &cancellables)
     }
 
-    private func rebuildGroupChangeSubscriptions(groups: [String: WebContentGroupInfo]) {
-        WebContentGroupInfo.reconcileSubscriptions(
-            groups: groups,
-            cancellables: &groupChangeCancellables
-        ) { [weak self] _ in
-            self?.updateContentOuterBorder()
-        }
-    }
-    
     /// Filter frequent defaults writes to page geometry changes only.
     private func setupConfigObserver() {
         NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
@@ -1120,11 +1091,7 @@ class WebContentContainerViewController: NSViewController {
         // AppKit lays a tree out top-down, so here that subtree still carries
         // its frames from the previous pass: after a one-shot height change (a
         // step of a window-edge drag, a programmatic setFrame) the outline
-        // kept the old card top, and the active tab's sides ran down through
-        // the page to meet it. A later recompute from the tab strip's own
-        // layout hid that wherever the strip relaid out in the same pass (a
-        // window showing the Space picker); a standalone Incognito window and
-        // a single-Space window got none. Settle the page subtree first.
+        // kept the old card top. Settle the page subtree first.
         contentContainer.layoutSubtreeIfNeeded()
         if isPeekBackgroundDeemphasized {
             updatePeekBackgroundPresentation(animated: false)
@@ -1133,296 +1100,53 @@ class WebContentContainerViewController: NSViewController {
         updateStatusURLPosition()
     }
 
-    /// Computes and applies the unified content border path for comfortable
-    /// layout, where the outline needs to connect with the active horizontal tab.
+    /// The outline around the page card while an extension side panel is
+    /// docked: one rounded frame around [page card | panel card], as with an
+    /// expanded AI Chat. Otherwise the page card draws its own 1pt border
+    /// (`setSplitViewContainerBorderVisible`), and edge-to-edge pages none.
     private func updateContentOuterBorder() {
         guard let controller = currentWebContentController else {
             outerBorderLayer.path = nil
-            clearGroupBoundaryLayers()
             return
         }
-        let isComfortableLayout = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
         let panelMounted = extensionSidePanelView?.superview === view
-        // The vertical layouts frame the content with splitViewContainer's
-        // own 1pt layer border — except while an extension side panel is
-        // docked: then this unified outline wraps [page card | panel card]
-        // as one frame (AI Chat parity), and svc's border would draw a
-        // second frame around the page alone.
         // Edge-to-edge pages meet the window and screen edges, where the
         // 1pt frame reads as a stray border around the page.
         let drawsContentFrame = !contentLayout.edgeToEdgeEnabled
         controller.setSplitViewContainerBorderVisible(
-            drawsContentFrame && !isComfortableLayout && !panelMounted
+            drawsContentFrame && !panelMounted
         )
-        guard isComfortableLayout || panelMounted else {
+        guard panelMounted, drawsContentFrame else {
             outerBorderLayer.path = nil
-            clearGroupBoundaryLayers()
             return
         }
 
         let r = controller.splitViewContainerFrame(in: view)
         guard r.width > 0, r.height > 0 else {
             outerBorderLayer.path = nil
-            clearGroupBoundaryLayers()
             return
         }
 
+        // The frame keeps its right edge around the panel instead of
+        // following the shrunken page card: it wraps the panel sub-card,
+        // which sits 4pt inside it.
+        let rect = CGRect(
+            x: r.minX,
+            y: r.minY,
+            width: max(r.maxX, (extensionSidePanelView?.frame.maxX ?? r.maxX)
+                + CGFloat(WebContentConstant.contentEdgeSpacing)) - r.minX,
+            height: r.height
+        )
         let cornerR = contentLayout.containerCornerRadius
-        let invR = TabStripMetrics.Tab.inverseCornerRadius
-        let kappa: CGFloat = 0.55228
-        let h = cornerR * kappa
+        let path = CGPath(roundedRect: rect, cornerWidth: cornerR, cornerHeight: cornerR, transform: nil)
 
-        let leftX = r.minX
-        // With the extension side panel mounted the outline keeps its right
-        // edge around the panel instead of following the shrunken page
-        // card: the frame wraps the panel sub-card (which sits 4pt inside
-        // it), and — critically for comfortable — the active-tab notch
-        // guard below stays satisfiable for tabs whose chips sit over the
-        // panel region; against the narrow card edge they would fail the
-        // right-side bound and lose their outline entirely.
-        let rightX = panelMounted
-            ? max(r.maxX, (extensionSidePanelView?.frame.maxX ?? r.maxX)
-                + CGFloat(WebContentConstant.contentEdgeSpacing))
-            : r.maxX
-        let topY = r.maxY
-        let bottomY = r.minY
-
-        // Tie the gap to the *visible* controller's tab rather than
-        // browserState.focusingTab, which changes a main-queue hop before
-        // the mount; using the visible tab keeps the outline attached to the
-        // tab whose page is actually onscreen. The notch only exists in
-        // comfortable — the vertical layouts (reachable here with a panel
-        // mounted) have no horizontal chips, so their frame is the plain
-        // closed outline below.
-        let overviewActive = browserState?.groupOverviewState != nil
-        let activeTabForBorder =
-            (overviewActive || !isComfortableLayout) ? nil : controller.associatedTab
-        let activeFrame = isComfortableLayout
-            ? tabStripBarController?.tabFrame(for: activeTabForBorder, in: view)
-            : nil
-
-        let path = CGMutablePath()
-
-        if let af = activeFrame,
-           af.minX - invR > leftX + cornerR,
-           af.maxX + invR < rightX - cornerR {
-            // Unified clockwise path: right apex → up tab → top → down tab →
-            // left apex → splitView outline → close.
-            let rightApex = CGPoint(x: af.maxX + invR, y: topY)
-
-            // Tab outline (right apex → top → left apex), shared with TabBackgroundLayer.
-            TabStripMetrics.appendActiveTabOutline(
-                to: path,
-                leftX: af.minX,
-                rightX: af.maxX,
-                apexY: topY,
-                tabTopY: af.maxY
-            )
-            // Continue clockwise along splitView's top edge to the left corner.
-            path.addLine(to: CGPoint(x: leftX + cornerR, y: topY))
-            path.addCurve(
-                to: CGPoint(x: leftX, y: topY - cornerR),
-                control1: CGPoint(x: leftX + cornerR - h, y: topY),
-                control2: CGPoint(x: leftX, y: topY - cornerR + h)
-            )
-            path.addLine(to: CGPoint(x: leftX, y: bottomY + cornerR))
-            path.addCurve(
-                to: CGPoint(x: leftX + cornerR, y: bottomY),
-                control1: CGPoint(x: leftX, y: bottomY + cornerR - h),
-                control2: CGPoint(x: leftX + cornerR - h, y: bottomY)
-            )
-            path.addLine(to: CGPoint(x: rightX - cornerR, y: bottomY))
-            path.addCurve(
-                to: CGPoint(x: rightX, y: bottomY + cornerR),
-                control1: CGPoint(x: rightX - cornerR + h, y: bottomY),
-                control2: CGPoint(x: rightX, y: bottomY + cornerR - h)
-            )
-            path.addLine(to: CGPoint(x: rightX, y: topY - cornerR))
-            path.addCurve(
-                to: CGPoint(x: rightX - cornerR, y: topY),
-                control1: CGPoint(x: rightX, y: topY - cornerR + h),
-                control2: CGPoint(x: rightX - cornerR + h, y: topY)
-            )
-            path.addLine(to: rightApex)
-            path.closeSubpath()
-        } else {
-            // Closed rounded rect outline (no active tab gap).
-            path.move(to: CGPoint(x: leftX + cornerR, y: topY))
-            path.addLine(to: CGPoint(x: rightX - cornerR, y: topY))
-            path.addCurve(
-                to: CGPoint(x: rightX, y: topY - cornerR),
-                control1: CGPoint(x: rightX - cornerR + h, y: topY),
-                control2: CGPoint(x: rightX, y: topY - cornerR + h)
-            )
-            path.addLine(to: CGPoint(x: rightX, y: bottomY + cornerR))
-            path.addCurve(
-                to: CGPoint(x: rightX - cornerR, y: bottomY),
-                control1: CGPoint(x: rightX, y: bottomY + cornerR - h),
-                control2: CGPoint(x: rightX - cornerR + h, y: bottomY)
-            )
-            path.addLine(to: CGPoint(x: leftX + cornerR, y: bottomY))
-            path.addCurve(
-                to: CGPoint(x: leftX, y: bottomY + cornerR),
-                control1: CGPoint(x: leftX + cornerR - h, y: bottomY),
-                control2: CGPoint(x: leftX, y: bottomY + cornerR - h)
-            )
-            path.addLine(to: CGPoint(x: leftX, y: topY - cornerR))
-            path.addCurve(
-                to: CGPoint(x: leftX + cornerR, y: topY),
-                control1: CGPoint(x: leftX, y: topY - cornerR + h),
-                control2: CGPoint(x: leftX + cornerR - h, y: topY)
-            )
-            path.closeSubpath()
-        }
-
-        // Animate path morphing when the caller (tab strip) is inside an
-        // NSAnimationContext with implicit animations enabled; snap otherwise.
-        // This keeps the gap aligned with tabs during select/close/scroll/drag
-        // animations without making it morph during plain layout passes.
-        let shouldAnimate = NSAnimationContext.current.allowsImplicitAnimation
         CATransaction.begin()
-        CATransaction.setDisableActions(!shouldAnimate)
-        outerBorderLayer.path = drawsContentFrame ? path : nil
+        CATransaction.setDisableActions(!NSAnimationContext.current.allowsImplicitAnimation)
+        outerBorderLayer.path = path
         outerBorderLayer.strokeColor = ThemedColor.border.resolve(in: view).cgColor
-
-        updateGroupBoundaryLayers(apexY: topY, invR: invR, activeTab: activeTabForBorder)
-
         CATransaction.commit()
-        contentOuterBorderDidUpdateForTesting?(path)
     }
 
-    /// Builds / refreshes one `CAShapeLayer` per visible expanded group,
-    /// each tracing a unified path: horizontal underline from chip to
-    /// the active tab's left apex (if the group contains the active
-    /// tab) → up over the active tab outline → down to the right apex
-    /// → horizontal underline to the last member tab. For groups that
-    /// don't contain the active tab the path is just the horizontal
-    /// segment.
-    ///
-    /// Single path means the seam at the inverse-curve apex no longer
-    /// exists by construction — stroke is one continuous shape.
-    private func updateGroupBoundaryLayers(apexY: CGFloat, invR: CGFloat, activeTab: Tab?) {
-        let traditionalLayout = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
-        guard traditionalLayout,
-              let geometries = tabStripBarController?.groupGeometries(in: view,
-                                                                       activeTab: activeTab) else {
-            clearGroupBoundaryLayers()
-            return
-        }
-
-        // Tear down vanished tokens.
-        let liveTokens = Set(geometries.map { $0.token })
-        for (token, layer) in groupBoundaryLayers where !liveTokens.contains(token) {
-            layer.removeFromSuperlayer()
-            groupBoundaryLayers.removeValue(forKey: token)
-        }
-
-        let cornerR = TabStripMetrics.Tab.cornerRadius
-        let activeFrame = tabStripBarController?.tabFrame(for: activeTab, in: view)
-
-        for geom in geometries {
-            guard let group = browserState?.groups[geom.token] else { continue }
-
-            let layer: CAShapeLayer
-            if let existing = groupBoundaryLayers[geom.token] {
-                layer = existing
-            } else {
-                layer = CAShapeLayer()
-                layer.fillColor = NSColor.clear.cgColor
-                layer.lineWidth = 1
-                layer.lineCap = .butt
-                layer.lineJoin = .round
-                layer.zPosition = LayerZIndex.contentOuterBorder + 1
-                layer.actions = ["strokeColor": NSNull(), "lineWidth": NSNull()]
-                view.layer?.addSublayer(layer)
-                groupBoundaryLayers[geom.token] = layer
-            }
-
-            // Inset the horizontal segment ends so the underline
-            // doesn't bleed into an adjacent (non-member) active
-            // tab's inverse-curve "shadow". An active tab's apex
-            // tip extends `invR − interTabGap` (= 8 − 3 = 5pt) past
-            // its neighboring chip's leading edge; without this
-            // inset our underline pokes 5pt under that adjacent
-            // apex curve, leaving a small triangular seam between
-            // the (gray) curve and the (colored) horizontal line.
-            //
-            // For groups whose active member sits at this boundary
-            // we keep the path extending all the way to its own
-            // apex tip via `min`/`max` — the inset only affects the
-            // free, non-curving end.
-            let edgeInset: CGFloat = invR - 3
-            let leftInsetX = geom.leftX + edgeInset
-            let rightInsetX = geom.rightX - edgeInset
-
-            let path = CGMutablePath()
-            if geom.containsActive, let af = activeFrame {
-                let leftLineStart = min(leftInsetX, af.minX - invR)
-                let rightLineEnd = max(rightInsetX, af.maxX + invR)
-                path.move(to: CGPoint(x: leftLineStart, y: apexY))
-                path.addLine(to: CGPoint(x: af.minX - invR, y: apexY))
-                // up the left inverse curve
-                path.addCurve(
-                    to: CGPoint(x: af.minX, y: apexY + invR),
-                    control1: CGPoint(x: af.minX - invR / 2, y: apexY),
-                    control2: CGPoint(x: af.minX, y: apexY + invR / 2)
-                )
-                // up the left side
-                path.addLine(to: CGPoint(x: af.minX, y: af.maxY - cornerR))
-                // top-left corner
-                path.addCurve(
-                    to: CGPoint(x: af.minX + cornerR, y: af.maxY),
-                    control1: CGPoint(x: af.minX, y: af.maxY - cornerR / 2),
-                    control2: CGPoint(x: af.minX + cornerR / 2, y: af.maxY)
-                )
-                // top edge
-                path.addLine(to: CGPoint(x: af.maxX - cornerR, y: af.maxY))
-                // top-right corner
-                path.addCurve(
-                    to: CGPoint(x: af.maxX, y: af.maxY - cornerR),
-                    control1: CGPoint(x: af.maxX - cornerR / 2, y: af.maxY),
-                    control2: CGPoint(x: af.maxX, y: af.maxY - cornerR / 2)
-                )
-                // down the right side
-                path.addLine(to: CGPoint(x: af.maxX, y: apexY + invR))
-                // down the right inverse curve
-                path.addCurve(
-                    to: CGPoint(x: af.maxX + invR, y: apexY),
-                    control1: CGPoint(x: af.maxX, y: apexY + invR / 2),
-                    control2: CGPoint(x: af.maxX + invR / 2, y: apexY)
-                )
-                // right apex → horizontal → group-right (or apex tip
-                // itself if active is the rightmost / only member).
-                path.addLine(to: CGPoint(x: rightLineEnd, y: apexY))
-            } else {
-                // No active tab in this group — just a horizontal
-                // underline along the strip's bottom edge, with the
-                // same 5pt edge inset so adjacent active apexes
-                // outside this group don't clip our line.
-                path.move(to: CGPoint(x: leftInsetX, y: apexY))
-                path.addLine(to: CGPoint(x: rightInsetX, y: apexY))
-            }
-
-            layer.path = path
-            // `NSColor(resource:).cgColor` resolves against
-            // `NSAppearance.currentDrawing()`, which isn't pinned here
-            // — `updateGroupBoundaryLayers` runs from `viewDidLayout`,
-            // a layout callback (not a draw callback). Pin it to the
-            // host view's appearance so the underline picks up the
-            // same variant the chip dot uses.
-            view.effectiveAppearance.performAsCurrentDrawingAppearance {
-                layer.strokeColor = group.color.nsColor.cgColor
-            }
-        }
-    }
-
-    private func clearGroupBoundaryLayers() {
-        for (_, layer) in groupBoundaryLayers {
-            layer.removeFromSuperlayer()
-        }
-        groupBoundaryLayers.removeAll()
-    }
-    
     // MARK: - Tab Management
     
     private func handleFocusingTabChanged(_ tab: Tab?) {
@@ -1587,49 +1311,6 @@ class WebContentContainerViewController: NSViewController {
         return controller
     }
 
-    private func ensureSharedBookmarkBar() -> BookmarkBar? {
-        if let sharedBookmarkBar {
-            return sharedBookmarkBar
-        }
-
-        guard let state = browserState else { return nil }
-
-        let bookmarkBar = BookmarkBar(browserState: state)
-        bookmarkBar.onBookmarksChanged = { [weak self] bookmarkCount in
-            guard let self else { return }
-            self.sharedBookmarkBarHostController?.updateBookmarkBarVisibility(bookmarkCount: bookmarkCount)
-        }
-        sharedBookmarkBar = bookmarkBar
-        return bookmarkBar
-    }
-
-    private func attachSharedBookmarkBar(to controller: WebContentViewController) {
-        guard let bookmarkBar = ensureSharedBookmarkBar() else { return }
-
-        if sharedBookmarkBarHostController === controller {
-            controller.attachBookmarkBar(bookmarkBar)
-            controller.updateBookmarkBarVisibility(bookmarkCount: bookmarkBar.bookmarkCount)
-            return
-        }
-
-        sharedBookmarkBarHostController?.detachBookmarkBarIfAttached()
-        controller.attachBookmarkBar(bookmarkBar)
-        sharedBookmarkBarHostController = controller
-        controller.updateBookmarkBarVisibility(bookmarkCount: bookmarkBar.bookmarkCount)
-    }
-
-    private func detachSharedBookmarkBar(from controller: WebContentViewController) {
-        guard sharedBookmarkBarHostController === controller else { return }
-
-        controller.detachBookmarkBarIfAttached()
-        sharedBookmarkBarHostController = nil
-    }
-
-    private func prepareSharedBookmarkBarSlot(for controller: WebContentViewController) {
-        guard let bookmarkBar = ensureSharedBookmarkBar() else { return }
-        controller.updateBookmarkBarVisibility(bookmarkCount: bookmarkBar.bookmarkCount)
-    }
-    
     // MARK: - Content surface
 
     /// The window's content surface view (chromium ADR 0014), once installed
@@ -2202,7 +1883,6 @@ class WebContentContainerViewController: NSViewController {
         }
 
         let controllerView = controller.view
-        prepareSharedBookmarkBarSlot(for: controller)
 
         // Add new view on top
         if controllerView.superview !== contentContainer {
@@ -2235,8 +1915,6 @@ class WebContentContainerViewController: NSViewController {
             // If already in container, bring to front
             contentContainer.addSubview(controllerView, positioned: .above, relativeTo: nil)
         }
-
-        attachSharedBookmarkBar(to: controller)
 
         willMountControllerForTesting?(controller)
         // Re-mount content before we mark this controller as current.
@@ -2295,7 +1973,6 @@ class WebContentContainerViewController: NSViewController {
     /// that tab in this turn.
     private func unmountTabViews(except controller: WebContentViewController) {
         for case let other as WebContentViewController in children where other !== controller {
-            detachSharedBookmarkBar(from: other)
             other.view.removeFromSuperview()
             other.removeFromParent()
         }
@@ -2303,8 +1980,6 @@ class WebContentContainerViewController: NSViewController {
 
     private func removeWebContentController(for identifier: String) {
         guard let controller = webContentControllers[identifier] else { return }
-
-        detachSharedBookmarkBar(from: controller)
 
         // If this is the current controller, remove from view
         if controller === currentWebContentController {
@@ -2335,15 +2010,18 @@ class WebContentContainerViewController: NSViewController {
         )
         
         if traditionalLayout {
-            // Traditional layout (horizontal tabs): show topBar
-            tabStripBarController?.view.isHidden = false
-            tabStripBarController?.setActive(true)
-            topBarHeightConstraint?.update(offset: WebContentConstant.topBarHeight)
-            topBarTopConstraint?.update(inset: contentLayout.topEdgeSpacing == 0 ? 0 : WebContentConstant.edgesSpacing - 2) // align with traffic light
+            // Comfortable: the top bar, docked along the window's top edge,
+            // or (hidden with ⌘S) floating out of sight until revealed.
+            topBarController?.view.isHidden = false
+            topBarController?.setActive(true)
+            layoutTopBar()
+            topBarController?.updateMiniPlayerActivation()
         } else {
             // Vertical sidebar layout: hide topBar
-            tabStripBarController?.setActive(false)
-            tabStripBarController?.view.isHidden = true
+            topBarController?.setActive(false)
+            topBarController?.view.isHidden = true
+            topBarReveal.setEnabled(false, edgeToEdge: contentLayout.edgeToEdgeEnabled)
+            topBarController?.updateMiniPlayerActivation()
             topBarHeightConstraint?.update(offset: 0)
             topBarTopConstraint?.update(inset: contentLayout.topEdgeSpacing)
             // The titlebar hit area disappears with the page margin.
@@ -2360,6 +2038,57 @@ class WebContentContainerViewController: NSViewController {
         extensionSidePanelFrameBackdrop?.layer?.cornerRadius = contentLayout.containerCornerRadius
         remakeContentLayout()
         contentContainer.needsLayout = true
+    }
+
+    /// Docked: the bar spans the window's top edge and the lights sit in
+    /// it. Hidden: it becomes a panel inset from the edges, above the window
+    /// until the top edge reveals it.
+    private func layoutTopBar() {
+        guard let bar = topBarController?.view else { return }
+        let floats = topBarFloats
+        topBarReveal.setEnabled(floats, edgeToEdge: contentLayout.edgeToEdgeEnabled)
+        let inset = TopBarRevealController.panelInset
+        let height = WebContentConstant.topBarHeight
+        bar.snp.remakeConstraints { make in
+            make.leading.trailing.equalToSuperview().inset(floats ? inset : 0)
+            topBarTopConstraint = make.top.equalToSuperview()
+                .inset(floats ? floatingTopBarTop(revealed: topBarReveal.isRevealed) : 0).constraint
+            topBarHeightConstraint = make.height.equalTo(height).constraint
+        }
+        bar.layer?.cornerRadius = floats ? TopBarRevealController.panelCornerRadius : 0
+        refreshTopBarTrafficLights()
+    }
+
+    private func floatingTopBarTop(revealed: Bool) -> CGFloat {
+        revealed ? TopBarRevealController.panelInset
+            : -(WebContentConstant.topBarHeight + TopBarRevealController.panelInset * 3)
+    }
+
+    /// Slides the floating bar in or out. Only the bar moves; the page under
+    /// it keeps its size.
+    private func moveFloatingTopBar(revealed: Bool, animated: Bool) {
+        guard topBarFloats else { return }
+        topBarTopConstraint?.update(inset: floatingTopBarTop(revealed: revealed))
+        if revealed { refreshTopBarTrafficLights() }
+        guard animated else {
+            view.layoutSubtreeIfNeeded()
+            if !revealed { refreshTopBarTrafficLights() }
+            return
+        }
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = revealed ? TopBarRevealController.showDuration : TopBarRevealController.hideDuration
+            context.timingFunction = revealed
+                ? CAMediaTimingFunction(controlPoints: 0.2, 0.8, 0.2, 1)
+                : CAMediaTimingFunction(name: .easeOut)
+            context.allowsImplicitAnimation = true
+            view.layoutSubtreeIfNeeded()
+        }, completionHandler: { [weak self] in
+            if !revealed { self?.refreshTopBarTrafficLights() }
+        })
+    }
+
+    private func refreshTopBarTrafficLights() {
+        browserState?.windowController?.refreshTrafficLightVisibility()
     }
 
     /// Mirror of `WebContentViewController.updateSplitViewLeadingInset`, so

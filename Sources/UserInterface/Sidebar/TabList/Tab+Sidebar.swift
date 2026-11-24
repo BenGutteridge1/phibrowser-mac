@@ -811,8 +811,8 @@ extension Tab: ContextMenuRepresentable {
         }
         let browserState = SpaceSessionControllersManager.shared
             .getBrowserState(for: windowId)
-        let inHorizontalStrip = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
-        if !inHorizontalStrip, isBookmarkBackedTab(state: browserState) {
+        // A Space pin's tab belongs to its pin, in every layout.
+        if isBookmarkBackedTab(state: browserState) {
             return
         }
         if groupToken == nil {

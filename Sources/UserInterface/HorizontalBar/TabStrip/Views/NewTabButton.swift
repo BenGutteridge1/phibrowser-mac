@@ -18,23 +18,40 @@ final class NewTabButton: NSView {
                 CATransaction.setAnimationDuration(0.12)
                 hoverLayer.opacity = isHovered ? 1.0 : 0.0
                 CATransaction.commit()
+                // The sidebar New Tab row's plus spins forward on hover and
+                // back on the way out; this one does the same.
+                if isHovered {
+                    didPlayForwardAnimation = true
+                    iconView.triggerAnimation()
+                } else if didPlayForwardAnimation {
+                    didPlayForwardAnimation = false
+                    iconView.triggerReverseAnimation()
+                }
             }
         }
     }
+    private var didPlayForwardAnimation = false
 
     // MARK: - Subviews
     private lazy var hoverLayer: CALayer = {
         let layer = CALayer()
         layer.backgroundColor = NSColor(resource: .sidebarTabHovered).cgColor
         layer.cornerRadius = TabStripMetrics.NewTabButton.cornerRadius
+        layer.cornerCurve = .continuous
         layer.opacity = 0
         return layer
     }()
-    private lazy var iconView: NSImageView = {
-        let imageView = NSImageView()
-        imageView.image = NSImage(systemSymbolName: "plus", accessibilityDescription: "New Tab")
-        imageView.symbolConfiguration = .init(pointSize: 16, weight: .medium)
-        return imageView
+    private lazy var iconView: LottieAnimationNSView = {
+        let config = LottieAnimationViewConfig(
+            animationName: "new-tab",
+            reverseAnimationName: "new-tab-reverse",
+            size: CGSize(width: 16, height: 16),
+            animationTrigger: .manual,
+            themedTintColor: .textTertiary,
+            reverseOnHoverExit: true,
+            allowsHitTesting: false
+        )
+        return LottieAnimationNSView(config: config)
     }()
 
 
@@ -56,8 +73,11 @@ final class NewTabButton: NSView {
         addSubview(iconView)
         iconView.snp.makeConstraints { make in
             make.center.equalToSuperview()
+            make.size.equalTo(CGSize(width: 16, height: 16))
         }
-        iconView.phi.setContentTintColor(.textTertiary)
+        setAccessibilityElement(true)
+        setAccessibilityRole(.button)
+        setAccessibilityLabel(NSLocalizedString("sidebar.newTabRow.title", value: "New Tab", comment: "side bar new tab button text"))
     }
 
     // MARK: - Layout

@@ -87,7 +87,7 @@ struct AIChatSidebarMetricsSession {
 enum WebContentConstant {
     static let edgesSpacing: CGFloat = 8.0
     static let headerHeight: CGFloat = 40  // WebContentHeader
-    static let topBarHeight: CGFloat = TabStripMetrics.Strip.height  // horizontal tab strip
+    static let topBarHeight: CGFloat = 40  // Comfortable's top bar (`TopBarController`)
     static let bookmarkBarHeight: CGFloat = 32
     static let contentEdgeSpacing = 4
 
@@ -187,6 +187,9 @@ struct WebContentLayout: Equatable {
     var layoutMode: LayoutMode = PhiPreferences.GeneralSettings.loadLayoutMode()
     var edgeToEdgeEnabled: Bool = PhiPreferences.GeneralSettings.edgeToEdgeWebContent.loadValue()
     var isFullScreen: Bool = false
+    /// Comfortable: the top bar is hidden (⌘S), so the page meets the
+    /// window's top edge as it meets the others.
+    var topBarHidden: Bool = false
 
     var sidebarOnRight: Bool { !layoutMode.isTraditional && sidebarPosition == .right }
 
@@ -203,10 +206,12 @@ struct WebContentLayout: Equatable {
         edgeToEdgeEnabled ? 0 : WebContentConstant.edgesSpacing
     }
 
-    /// Comfortable keeps its normal tab-strip placement until fullscreen.
+    /// The page's gap under the window's top edge. Comfortable's page sits
+    /// right under its top bar; with the bar hidden, the top follows edge to
+    /// edge like the other edges.
     var topEdgeSpacing: CGFloat {
-        edgeToEdgeEnabled && (!layoutMode.isTraditional || isFullScreen)
-            ? 0 : WebContentConstant.edgesSpacing
+        if layoutMode.isTraditional && !topBarHidden { return 0 }
+        return edgeToEdgeEnabled ? 0 : WebContentConstant.edgesSpacing
     }
 
     var squaresCorners: Bool { edgeToEdgeEnabled && isFullScreen }
@@ -230,7 +235,8 @@ extension WebContentLayout {
         self.init(
             edgeToEdgeEnabled: PhiPreferences.GeneralSettings.edgeToEdgeWebContent.loadValue()
                 && browserState?.isTranscriptDocked != true,
-            isFullScreen: browserState?.isInFullScreenMode ?? false
+            isFullScreen: browserState?.isInFullScreenMode ?? false,
+            topBarHidden: browserState?.topBarHidden ?? false
         )
     }
 }
@@ -3171,6 +3177,12 @@ class WebContentViewController: NSViewController {
 
     // MARK: - Bookmark Bar Hosting
 
+    /// Comfortable's top bar was hidden or shown (⌘S): the page's edges and
+    /// its own progress line follow.
+    func refreshLayoutForTopBar() {
+        updateHeaderVisibility()
+    }
+
     /// Update headerView visibility based on configuration
     /// Note: topBarView is now managed by WebContentContainerViewController
     private func updateHeaderVisibility() {
@@ -3186,10 +3198,10 @@ class WebContentViewController: NSViewController {
         updateLeftContainerStyle(isAIChatExpanded: isAIChatExpanded)
 
         if traditionalLayout {
-            // Traditional layout shows the header and optional bookmark bar.
-            // topBar is now managed by WebContentContainerViewController
-            headerView.isHidden = false
-            headerHeightConstraint?.update(offset: WebContentConstant.headerHeight)
+            // Comfortable: the top bar holds the navigation buttons and the
+            // address field, so the page has no header of its own.
+            headerView.isHidden = true
+            headerHeightConstraint?.update(offset: 0)
         } else if navigationAtTop {
             // Navigation-at-top mode shows only the header.
             headerView.isHidden = false
@@ -3202,7 +3214,10 @@ class WebContentViewController: NSViewController {
 
         updateBookmarkBarVisibility(bookmarkCount: bookmarkCount)
 
-        let isDefaultLayout = !navigationAtTop && !traditionalLayout
+        // The page shows its own progress line when no address bar is in
+        // view: the sidebar layouts, and Comfortable with its top bar hidden.
+        let isDefaultLayout = (!navigationAtTop && !traditionalLayout)
+            || (traditionalLayout && browserState?.topBarHidden == true)
         updateWebContentProgressBarVisibility(isDefaultLayout: isDefaultLayout)
         updateSplitViewLeadingInset()
     }

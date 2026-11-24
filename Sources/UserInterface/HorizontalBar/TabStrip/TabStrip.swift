@@ -267,9 +267,6 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
 
     private let containerMaskLayer = CAShapeLayer()
 
-    /// Notifies the parent (TabStripBarController) whenever the strip relayouts
-    /// so the content border outline can recompute its active-tab gap.
-    var onLayoutChanged: (() -> Void)?
 
     // MARK: - View Pools
     private var pinnedTabViews: [String: TabItemView] = [:]
@@ -296,6 +293,51 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
 
     /// Hovered normal-tab index.
     private var hoveredTabIndex: Int?
+
+    // MARK: - Hover expansion
+
+    /// The favicon-only tab under the pointer, laid out at its titled width
+    /// (`TabStripLayoutInput.hoverExpandedIndex`): the tabs after it move
+    /// along to make the room.
+    private var hoverExpandedIndex: Int?
+    /// The width a favicon-only tab grows to under the pointer.
+    private static let hoverExpandedWidth: CGFloat = TabStripMetrics.Tab.idealWidth
+    private var hoverExpansionUpdateScheduled = false
+
+    /// Hover changes can arrive inside a layout pass (a reused tab's hover
+    /// is reset while the pool is updated); the expansion is resolved on the
+    /// next turn instead, once per burst.
+    private func scheduleHoverExpansionUpdate() {
+        guard !hoverExpansionUpdateScheduled else { return }
+        hoverExpansionUpdateScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.hoverExpansionUpdateScheduled = false
+            self.updateHoverExpansion()
+        }
+    }
+
+    /// Grows the hovered tab when it is down to its favicon, and lets the
+    /// previous one shrink back, in one animated pass. The hovered tab grows
+    /// from its leading edge, so the pointer stays on it and hover can't hop
+    /// between neighbours as they move.
+    private func updateHoverExpansion() {
+        let target: Int? = {
+            guard isActive, dragController.context == nil, groupDragController.context == nil,
+                  let index = hoveredTabIndex else { return nil }
+            if index == hoverExpandedIndex { return index }
+            let tabs = browserState.normalTabs
+            guard tabs.indices.contains(index),
+                  let view = normalTabViews[tabId(for: tabs[index])],
+                  view.frame.width > 0,
+                  view.frame.width < TabStripMetrics.Content.compactModeThreshold else { return nil }
+            return index
+        }()
+        guard target != hoverExpandedIndex else { return }
+        hoverExpandedIndex = target
+        performLayout(context: .hoverExpansion)
+    }
+
     /// Token of the currently-hovered group chip, if any. Used by
     /// `updateSeparators` / `updateChipRightSeparators` to hide the
     /// separators on both sides of the chip while hovered (mirrors the
@@ -462,6 +504,11 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
         return btn
     }()
 
+    /// Pinned tabs drawn in this strip. None: the top bar shows pinned tabs
+    /// and pinned extensions as tiles of their own, ahead of the strip
+    /// (`TopBarController`), so the strip holds the Space's tabs alone.
+    private var stripPinnedTabs: [Tab] { [] }
+
     // MARK: - Containers
 
     // Pinned-tab container.
@@ -524,6 +571,9 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
             make.leading.equalTo(pinnedContainer.snp.trailing).offset(-1 * normalTabContainerOffset)
             make.height.equalTo(tabHeight + bottomSpacing)
             make.trailing.equalToSuperview()
+            // Tabs are laid out `bottomSpacing` above the container's bottom
+            // edge, which sits on the bar's.
+            make.bottom.equalToSuperview()
         }
 
         dragOverlay.snp.makeConstraints { make in
@@ -535,7 +585,7 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
         super.layout()
         updateNormalContainerMask()
 
-        let pinnedTabs = browserState.pinnedTabs
+        let pinnedTabs = stripPinnedTabs
         let normalTabs = browserState.normalTabs
         let activeTab = visibleActiveTabForChrome()
 
@@ -700,8 +750,6 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
             applyGroupDragTransforms(context: nil)
             CATransaction.commit()
         }
-
-        onLayoutChanged?()
     }
 
     /// Sets `layer.transform` on the dragged group's chip + member
@@ -1182,7 +1230,7 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
            }) {
             return sibling.proxy.convert(sibling.proxy.bounds, to: coordView)
         }
-        let isPinned = browserState.pinnedTabs.contains(where: { tabId(for: $0) == id })
+        let isPinned = stripPinnedTabs.contains(where: { tabId(for: $0) == id })
         guard !isPinned,
               let view = normalTabViews[id],
               view.superview != nil else {
@@ -1393,7 +1441,7 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
     }
 
     private func rebindData() {
-        let pinnedTabs = browserState.pinnedTabs
+        let pinnedTabs = stripPinnedTabs
         let normalTabs = browserState.normalTabs
         let activeTab = visibleActiveTabForChrome()
         let pinnedSplitCollapse = pinnedSplitCollapseInfo()
@@ -1416,11 +1464,6 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
             isPinned: false,
             splitCollapse: normalSplitCollapse
         )
-
-        // scroll-driven and animation-driven repositioning enters here without
-        // going through layout(); fire the same notification so the content
-        // outer border tracks the active tab's new x.
-        onLayoutChanged?()
     }
 
     private func visibleActiveTabForChrome() -> Tab? {
@@ -1488,7 +1531,7 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
     }
 
     private func syncVisibleState() {
-        let pinnedTabs = browserState.pinnedTabs
+        let pinnedTabs = stripPinnedTabs
         let normalTabs = browserState.normalTabs
         let activeTab = visibleActiveTabForChrome()
 
@@ -1807,7 +1850,7 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
     /// the lowest-index pane in `browserState.pinnedTabs`, the other panes
     /// collapse. Members come from `pinnedSplitDBGuids`.
     private func pinnedSplitCollapseInfo() -> SplitCollapseInfo {
-        let pinned = browserState.pinnedTabs
+        let pinned = stripPinnedTabs
         guard !pinned.isEmpty else { return .empty }
         var info = SplitCollapseInfo()
         var consumed = Set<String>()
@@ -2042,7 +2085,10 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
             groupRuns: isPinned ? [] : runs,
             chipFullWidths: isPinned ? [:] : chipFullWidths,
             gapBeforeRunStartChip: gapBeforeRunStartChip,
-            lockedInactiveTabWidth: isLayoutLocked ? lockedTabWidth : nil
+            lockedInactiveTabWidth: isLayoutLocked ? lockedTabWidth : nil,
+            hoverExpandedIndex: isPinned || dragController.context != nil
+                || groupDragController.context != nil ? nil : hoverExpandedIndex,
+            hoverExpandedWidth: Self.hoverExpandedWidth
         )
         return TabStripLayoutEngine.layoutNormal(input: input)
     }
@@ -2117,6 +2163,7 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
             )
             view.revealsCloseButtonForTouch = isTouchInputActive
             view.configure(with: renderData, browserState: browserState)
+            view.setHoverExpanded(!isPinned && index == hoverExpandedIndex)
             view.setActivePageStyle(
                 backgroundColor: activePageBackgroundColor,
                 appearance: activePageAppearance
@@ -2203,6 +2250,7 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
                 view.onHoverChanged = { [weak self] isHovered in
                     guard let self = self else { return }
                     self.hoveredTabIndex = isHovered ? capturedIndex : nil
+                    self.scheduleHoverExpansionUpdate()
                     // Mirror `performLayout`'s split-pane exclusion so the
                     // recomputed separator positions match the frames
                     // actually on screen.
@@ -4541,7 +4589,7 @@ extension Tab {
 extension TabStrip: TabStripDragDelegate {
     func dragControllerRequestMetrics() -> TabStripMetricsSnapshot {
         // Collect pinned frames in browser-state order.
-        let pinnedFrames = browserState.pinnedTabs.compactMap { tab -> CGRect? in
+        let pinnedFrames = stripPinnedTabs.compactMap { tab -> CGRect? in
             return pinnedTabViews[tab.uniqueId]?.frame
         }
         // Collect normal-tab frames in browser-state order.
@@ -4616,7 +4664,7 @@ extension TabStrip: TabStripDragDelegate {
             updateLayoutOnly(
                 container: pinnedContainer,
                 viewPool: pinnedTabViews,
-                tabs: browserState.pinnedTabs,
+                tabs: stripPinnedTabs,
                 activeTab: browserState.focusingTab,
                 isPinned: true,
                 excludedIndices: pinnedExcludedIndices,
@@ -4638,10 +4686,6 @@ extension TabStrip: TabStripDragDelegate {
         }
 
         updateDraggingViewPosition()
-        // Drag relayout reflows the non-dragged tabs (including the active tab
-        // when a sibling is dragged past it); recompute the content border so
-        // its gap follows.
-        onLayoutChanged?()
     }
 
     func dragControllerDidEndDrag(tab: Tab, toZone: TabContainerType, toIndex: Int) {
@@ -5371,10 +5415,6 @@ extension TabStrip: TabStripDragDelegate {
         CATransaction.commit()
 
         updateDragCountBadge(for: context, screenPoint: lastDragScreenPoint)
-
-        // Keep the content-border active-tab gap in sync with the proxy on
-        // plain drag-move ticks (when no sibling reflow fires onLayoutChanged).
-        onLayoutChanged?()
     }
 
     private func updateDraggingPresentationIfNeeded(for zone: TabContainerType, tab: Tab) {

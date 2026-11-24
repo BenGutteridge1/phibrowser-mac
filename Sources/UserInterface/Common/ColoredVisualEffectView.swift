@@ -21,6 +21,24 @@ class ColoredVisualEffectView: NSVisualEffectView {
         didSet { updateColor() }
     }
 
+    /// Lays the navigation palette leading → trailing instead of top →
+    /// bottom: Comfortable's top bar carries the palette along its length as
+    /// the sidebar carries it down its height.
+    var runsPaletteHorizontally = false {
+        didSet {
+            guard runsPaletteHorizontally != oldValue else { return }
+            updateColor()
+        }
+    }
+
+    private var paletteStartPoint: CGPoint {
+        runsPaletteHorizontally ? CGPoint(x: 0, y: 0.5) : CGPoint(x: 0.5, y: 1)
+    }
+
+    private var paletteEndPoint: CGPoint {
+        runsPaletteHorizontally ? CGPoint(x: 1, y: 0.5) : CGPoint(x: 0.5, y: 0)
+    }
+
     /// Align split navigation backdrops to one continuous palette.
     weak var paletteCoordinateView: NSView? {
         didSet { needsLayout = true }
@@ -164,8 +182,8 @@ class ColoredVisualEffectView: NSVisualEffectView {
             : staticPaletteColors
         if let navigationColors {
             colorView.layer?.backgroundColor = nil
-            paletteLayer.startPoint = CGPoint(x: 0.5, y: 1)
-            paletteLayer.endPoint = CGPoint(x: 0.5, y: 0)
+            paletteLayer.startPoint = paletteStartPoint
+            paletteLayer.endPoint = paletteEndPoint
             paletteLayer.locations = nil
             let colors = navigationColors.map {
                 $0.withAlphaComponent(colorAlphaComponent ?? $0.alphaComponent)
@@ -398,6 +416,8 @@ class BackdropContainerView: NSView {
         backdrop.themedBackgroundColor = .windowOverlayBackground
         backdrop.usesThemePalette = true
         backdrop.material = .fullScreenUI
+        // Along Comfortable's top bar, as along the shell's backdrop.
+        backdrop.runsPaletteHorizontally = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
     }
 
     private func applyBackdropPainting() {

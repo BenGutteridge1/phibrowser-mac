@@ -1032,15 +1032,16 @@ final class HostedSidebarStateTests: XCTestCase {
         NotificationCenter.default.post(name: .sparkleDidSkipUpdate, object: nil)
     }
 
-    func testComfortableSpacePickerTracksNativeTrafficLightsWithTenPointGap() throws {
+    func testComfortableTopBarRowTracksNativeTrafficLightsWithTenPointGap() throws {
         PhiPreferences.GeneralSettings.saveLayoutMode(.comfortable)
         let slot = makeSlot()
         let session = makeSession(in: slot, spaceId: "space-picker-clearance")
         let window = try XCTUnwrap(slot.shell?.window)
-        let bar = TabStripBarController(browserState: session.browserState)
-        bar.view.frame = NSRect(x: 0, y: window.frame.height - 42, width: 1000, height: 36)
+        let bar = TopBarController(browserState: session.browserState)
+        bar.view.frame = NSRect(x: 0, y: window.frame.height - 40, width: 1000, height: 40)
+        // The row starts with the navigation buttons, just past the lights.
         let picker = try XCTUnwrap(descendants(of: bar.view)
-            .first { $0.accessibilityIdentifier() == "tabStrip.spacePicker" })
+            .first { $0.accessibilityIdentifier() == "topBar.navigation" })
         window.contentView?.addSubview(bar.view)
         let green = try XCTUnwrap(window.standardWindowButton(.zoomButton))
 
@@ -1064,10 +1065,10 @@ final class HostedSidebarStateTests: XCTestCase {
         bar.view.removeFromSuperview()
     }
 
-    func testSpacePickerAlignmentIgnoresOtherViewsFrameChanges() {
+    func testTopBarRowAlignmentIgnoresOtherViewsFrameChanges() {
         let window = ZoomButtonLookupCountingWindow()
         defer { window.close() }
-        let bar = TabStripBarController(browserState: makeState(spaceId: "picker-other-frames"))
+        let bar = TopBarController(browserState: makeState(spaceId: "picker-other-frames"))
         bar.view.frame = NSRect(x: 0, y: window.frame.height - 42, width: 1000, height: 36)
         window.contentView?.addSubview(bar.view)
         defer { bar.view.removeFromSuperview() }
@@ -1077,7 +1078,7 @@ final class HostedSidebarStateTests: XCTestCase {
         window.zoomButtonLookups = 0
         for width in 1...20 { other.setFrameSize(NSSize(width: CGFloat(width), height: 10)) }
         XCTAssertEqual(window.zoomButtonLookups, 0,
-            "Another view's frame change must not reach the Space picker's alignment")
+            "Another view's frame change must not reach the top bar row's alignment")
     }
 
     func testSidebarButtonAlignmentIgnoresOtherViewsFrameChanges() {
@@ -1096,15 +1097,15 @@ final class HostedSidebarStateTests: XCTestCase {
             "Another view's frame change must not reach the sidebar button's alignment")
     }
 
-    func testSpacePickerFollowsTheZoomButtonAcrossItsReplacement() throws {
+    func testTopBarRowFollowsTheZoomButtonAcrossItsReplacement() throws {
         let slot = makeSlot()
         let session = makeSession(in: slot, spaceId: "picker-zoom-replacement")
         let window = ZoomButtonLookupCountingWindow()
         defer { window.close() }
-        let bar = TabStripBarController(browserState: session.browserState)
-        bar.view.frame = NSRect(x: 0, y: window.frame.height - 42, width: 1000, height: 36)
+        let bar = TopBarController(browserState: session.browserState)
+        bar.view.frame = NSRect(x: 0, y: window.frame.height - 40, width: 1000, height: 40)
         let picker = try XCTUnwrap(descendants(of: bar.view)
-            .first { $0.accessibilityIdentifier() == "tabStrip.spacePicker" })
+            .first { $0.accessibilityIdentifier() == "topBar.navigation" })
         window.contentView?.addSubview(bar.view)
         defer { bar.view.removeFromSuperview() }
 

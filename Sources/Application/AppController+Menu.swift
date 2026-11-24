@@ -3599,11 +3599,16 @@ extension AppController {
             }
         }
 
-        // Toggle Sidebar is unavailable in the traditional layout.
+        // Comfortable has no sidebar: the same item and shortcut show and
+        // hide its top bar.
         if item.action == #selector(toggleSidebar(_:)) {
+            if let menuItem = item as? NSMenuItem {
+                menuItem.title = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
+                    ? NSLocalizedString("app.viewMenu.toggleTopBar", value: "Toggle Top Bar", comment: "View menu - Menu item, in the Comfortable layout, that shows or hides the top bar")
+                    : NSLocalizedString("app.viewMenu.toggleSidebar", value: "Toggle Sidebar", comment: "View menu - Menu item to show or hide the sidebar")
+            }
             if SpaceSessionControllersManager.shared
-                .getActiveWindowState()?.isKioskWindow == true
-                || PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional {
+                .getActiveWindowState()?.isKioskWindow == true {
                 return false
             }
         }
@@ -3750,31 +3755,12 @@ extension AppController {
             }
         }
 
-        let traditionalLayout = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
-        if item.action == #selector(toggleBookmarkBar(_:)) {
-            if let menuItem = item as? NSMenuItem {
-                if !traditionalLayout {
-                    menuItem.isHidden = true
-                    return false
-                }
-                menuItem.isHidden = false
-                let isAlwaysShow = PhiPreferences.GeneralSettings.alwaysShowBookmarkBar.loadValue()
-                menuItem.state = isAlwaysShow ? .on : .off
-                return true
-            }
-        }
-        if item.action == #selector(toggleBookmarkBarOnNewTab(_:)) {
-            if let menuItem = item as? NSMenuItem {
-                let isAlwaysShow = PhiPreferences.GeneralSettings.alwaysShowBookmarkBar.loadValue()
-                if !traditionalLayout || isAlwaysShow {
-                    menuItem.isHidden = true
-                    return false
-                }
-                menuItem.isHidden = false
-                let isShowOnNewTab = PhiPreferences.GeneralSettings.showBookmarkBarOnNewTabPage.loadValue()
-                menuItem.state = isShowOnNewTab ? .on : .off
-                return true
-            }
+        // The Space's bookmarks are in Comfortable's top bar now, so no layout
+        // has a bookmark bar row to show or hide.
+        if item.action == #selector(toggleBookmarkBar(_:))
+            || item.action == #selector(toggleBookmarkBarOnNewTab(_:)) {
+            (item as? NSMenuItem)?.isHidden = true
+            return false
         }
         let spacesFeatureEnabled = PhiPreferences.GeneralSettings.spacesFeatureEnabled.loadValue()
         if item.action == #selector(newProfile(_:)) {

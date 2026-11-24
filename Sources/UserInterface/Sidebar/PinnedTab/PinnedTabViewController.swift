@@ -14,7 +14,19 @@ class PinnedTabViewController: NSViewController {
     // from both. The gaps sit inside the band rather than in the sidebars'
     // spacers, so a corner badge overhanging the first row is not clipped
     // and drops just above or below the grid still land here.
-    private lazy var customLayout = PinnedTabLayout(topInset: 5, bottomInset: 6)
+    private lazy var customLayout: PinnedTabLayout = {
+        guard style == .row else { return PinnedTabLayout(topInset: 5, bottomInset: 6) }
+        let layout = PinnedTabLayout(topInset: 0, bottomInset: 0, style: .row)
+        layout.rowItemWidth = { [weak self] indexPath in
+            guard let self, indexPath.section == Section.tabs.rawValue,
+                  case .splitItem(let group)? = self.dataSource.itemIdentifier(for: indexPath) else { return nil }
+            return PinnedTabLayout.RowMetrics.splitTileWidth(paneCount: group.tabs.count)
+        }
+        layout.onRowContentWidthChange = { [weak self] width in
+            self?.rowContentWidth = width
+        }
+        return layout
+    }()
 
     private lazy var collectionView: ReorderingCollectionView = {
         let collectionView = ReorderingCollectionView()
@@ -317,6 +329,13 @@ class PinnedTabViewController: NSViewController {
 
     @Published var contentHeight: CGFloat = 0
 
+    /// Row style: the width of the run of tiles, which the top bar gives
+    /// this zone.
+    @Published private(set) var rowContentWidth: CGFloat = 0
+
+    /// `grid` in the sidebars; `row` in the Comfortable top bar.
+    let style: PinnedTabLayout.Style
+
     /// With nothing pinned the band stays collapsed when a drag starts, so the
     /// tab rows below it keep their place under the cursor. It opens as a
     /// drop zone once the dragged item is carried above the band, over the
@@ -324,9 +343,10 @@ class PinnedTabViewController: NSViewController {
     /// band from this.
     @Published private(set) var isEmptyDropZoneRevealed = false
     
-    init(state: BrowserState?, hostVC: NSViewController? = nil) {
+    init(state: BrowserState?, hostVC: NSViewController? = nil, style: PinnedTabLayout.Style = .grid) {
         self.browserState = state
         self.hostVC = hostVC
+        self.style = style
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -492,10 +512,13 @@ class PinnedTabViewController: NSViewController {
             )
             .receive(on: DispatchQueue.main)
             .sink { [weak self] extensions, show, isPlaceholder in
-                if isPlaceholder || !show {
-                    self?.handlePinnedExtensionsUpdate([])
+                guard let self else { return }
+                // The top bar's tiles always hold the pinned extensions; the
+                // sidebar's grid holds them when they don't fit its address bar.
+                if isPlaceholder || !(show || self.style == .row) {
+                    self.handlePinnedExtensionsUpdate([])
                 } else {
-                    self?.handlePinnedExtensionsUpdate(extensions)
+                    self.handlePinnedExtensionsUpdate(extensions)
                 }
             }
             .store(in: &cancellables)
@@ -625,7 +648,7 @@ class PinnedTabViewController: NSViewController {
     /// placeholder gating (before the per-tab visibility filter).
     private func currentPinnedExtensionsForDisplay() -> [Extension] {
         guard let browserState else { return [] }
-        let show = browserState.extensionManager.shouldDisplayExtensionsWithinSidebar
+        let show = (browserState.extensionManager.shouldDisplayExtensionsWithinSidebar || style == .row)
             && !browserState.isInPlaceholderMode
         return show ? browserState.extensionManager.pinedExtensions : []
     }
@@ -979,7 +1002,9 @@ class PinnedTabViewController: NSViewController {
 
     private func updateEmptyViewVisibility() {
         let isEmpty = pinnedTabs.isEmpty && pinnedExtensionItems.isEmpty
-        let showEmptyView = isEmpty && isEmptyDropZoneRevealed
+        // The top bar's row has no room for a drop hint: an empty run is
+        // simply absent.
+        let showEmptyView = isEmpty && isEmptyDropZoneRevealed && style == .grid
         emptyView.isHidden = !showEmptyView
         collectionView.isHidden = showEmptyView
     }

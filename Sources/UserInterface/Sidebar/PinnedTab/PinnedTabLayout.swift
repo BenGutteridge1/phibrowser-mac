@@ -36,6 +36,37 @@ class PinnedTabLayout: NSCollectionViewLayout {
         static let extensionMinimumWidth: CGFloat = 26
     }
 
+    /// `grid`: the sidebar's band, rows of tiles filling its width.
+    /// `row`: the Comfortable top bar's run, every tile in one row at its own
+    /// width (extensions first), as wide as its tiles.
+    enum Style {
+        case grid
+        case row
+    }
+
+    enum RowMetrics {
+        static let tileWidth: CGFloat = 30
+        static let tileHeight: CGFloat = 28
+        static let spacing: CGFloat = 3
+        /// Between the last extension and the first pinned tab.
+        static let sectionGap: CGFloat = 6
+        /// A pinned split's tile: one 16pt favicon slot per pane.
+        static func splitTileWidth(paneCount: Int) -> CGFloat {
+            12 + CGFloat(max(2, paneCount)) * 18
+        }
+    }
+
+    let style: Style
+
+    /// Row style: the width of the tile at an index path, for tiles wider
+    /// than one (pinned splits). Nil answers `RowMetrics.tileWidth`.
+    var rowItemWidth: ((IndexPath) -> CGFloat?)?
+
+    /// Row style: the run's width, reported after every layout pass that
+    /// changes it, so the top bar can size the zone.
+    private(set) var rowContentWidth: CGFloat = 0
+    var onRowContentWidthChange: ((CGFloat) -> Void)?
+
     /// Gaps before the first row and after the last row of the grid.
     let topInset: CGFloat
     let bottomInset: CGFloat
@@ -49,9 +80,10 @@ class PinnedTabLayout: NSCollectionViewLayout {
     private var tabMetrics: SectionMetrics = .empty
     private var extensionMetrics: SectionMetrics = .empty
 
-    init(topInset: CGFloat, bottomInset: CGFloat) {
+    init(topInset: CGFloat, bottomInset: CGFloat, style: Style = .grid) {
         self.topInset = topInset
         self.bottomInset = bottomInset
+        self.style = style
         super.init()
     }
 
@@ -122,7 +154,7 @@ class PinnedTabLayout: NSCollectionViewLayout {
     }
 
     override func shouldInvalidateLayout(forBoundsChange newBounds: NSRect) -> Bool {
-        guard let collectionView else { return false }
+        guard style == .grid, let collectionView else { return false }
         return abs(newBounds.width - collectionView.bounds.width) > .ulpOfOne
     }
 }
@@ -135,6 +167,10 @@ private extension PinnedTabLayout {
     }
 
     private func recalculateLayout(using input: LayoutInput) {
+        if style == .row {
+            recalculateRowLayout(using: input)
+            return
+        }
         guard input.contentWidth > 0 else {
             resetLayoutState(withWidth: input.contentWidth)
             return
@@ -172,6 +208,41 @@ private extension PinnedTabLayout {
         }
 
         contentSize = NSSize(width: input.contentWidth, height: yOffset)
+    }
+
+    /// One row, extensions then pinned tabs, each tile at its own width.
+    /// The run does not depend on the view's width: the view takes the run's.
+    private func recalculateRowLayout(using input: LayoutInput) {
+        pendingConfiguredWidth = nil
+        cachedAttributes.removeAll()
+        orderedAttributes.removeAll()
+        tabMetrics = .empty
+        extensionMetrics = .empty
+
+        var x: CGFloat = 0
+        func place(_ section: Section, count: Int) {
+            for index in 0..<count {
+                let indexPath = IndexPath(item: index, section: section.rawValue)
+                let width = rowItemWidth?(indexPath) ?? RowMetrics.tileWidth
+                let attributes = NSCollectionViewLayoutAttributes(forItemWith: indexPath)
+                attributes.frame = NSRect(x: x, y: 0, width: width, height: RowMetrics.tileHeight)
+                cachedAttributes[indexPath] = attributes
+                orderedAttributes.append(attributes)
+                x += width + RowMetrics.spacing
+            }
+        }
+        place(.extensions, count: input.extensionCount)
+        if input.extensionCount > 0, input.tabCount > 0 {
+            x += RowMetrics.sectionGap - RowMetrics.spacing
+        }
+        place(.tabs, count: input.tabCount)
+        let width = max(0, x - (orderedAttributes.isEmpty ? 0 : RowMetrics.spacing))
+        contentSize = NSSize(width: width, height: orderedAttributes.isEmpty ? 0 : RowMetrics.tileHeight)
+        if abs(width - rowContentWidth) > 0.5 {
+            rowContentWidth = width
+            let report = onRowContentWidthChange
+            DispatchQueue.main.async { report?(width) }
+        }
     }
 
     func resetLayoutState(withWidth width: CGFloat) {

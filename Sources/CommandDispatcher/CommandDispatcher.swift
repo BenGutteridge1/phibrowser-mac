@@ -171,10 +171,8 @@ struct CommandDispatcher {
             }
             return true
         case .IDC_SHOW_BOOKMARK_BAR:
-            // Keep the Chromium command identity while Phi owns its presentation.
-            if PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional {
-                AppController.shared?.toggleBookmarkBar(nil)
-            }
+            // Keep the Chromium command identity. No layout has a bookmark bar
+            // row: Comfortable shows the Space's bookmarks in its top bar.
             return true
         case .IDC_HOME:
             guard !AgentAnimationManager.shared.isActive(for: windowController.browserState.focusingTab?.guid ?? 0) else {

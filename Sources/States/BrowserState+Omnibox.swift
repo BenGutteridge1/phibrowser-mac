@@ -203,14 +203,15 @@ extension BrowserState {
                             splitBookmarkBindings[entity.entityID] != nil)
             }
         }
-        let action = Binding.resolve(cache: cache, live: live, isPin: isPin, traditional: layoutMode.isTraditional)
+        // Every layout binds pins and bookmarks to their tabs, as the sidebar does.
+        let action = Binding.resolve(cache: cache, live: live, isPin: isPin, traditional: false)
         if action == nil {
             let describe = { (items: [Binding]) in
                 items.map { "tab=\($0.tabID) open=\($0.isOpen) unsupported=\($0.unsupported) " +
                     "wrapper=\($0.wrapper.map { String(describing: $0) } ?? "nil")" }
             }
             AppLogDebug("[OmniboxNative] resolve failed kind=\(entity.kind.rawValue) id=\(entity.entityID) " +
-                "traditional=\(layoutMode.isTraditional) cache=\(describe(cache)) live=\(describe(live))")
+                "cache=\(describe(cache)) live=\(describe(live))")
         }
         return action
     }

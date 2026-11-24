@@ -12,6 +12,8 @@ enum TabStripAnimationContext {
     case dataChanged
     case dragReorder
     case stateChanged
+    /// A favicon-only tab growing under the pointer, or shrinking back.
+    case hoverExpansion
 }
 
 /// Animation configuration for a tab-strip transition.
@@ -44,6 +46,12 @@ struct TabStripAnimationConfig {
             return TabStripAnimationConfig(
                 duration: 0.25,
                 timingFunction: CAMediaTimingFunction(name: .easeOut),
+                allowsImplicitAnimation: true
+            )
+        case .hoverExpansion:
+            return TabStripAnimationConfig(
+                duration: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.22,
+                timingFunction: CAMediaTimingFunction(controlPoints: 0.2, 0.8, 0.2, 1),
                 allowsImplicitAnimation: true
             )
         }

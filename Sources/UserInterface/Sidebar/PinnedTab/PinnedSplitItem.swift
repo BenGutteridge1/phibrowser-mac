@@ -123,9 +123,8 @@ class PinnedSplitItem: NSCollectionViewItem, NSMenuDelegate {
             let point = self.backgroundView.convert(event.locationInWindow, from: nil)
             self.itemDoubleClicked?(self.tab(at: point), event.modifierFlags)
         }
-        backgroundView.hoverStateChanged = { [weak self] isHovered in
-            self?.splitTabPreviewRegistration.setHovering(isHovered)
-        }
+        // Fork: pinned splits show nothing on hover (no preview card, no
+        // tooltip), as pinned tabs.
         splitTabPreviewRegistration.onEligibilityChanged = { [weak self] isEligible in
             self?.showsSplitTabPreview = isEligible
             self?.updateToolTip()
@@ -432,12 +431,9 @@ class PinnedSplitItem: NSCollectionViewItem, NSMenuDelegate {
         }
     }
 
+    /// Fork: pinned splits show no tooltip, as pinned tabs.
     private func updateToolTip() {
-        guard panes.count >= 2, !showsSplitTabPreview else {
-            view.toolTip = nil
-            return
-        }
-        view.toolTip = panes.map(\.title).joined(separator: " | ")
+        view.toolTip = nil
     }
 
     func cancelTabPreviewForInteraction() {

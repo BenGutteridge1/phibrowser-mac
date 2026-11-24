@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1F5D9D2ED057B08FED9DE49 /* TopBarRevealController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32EA77EFE0B71A8166B17CE9 /* TopBarRevealController.swift */; };
+		542EDEEAA7BC1B4DBB90F5D8 /* TopBarAddressField.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F2476EE63E08005BCA7498 /* TopBarAddressField.swift */; };
+		FDA0621B7982FD41C48E5D27 /* TopBarWidths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F2EE431899DE75A0FA6CB6 /* TopBarWidths.swift */; };
 		CA7DF0170000000000000003 /* ShareTechMono-Regular.ttf in Copy Fonts */ = {isa = PBXBuildFile; fileRef = CA7DF0170000000000000001 /* ShareTechMono-Regular.ttf */; };
 		CA7DF0170000000000000004 /* ShareTechMono-OFL.txt in Copy Fonts */ = {isa = PBXBuildFile; fileRef = CA7DF0170000000000000002 /* ShareTechMono-OFL.txt */; };
 		032F940519944127A19A4AD6 /* ShortcutsStatusSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02871C6C7E9D44C08F43D639 /* ShortcutsStatusSection.swift */; };
@@ -104,8 +107,8 @@
 		376CE4152F2897D30093D937 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376CE40D2F2897D30093D937 /* Profile.swift */; };
 		376CE4162F2897D30093D937 /* Response.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376CE40E2F2897D30093D937 /* Response.swift */; };
 		376CE4172F2897D30093D937 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376CE4102F2897D30093D937 /* APIClient.swift */; };
-		376CE5E62F2C66900093D937 /* TabStripBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376CE5E52F2C66900093D937 /* TabStripBarController.swift */; };
-		376CE5E82F2C669B0093D937 /* TabStripRightButtons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376CE5E72F2C669B0093D937 /* TabStripRightButtons.swift */; };
+		376CE5E62F2C66900093D937 /* TopBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376CE5E52F2C66900093D937 /* TopBarController.swift */; };
+		376CE5E82F2C669B0093D937 /* TopBarButtons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376CE5E72F2C669B0093D937 /* TopBarButtons.swift */; };
 		3777EEF42FC4442700C85E41 /* FloatingNewTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3777EEF32FC4442700C85E41 /* FloatingNewTabView.swift */; };
 		377D210F2F51986900A68BE5 /* WebContentContainerViewController+FloatingSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 377D210E2F51986900A68BE5 /* WebContentContainerViewController+FloatingSidebar.swift */; };
 		377D21EC2F52C67300A68BE5 /* WebContentAddressBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 377D21EB2F52C67300A68BE5 /* WebContentAddressBarMenu.swift */; };
@@ -895,6 +898,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		32EA77EFE0B71A8166B17CE9 /* TopBarRevealController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarRevealController.swift; sourceTree = "<group>"; };
+		B0F2476EE63E08005BCA7498 /* TopBarAddressField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarAddressField.swift; sourceTree = "<group>"; };
+		65F2EE431899DE75A0FA6CB6 /* TopBarWidths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarWidths.swift; sourceTree = "<group>"; };
 		CA7DF0170000000000000001 /* ShareTechMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ShareTechMono-Regular.ttf"; sourceTree = "<group>"; };
 		CA7DF0170000000000000002 /* ShareTechMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ShareTechMono-OFL.txt"; sourceTree = "<group>"; };
 		01794B7EA4882E10EFB8D56C /* SelfRevokeStrings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SelfRevokeStrings.swift; path = UI/SelfRevokeStrings.swift; sourceTree = "<group>"; };
@@ -999,8 +1005,8 @@
 		376CE40D2F2897D30093D937 /* Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Profile.swift; sourceTree = "<group>"; };
 		376CE40E2F2897D30093D937 /* Response.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Response.swift; sourceTree = "<group>"; };
 		376CE4102F2897D30093D937 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-		376CE5E52F2C66900093D937 /* TabStripBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabStripBarController.swift; sourceTree = "<group>"; };
-		376CE5E72F2C669B0093D937 /* TabStripRightButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabStripRightButtons.swift; sourceTree = "<group>"; };
+		376CE5E52F2C66900093D937 /* TopBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarController.swift; sourceTree = "<group>"; };
+		376CE5E72F2C669B0093D937 /* TopBarButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarButtons.swift; sourceTree = "<group>"; };
 		3777EEF32FC4442700C85E41 /* FloatingNewTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingNewTabView.swift; sourceTree = "<group>"; };
 		377D210E2F51986900A68BE5 /* WebContentContainerViewController+FloatingSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WebContentContainerViewController+FloatingSidebar.swift"; sourceTree = "<group>"; };
 		377D21EB2F52C67300A68BE5 /* WebContentAddressBarMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebContentAddressBarMenu.swift; sourceTree = "<group>"; };
@@ -2449,6 +2455,7 @@
 			children = (
 				8EEBD7682FAB137E008CBD9A /* TabGroupRun.swift */,
 				8E4C94992F10D01500B09A80 /* TabStripLayout.swift */,
+				65F2EE431899DE75A0FA6CB6 /* TopBarWidths.swift */,
 				8E9E96A52F0F6E64002D0D21 /* TabStripMetrics.swift */,
 				8E9E96A62F0F6E64002D0D21 /* TabStripState.swift */,
 			);
@@ -2473,8 +2480,10 @@
 			children = (
 				8E2A91252FB18051003E1F05 /* TabGroupDragContext.swift */,
 				8E2A91262FB18051003E1F05 /* TabGroupDragController.swift */,
-				376CE5E72F2C669B0093D937 /* TabStripRightButtons.swift */,
-				376CE5E52F2C66900093D937 /* TabStripBarController.swift */,
+				376CE5E72F2C669B0093D937 /* TopBarButtons.swift */,
+				376CE5E52F2C66900093D937 /* TopBarController.swift */,
+				32EA77EFE0B71A8166B17CE9 /* TopBarRevealController.swift */,
+				B0F2476EE63E08005BCA7498 /* TopBarAddressField.swift */,
 				8E762CC52F16531A00631087 /* TabStripAnimation.swift */,
 				8E762C172F15F5AE00631087 /* TabDragContext.swift */,
 				8E762C182F15F5AE00631087 /* TabStripDragController.swift */,
@@ -4046,7 +4055,7 @@
 				37C1B2882EE0418700DD4496 /* DownloadsManager+Test.swift in Sources */,
 				37C1B3322EE691E700DD4496 /* LottieAnimationView.swift in Sources */,
 				37C1B1E62EDEA1E200DD4496 /* FeedbackViewController.swift in Sources */,
-				376CE5E82F2C669B0093D937 /* TabStripRightButtons.swift in Sources */,
+				376CE5E82F2C669B0093D937 /* TopBarButtons.swift in Sources */,
 				376195C02F518DDE0094A78E /* FloatingSidebarViewController.swift in Sources */,
 				B9355DB35D733C3C5CF6EACC /* FloatingSidebarHostViewController+Fork.swift in Sources */,
 				F10920260921000000000001 /* FloatingSidebarHostViewController.swift in Sources */,
@@ -4122,12 +4131,15 @@
 				CCCD5E382EB1C36300E78FC1 /* PiCompanionExtensionCleanup.swift in Sources */,
 				8E9E96AC2F0F6E64002D0D21 /* TabItemView.swift in Sources */,
 				8E4C949A2F10D01500B09A80 /* TabStripLayout.swift in Sources */,
+				FDA0621B7982FD41C48E5D27 /* TopBarWidths.swift in Sources */,
 				8E9E96AD2F0F6E64002D0D21 /* TabStripState.swift in Sources */,
 				8E2A91272FB18051003E1F05 /* TabGroupDragContext.swift in Sources */,
 				8E2A91282FB18051003E1F05 /* TabGroupDragController.swift in Sources */,
 				8E9E96AE2F0F6E64002D0D21 /* TabStripMetrics.swift in Sources */,
 				8E9E96AF2F0F6E64002D0D21 /* TabStrip.swift in Sources */,
-				376CE5E62F2C66900093D937 /* TabStripBarController.swift in Sources */,
+				376CE5E62F2C66900093D937 /* TopBarController.swift in Sources */,
+				A1F5D9D2ED057B08FED9DE49 /* TopBarRevealController.swift in Sources */,
+				542EDEEAA7BC1B4DBB90F5D8 /* TopBarAddressField.swift in Sources */,
 				CC376D182EC6D5EE00270B93 /* Utils.swift in Sources */,
 				CC376D192EC6D5EE00270B93 /* HSL.swift in Sources */,
 				375B2D3A2ED009F60053FECC /* BrowserDataImporter.swift in Sources */,

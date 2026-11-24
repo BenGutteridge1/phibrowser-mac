@@ -86,6 +86,13 @@ struct TabStripLayoutInput {
     /// exclusions) lays out as usual.
     let lockedInactiveTabWidth: CGFloat?
 
+    /// The tab under the pointer. When it is down to its favicon it lays out
+    /// at `hoverExpandedWidth` instead, and the tabs after it move along to
+    /// make the room: it grows from its own leading edge, so it stays under
+    /// the pointer as it grows.
+    let hoverExpandedIndex: Int?
+    let hoverExpandedWidth: CGFloat
+
     init(containerWidth: CGFloat,
          tabCount: Int,
          activeTabIndex: Int?,
@@ -103,7 +110,9 @@ struct TabStripLayoutInput {
          groupRuns: [GroupRun] = [],
          chipFullWidths: [String: CGFloat] = [:],
          gapBeforeRunStartChip: Bool = false,
-         lockedInactiveTabWidth: CGFloat? = nil) {
+         lockedInactiveTabWidth: CGFloat? = nil,
+         hoverExpandedIndex: Int? = nil,
+         hoverExpandedWidth: CGFloat = 0) {
         self.containerWidth = containerWidth
         self.tabCount = tabCount
         self.activeTabIndex = activeTabIndex
@@ -122,6 +131,16 @@ struct TabStripLayoutInput {
         self.chipFullWidths = chipFullWidths
         self.gapBeforeRunStartChip = gapBeforeRunStartChip
         self.lockedInactiveTabWidth = lockedInactiveTabWidth
+        self.hoverExpandedIndex = hoverExpandedIndex
+        self.hoverExpandedWidth = hoverExpandedWidth
+    }
+
+    /// A favicon-only tab under the pointer grows to `hoverExpandedWidth`.
+    func width(ofTabAt index: Int, laidOutAt width: CGFloat) -> CGFloat {
+        guard index == hoverExpandedIndex,
+              width < TabStripMetrics.Content.compactModeThreshold,
+              hoverExpandedWidth > width else { return width }
+        return hoverExpandedWidth
     }
 }
 
@@ -338,7 +357,7 @@ enum TabStripLayoutEngine {
             }
             currentX += input.spacing
             let isActive = (input.activeTabIndex != nil && i == input.activeTabIndex!)
-            let width = isActive ? activeW : inactiveW
+            let width = input.width(ofTabAt: i, laidOutAt: isActive ? activeW : inactiveW)
             // Split-merged cells occupy a single normal-tab slot (no
             // widening). Fitting every pane inside the same width as one
             // tab keeps the per-pane hit regions from spilling into the
@@ -609,7 +628,7 @@ enum TabStripLayoutEngine {
 
             currentX += input.spacing
             let isActive = (input.activeTabIndex == i)
-            let width = isActive ? activeW : inactiveW
+            let width = input.width(ofTabAt: i, laidOutAt: isActive ? activeW : inactiveW)
             // Split-merged cells occupy a single normal-tab slot (no
             // widening). Fitting every pane inside the same width as one
             // tab keeps the per-pane hit regions from spilling into the

@@ -91,7 +91,7 @@ final class WebContentContainerLayoutModeTests: XCTestCase {
         drainMainQueue()
 
         let tabStripBar = container.children.lazy
-            .compactMap { $0 as? TabStripBarController }
+            .compactMap { $0 as? TopBarController }
             .first
         return try XCTUnwrap(tabStripBar, "the container built no tab strip bar").view
     }

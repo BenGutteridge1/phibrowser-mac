@@ -11,7 +11,9 @@ import Foundation
 @MainActor
 final class SidebarMediaController: ObservableObject {
     struct Surface: Hashable {
-        enum Kind: Hashable { case docked, floating }
+        /// `topBar`: the Comfortable top bar's player, which only ever shows
+        /// the compact transport row.
+        enum Kind: Hashable { case docked, floating, topBar }
         let sessionID: ObjectIdentifier?
         let kind: Kind
 
@@ -249,6 +251,7 @@ final class SidebarMediaController: ObservableObject {
         let presented: Surface? = !isEnabled ? nil
             : eligible.first(where: { $0.kind == .floating })
                 ?? eligible.first(where: { $0.kind == .docked })
+                ?? eligible.first(where: { $0.kind == .topBar })
         if activeSurface != presented {
             finishTrackChange()
             isVolumeExpanded = false
@@ -889,6 +892,8 @@ final class SidebarMediaController: ObservableObject {
 
     private func applyPresentationMode(resetDynamic: Bool = false) {
         guard hasEligibleSource else { isExpanded = false; return }
+        // The top bar has room for the transport row alone.
+        guard activeSurface?.kind != .topBar else { isExpanded = false; return }
         switch presentationMode {
         case .alwaysExpanded: isExpanded = true
         case .alwaysCompact: isExpanded = false
@@ -898,7 +903,7 @@ final class SidebarMediaController: ObservableObject {
     }
 
     func setExpanded(_ expanded: Bool, on surface: Surface) {
-        guard activeSurface == surface else { return }
+        guard activeSurface == surface, surface.kind != .topBar else { return }
         cancelHoverExpansion()
         if presentationMode == .dynamic {
             isExpanded = expanded && hasEligibleSource
@@ -910,7 +915,7 @@ final class SidebarMediaController: ObservableObject {
     /// The delay belongs to the production controller so cancellation and
     /// source/surface validation do not depend on SwiftUI delivering disappear.
     func setHovering(_ hovering: Bool, on surface: Surface) {
-        guard activeSurface == surface else { return }
+        guard activeSurface == surface, surface.kind != .topBar else { return }
         cancelHoverExpansion()
         hoveredSurface = hovering ? surface : nil
         guard hovering, presentationMode == .dynamic, hasEligibleSource,

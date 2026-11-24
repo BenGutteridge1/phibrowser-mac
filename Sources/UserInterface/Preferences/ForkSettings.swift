@@ -89,6 +89,8 @@ enum ForkSettings {
     enum Key {
         static let spaceSwitcherPlacement = "fork.spaceSwitcherPlacement"
         static let spaceSwitcherUsesDots = "fork.spaceSwitcherUsesDots"
+        /// Comfortable: whether new windows open with the top bar hidden (⌘S).
+        static let topBarHidden = "fork.topBarHidden"
         static let spaceOverlayOpacities = "fork.spaceOverlayOpacities"
         static let lastTabShowsEmptyState = "fork.lastTabShowsEmptyState"
         static let tabSwitcherExcludesPinnedTabs = "fork.tabSwitcherExcludesPinnedTabs"
@@ -218,6 +220,13 @@ enum ForkSettings {
     }
 
     /// Draws each Space as a small dot instead of its icon.
+    /// The top bar's hidden state the last window left, which new windows
+    /// start with. Each window then keeps its own, as the sidebar does.
+    static var topBarHidden: Bool {
+        get { UserDefaults.standard.bool(forKey: Key.topBarHidden) }
+        set { UserDefaults.standard.set(newValue, forKey: Key.topBarHidden) }
+    }
+
     static var spaceSwitcherUsesDots: Bool {
         get { UserDefaults.standard.bool(forKey: Key.spaceSwitcherUsesDots) }
         set { UserDefaults.standard.set(newValue, forKey: Key.spaceSwitcherUsesDots) }

@@ -108,8 +108,11 @@ extension SpaceSessionController {
 
     @IBAction func openLocationBar(_ sender: Any?) {
         var addressView = sender as? NSView
+        // ⌘L lays the Omnibox over Balanced's header address bar. Performance
+        // and Comfortable open it where ⌘T does, centred; a click on their
+        // address bar passes the bar itself and opens it there.
         if addressView == nil,
-           PhiPreferences.GeneralSettings.loadLayoutMode() != .performance {
+           PhiPreferences.GeneralSettings.loadLayoutMode() == .balanced {
             addressView = mainSplitViewController.webContentContainerViewController.addressBarAnchorView
         }
         toggleOmniBox(fromAddressBar: true, addressView: addressView)

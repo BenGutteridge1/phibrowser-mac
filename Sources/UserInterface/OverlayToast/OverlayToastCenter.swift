@@ -290,9 +290,12 @@ extension OverlayToastCenter {
     @MainActor
     @discardableResult
     func showBackgroundTabCreation(_ tab: Tab, in browserState: BrowserState) -> UUID? {
+        // Shown when no tab list is in view: a collapsed sidebar, or
+        // Comfortable's top bar hidden.
+        let tabsOutOfView = browserState.layoutMode.isTraditional
+            ? browserState.topBarHidden : browserState.sidebarCollapsed
         guard !browserState.isKioskWindow,
-              !browserState.layoutMode.isTraditional,
-              browserState.sidebarCollapsed,
+              tabsOutOfView,
               browserState.windowController?.isPresentedOrLegacy != false,
               browserState.normalTabs.contains(where: { $0 === tab }) else { return nil }
 

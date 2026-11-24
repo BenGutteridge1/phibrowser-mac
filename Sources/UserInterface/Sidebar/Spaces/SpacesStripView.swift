@@ -255,6 +255,13 @@ struct SpacesStripView: View {
     /// When true (sidebar), the label sits left with a trailing ellipsis
     /// affordance and a spacer between them.
     var showsEllipsisAffordance: Bool = true
+    /// Top bar: the "+" is always drawn, and the row's own hover tracking
+    /// leaves the slot's sidebar-row hover state alone. The bar clips the
+    /// strip to its Spaces and slides it open to the "+" under the pointer
+    /// (`TopBarSpacesRowView`); the slot's hover state is verified against
+    /// the sidebar's row, which Comfortable never shows, so it would hide
+    /// the "+" while the row is open.
+    var alwaysShowsAddButton: Bool = false
     /// Resolves the window controller that hosts this strip, evaluated lazily so
     /// it stays correct even if the controller finishes wiring up after the strip
     /// is built. `iconPickerRequestToken` is slot-wide, so every Space-window in a
@@ -390,7 +397,7 @@ struct SpacesStripView: View {
     @State private var iconEditSpaceId: String?
 
     /// Externally owned tooltip controller for the horizontal chip, injected by
-    /// TabStripBarController so the chip's AppKit hosting view can dismiss the
+    /// its AppKit host so the chip's hosting view can dismiss the
     /// card synchronously before popping the switcher menu — the menu's modal
     /// tracking loop stops the main queue, so a deferred SwiftUI-driven
     /// dismissal would land only after the menu closes. Nil in the sidebar,
@@ -556,7 +563,7 @@ struct SpacesStripView: View {
     /// Space-switcher menu (one item per Space, plus "New Space");
     /// right-clicking it shows the tab strip's context menu (the active-Space
     /// controls). Both menus are AppKit NSMenus attached to the chip's hosting
-    /// view in TabStripBarController — the switcher on left-click, the context
+    /// view by its host — the switcher on left-click, the context
     /// menu on right-click — so the chip intentionally has no SwiftUI
     /// `.contextMenu` or popover of its own. The hover card rides the injected
     /// `chipTooltipController`, which the hosting view dismisses synchronously
@@ -759,7 +766,10 @@ struct SpacesStripView: View {
         // already visible by the time the cursor could reach its
         // far-right slot.
         .contentShape(Rectangle())
-        .onHover { stripRowHoverChanged($0) }
+        .onHover { hovering in
+            guard !alwaysShowsAddButton else { return }
+            stripRowHoverChanged(hovering)
+        }
         // Slide the glass chip (and cross-fade the pips' dim/brighten
         // swap) to the new active pip on every switch source — click,
         // ⌃-number, menu, swipe. Match the band push-in exactly (same
@@ -1349,6 +1359,21 @@ struct SpacesStripView: View {
 
     /// Whether `count` pips all fit in a row `availableWidth` wide, with the
     /// "+" trailing — the row then shows every pip and never slides.
+    /// The width that shows `count` pips and the trailing "+" in the full
+    /// strip, its padding included: Comfortable's top bar sizes its dot row
+    /// to this.
+    static func fullStripWidth(count: Int) -> CGFloat {
+        let pips = count <= 0 ? 0 : CGFloat(count) * stripItemWidth + CGFloat(count - 1) * stripSpacing
+        return pips + trailingSlotWidth + 2 * horizontalPadding
+    }
+
+    /// The "+" slot at the full strip's end: the row's spacer (4pt) and stack
+    /// spacing before it, plus a point of slack so the last dot never
+    /// measures as overflowing.
+    static var trailingSlotWidth: CGFloat {
+        2 * stripSpacing + 4 + trailingButtonWidth + 1
+    }
+
     static func allPipsFit(count: Int, availableWidth: CGFloat) -> Bool {
         let width = count <= 0 ? 0 : CGFloat(count) * stripItemWidth + CGFloat(count - 1) * stripSpacing
         return width <= availableWidth - trailingButtonWidth - stripSpacing
@@ -1772,7 +1797,7 @@ struct SpacesStripView: View {
     /// reserves for it and the pips never reflow on hover. In the header's
     /// control row it stays shown: the pips sit right beside it there.
     private var showsAddButton: Bool {
-        slot.isStripRowHovered || stripGeometry.sitsInControlRow
+        alwaysShowsAddButton || slot.isStripRowHovered || stripGeometry.sitsInControlRow
     }
 
     private var addButton: some View {

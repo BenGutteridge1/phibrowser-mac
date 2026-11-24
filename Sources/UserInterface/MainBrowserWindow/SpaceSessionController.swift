@@ -1429,8 +1429,12 @@ class SpaceSessionController: NSWindowController {
         let traditionalLayout = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
         let bandVisible = mainSplitViewController.webContentContainerViewController.floatingSidebarHost.isTrafficLightBandVisible
         let waitingForSidebar = mainSplitViewController.windowSplitViewController.isSidebarExpanding
-        let hideTrafficLights = !fullScreen && !traditionalLayout
-            && (SidebarPosition.isOnRight ? !bandVisible : collapsed || waitingForSidebar)
+        // Comfortable's lights sit in the top bar and go with it: hidden with
+        // the bar (⌘S), back while it is revealed from the top edge.
+        let topBarAway = browserState.topBarHidden
+            && !mainSplitViewController.webContentContainerViewController.isTopBarRevealed
+        let hideTrafficLights = !fullScreen && (traditionalLayout ? topBarAway
+            : (SidebarPosition.isOnRight ? !bandVisible : collapsed || waitingForSidebar))
 
         // This runs on every defaults change, and a set of `isHidden` or
         // `titlebarAppearsTransparent` retiles the titlebar, so only actual
@@ -1458,13 +1462,28 @@ class SpaceSessionController: NSWindowController {
     /// `WebContentConstant.edgesSpacing - 2` below the top of the window.
     static func chromeRowCenter(
         for layoutMode: LayoutMode,
-        edgeToEdgeEnabled: Bool = PhiPreferences.GeneralSettings.edgeToEdgeWebContent.loadValue()
+        edgeToEdgeEnabled: Bool = PhiPreferences.GeneralSettings.edgeToEdgeWebContent.loadValue(),
+        topBarHidden: Bool = false
     ) -> CGFloat {
         switch layoutMode {
         case .performance, .balanced:
             return SidebarHeaderView.controlRowTopOffset(for: layoutMode, edgeToEdgeEnabled: edgeToEdgeEnabled) + 12
         case .comfortable:
-            return 22
+            // The middle of the 40pt top bar, which a hidden bar's reveal
+            // brings in as a panel `TopBarRevealController.panelInset` down.
+            let barCenter = WebContentConstant.topBarHeight / 2
+            return topBarHidden ? barCenter + TopBarRevealController.panelInset : barCenter
+        }
+    }
+
+    /// Comfortable's revealed panel sits in from the window's leading edge,
+    /// and its lights with it. Nil keeps AppKit's own leading placement.
+    static func chromeRowLeading(for layout: WebContentLayout) -> CGFloat? {
+        if layout.sidebarOnRight { return 20 }
+        switch layout.layoutMode {
+        case .balanced: return 22
+        case .comfortable: return layout.topBarHidden ? 20 + TopBarRevealController.panelInset : nil
+        case .performance: return nil
         }
     }
 
@@ -1508,8 +1527,8 @@ class SpaceSessionController: NSWindowController {
         trafficLightPositioner?.stop(restoringPlacement: true)
         let positioner = TrafficLightPositioner(
             window: window,
-            centerFromWindowTop: layout.sidebarOnRight ? FloatingTrafficLightMetrics.bandHeight / 2 : Self.chromeRowCenter(for: layoutMode, edgeToEdgeEnabled: layout.edgeToEdgeEnabled),
-            centerFromWindowLeading: layout.sidebarOnRight ? 20 : (layoutMode == .balanced ? 22 : nil)
+            centerFromWindowTop: layout.sidebarOnRight ? FloatingTrafficLightMetrics.bandHeight / 2 : Self.chromeRowCenter(for: layoutMode, edgeToEdgeEnabled: layout.edgeToEdgeEnabled, topBarHidden: layout.topBarHidden),
+            centerFromWindowLeading: Self.chromeRowLeading(for: layout)
         )
         trafficLightPositioner = positioner
         trafficLightLayout = layout

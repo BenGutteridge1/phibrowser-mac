@@ -407,6 +407,32 @@ class BrowserState {
         }
     }
 
+    /// Comfortable: the window's top bar is hidden (⌘S). False in the
+    /// sidebar layouts, which have no top bar.
+    var topBarHidden: Bool {
+        MainActor.assumeIsolated {
+            layoutMode.isTraditional && !isKioskWindow
+                && (windowController?.mainSplitViewController.isTopBarHidden ?? false)
+        }
+    }
+
+    /// The window's top-bar hidden state, whatever the layout; read with
+    /// `layoutMode`.
+    var topBarHiddenPublisher: AnyPublisher<Bool, Never> {
+        windowControllerChanges.prepend(())
+            .map { [weak self] _ -> AnyPublisher<Bool, Never> in
+                MainActor.assumeIsolated {
+                    guard let self, !self.isKioskWindow, let controller = self.windowController else {
+                        return Just(false).eraseToAnyPublisher()
+                    }
+                    return controller.mainSplitViewController.topBarHiddenPublisher
+                }
+            }
+            .switchToLatest()
+            .removeDuplicates()
+            .eraseToAnyPublisher()
+    }
+
     var sidebarCollapsedPublisher: AnyPublisher<Bool, Never> {
         windowControllerChanges.prepend(())
             .map { [weak self] _ -> AnyPublisher<Bool, Never> in
@@ -891,7 +917,6 @@ class BrowserState {
                     if self.layoutMode != newLayoutMode {
                         self.layoutMode = newLayoutMode
                         self.clearMultiSelection()
-                        self.adoptPeekOnTraditionalLayoutIfNeeded()
                     }
                     self.adoptPeeksOnFeatureDisabledIfNeeded()
                     self.mayUpdateNormalTabsOnLayoutChanged()
@@ -1164,15 +1189,15 @@ class BrowserState {
         }
     }
 
+    /// Every layout shares the sidebar's tab model: bookmark-backed tabs
+    /// stay bound to their Space pins, so a layout change only refreshes
+    /// the normal-tab list.
     private func mayUpdateNormalTabsOnLayoutChanged() {
         let traditionalLayout = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
         if lastLegacyLayout != nil && traditionalLayout == lastLegacyLayout {
             return
         }
         lastLegacyLayout = traditionalLayout
-        if traditionalLayout {
-            detachBookmarkTabsForComfortableLayout()
-        }
         self.updateNormalTabs()
     }
 
@@ -1318,23 +1343,19 @@ class BrowserState {
             return ids
         }()
 
-        let traditionalLayout = PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
         let normalTabGuids = tabs.compactMap { tab -> Int? in
             if let localGuid = tab.guidInLocalDB, !localGuid.isEmpty {
                 if openedPinnedGuids.contains(localGuid) {
                     return nil
                 }
-                if !traditionalLayout {
-                    if openedBookmarkGuids.contains(localGuid) {
-                        return nil
-                    }
+                if openedBookmarkGuids.contains(localGuid) {
+                    return nil
                 }
             }
             if tab.isPinned {
                 return nil
             }
-            if !traditionalLayout,
-               splitBookmarkBoundTabIds.contains(tab.guid)
+            if splitBookmarkBoundTabIds.contains(tab.guid)
                 || splitPaneIdsOpeningBehindBookmark.contains(tab.guid)
                 || splitPaneIdsClosingBehindBookmark.contains(tab.guid) {
                 return nil
@@ -1486,9 +1507,15 @@ class BrowserState {
         )
     }
     
+    /// Toggles the sidebar, or in Comfortable the top bar, which stands in
+    /// for it.
     func toggleSidebar(_ collapse: Bool? = nil) {
         MainActor.assumeIsolated {
-            guard !isKioskWindow, !layoutMode.isTraditional else { return }
+            guard !isKioskWindow else { return }
+            if layoutMode.isTraditional {
+                windowController?.mainSplitViewController.setTopBarHidden(collapse ?? !topBarHidden)
+                return
+            }
             windowController?.mainSplitViewController.setSidebarCollapsed(
                 collapse ?? !sidebarCollapsed, animated: true)
         }
@@ -3968,7 +3995,7 @@ class BrowserState {
         let isAgentSpaceWindow = MainActor.assumeIsolated {
             AgentSpaceManager.shared.isAgentSpace(spaceId)
         }
-        guard !isIncognito, !isAgentSpaceWindow, !layoutMode.isTraditional,
+        guard !isIncognito, !isAgentSpaceWindow,
               PhiPreferences.GeneralSettings.peekViewEnabled.loadValue(),
               PhiPreferences.GeneralSettings.autoPeekViewEnabled.loadValue(),
               let boundURLString = boundURLStringForPeekOpener(openerTabId) else { return false }
@@ -4004,11 +4031,6 @@ class BrowserState {
         if divertExplicitPeekIfRequested(tab, context: context) {
             return true
         }
-        // Peek is a sidebar-layout feature: the traditional (Comfortable)
-        // layout opens everything as normal tabs. The explicit context-menu
-        // path above is likewise sidebar-only — Comfortable hides the menu
-        // item, and openLinkAsPeek degrades to a plain new tab as backstop.
-        guard !layoutMode.isTraditional else { return false }
         // The automatic bound-opener diversion has its own sub-toggle; the
         // explicit path above answers to the master gate alone.
         guard PhiPreferences.GeneralSettings.autoPeekViewEnabled.loadValue() else { return false }
@@ -4124,7 +4146,7 @@ class BrowserState {
         // one-peek-per-opener rule then replaces the current peek with it.
         // A split pane is an opener too — its peek covers the whole split.
         let openerTabId = peekState.openerTabId(forPeekTabId: sourceTabId) ?? sourceTabId
-        guard !isIncognito, !layoutMode.isTraditional,
+        guard !isIncognito,
               PhiPreferences.GeneralSettings.peekViewEnabled.loadValue(),
               tabs.contains(where: { $0.guid == openerTabId }) else {
             createTab(urlString)
@@ -4182,16 +4204,13 @@ class BrowserState {
     }
 
     /// Whether an address-bar submission made while `tab` is focused must
-    /// open a NEW tab instead of navigating `tab` itself. True in the
-    /// vertical layouts for the bound tabs. A bookmark's tab or pinned tab
+    /// open a NEW tab instead of navigating `tab` itself. True for the bound
+    /// tabs, in every layout. A bookmark's tab or pinned tab
     /// navigated in place would bounce the load into a Peek (bookmark) or
     /// re-point the pinned row and its icon at whatever was typed. A Split
     /// Bookmark pane would load the typed URL past Space URL rules; a pane
-    /// counts when its mark was pushed to Chromium, so the two agree. The
-    /// traditional (Comfortable) layout has no Bookmark Tab or Split
-    /// Bookmark and keeps plain same-tab navigation, pinned tabs included.
+    /// counts when its mark was pushed to Chromium, so the two agree.
     func addressBarNavigationOpensNewTab(for tab: Tab) -> Bool {
-        guard !layoutMode.isTraditional else { return false }
         return boundRecordURLString(for: tab) != nil
             || markedSplitBookmarkPaneWrappers[tab.guid] != nil
     }
@@ -4228,12 +4247,11 @@ class BrowserState {
         }
 
         // Peek previews web pages only; anything else keeps stock behavior.
-        // The layout and auto-toggle re-checks cover a switch to traditional
-        // layout or a flipped setting while the candidate was waiting for its
-        // first URL.
+        // The auto-toggle re-check covers a setting flipped while the
+        // candidate was waiting for its first URL.
         let scheme = URL(string: targetURLString)?.scheme?.lowercased() ?? ""
         let isWebURL = scheme == "http" || scheme == "https"
-        if !isWebURL || layoutMode.isTraditional
+        if !isWebURL
             || !PhiPreferences.GeneralSettings.autoPeekViewEnabled.loadValue()
             || !autoPeeksLink(boundURLString: candidate.boundURLString, targetURLString: targetURLString) {
             AppLogInfo("👀 [Peek] tabId=\(candidate.tab.guid) url=\(targetURLString) adopting as normal tab")
@@ -4372,7 +4390,6 @@ class BrowserState {
                                      context: NativeTabCreationContext?,
                                      openerTabId: Int) {
         guard PhiPreferences.GeneralSettings.peekViewEnabled.loadValue(),
-              !layoutMode.isTraditional,
               tabs.contains(where: { $0.guid == openerTabId }),
               peekState.peek(forOpener: openerTabId) == nil else {
             AppLogInfo("👀 [Peek] restored peek tabId=\(tab.guid) cannot re-bind to opener=\(openerTabId) — adopting as a normal tab")
@@ -4633,14 +4650,6 @@ class BrowserState {
             DispatchQueue.main.async { surface.webContentWrapper?.setAsActiveTab() }
         }
         return true
-    }
-
-    /// Peek exists only in the sidebar layouts: entering the traditional
-    /// (horizontal-tab) layout converts every live peek into a regular tab
-    /// and resolves a pending candidate the same way.
-    func adoptPeekOnTraditionalLayoutIfNeeded() {
-        guard layoutMode.isTraditional else { return }
-        adoptAllPeeksIntoTabs()
     }
 
     /// The Peek feature toggle (Settings › General): turning it off converts
@@ -6402,7 +6411,7 @@ class BrowserState {
         let eligible = normalTabs.filter { tab in
             !tab.isPinned
                 && !pinnedGuids.contains(tab.guidInLocalDB ?? "")
-                && (layoutMode.isTraditional || !isBookmarkBackedTab(tab))
+                && !isBookmarkBackedTab(tab)
         }
         let eligibleIds = Set(eligible.map(\.guid))
         return eligible.filter { tab in

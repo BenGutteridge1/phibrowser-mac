@@ -316,14 +316,23 @@ final class ForkPinnedLivePreview: NSObject {
         if let page = pages[url], page.session != nil, page.isDark != isDark {
             Task { @MainActor [weak self] in await self?.applyColorScheme(isDark: isDark, to: page) }
         }
-        // Beside the sidebar, top-aligned with the pinned tab, kept on screen.
+        // Beside the sidebar, top-aligned with the pinned tab; in the
+        // Comfortable top bar, below the tile, leading-aligned with it. Kept
+        // on screen.
         let anchorRect = parent.convertToScreen(anchor.convert(anchor.bounds, to: nil))
         let visible = (parent.screen ?? NSScreen.main)?.visibleFrame ?? parent.frame
-        // The pinned grid spans the sidebar, so its edge is the sidebar's.
-        let grid = anchor.enclosingScrollView ?? anchor
-        let sidebarEdge = parent.convertToScreen(grid.convert(grid.bounds, to: nil)).maxX
-        var origin = NSPoint(x: max(sidebarEdge, anchorRect.maxX) + Self.gap,
+        var origin: NSPoint
+        if state.layoutMode.isTraditional {
+            origin = NSPoint(x: anchorRect.minX,
+                             y: anchorRect.minY - Self.gap - currentCardSize.height)
+            origin.x = min(max(origin.x, visible.minX + Self.gap), visible.maxX - currentCardSize.width - Self.gap)
+        } else {
+            // The pinned grid spans the sidebar, so its edge is the sidebar's.
+            let grid = anchor.enclosingScrollView ?? anchor
+            let sidebarEdge = parent.convertToScreen(grid.convert(grid.bounds, to: nil)).maxX
+            origin = NSPoint(x: max(sidebarEdge, anchorRect.maxX) + Self.gap,
                              y: anchorRect.maxY - currentCardSize.height)
+        }
         origin.y = min(max(origin.y, visible.minY + Self.gap), visible.maxY - currentCardSize.height - Self.gap)
         panel.setFrame(NSRect(origin: origin, size: currentCardSize), display: true)
         if panel.parent !== parent {

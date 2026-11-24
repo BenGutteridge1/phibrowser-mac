@@ -256,15 +256,22 @@ class SideAddressBar: NSView {
 
     var sessionBrowserStateForTesting: BrowserState? { sessionBrowserState }
 
-    init(browserState: BrowserState?, isFloating: Bool = false) {
+    /// Comfortable's top bar: the bar is the active tab's address field, so
+    /// it fills the field edge to edge, and it carries the address bar's own
+    /// buttons alone. Extensions live in the bar's pinned tiles.
+    private let isInTopBar: Bool
+
+    init(browserState: BrowserState?, isFloating: Bool = false, isInTopBar: Bool = false) {
         self.boundBrowserState = browserState
         self.isFloating = isFloating
+        self.isInTopBar = isInTopBar
         super.init(frame: .zero)
         setupUI()
     }
     
     required init?(coder: NSCoder) {
         isFloating = false
+        isInTopBar = false
         super.init(coder: coder)
         setupUI()
     }
@@ -452,7 +459,10 @@ class SideAddressBar: NSView {
             .combineLatest(widthPublisher, browserState.$layoutMode, browserState.sidebarCollapsedPublisher)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] exts, width, layoutMode, _ in
-                guard let self,
+                // The top bar's field never holds extensions and never
+                // decides for the sidebar where they go: it exists, hidden,
+                // in the sidebar layouts too.
+                guard let self, !self.isInTopBar,
                       self.isFloating == browserState.sidebarCollapsed else { return }
                 // Only the current sidebar host may publish its width decision.
                 // Recheck the shared value on activation: the other host may
@@ -793,22 +803,26 @@ class SideAddressBar: NSView {
             self?.commitExtensionReorderDrop(atX: x) ?? false
         }
         
-        rightStackView.addArrangedSubview(extensionIconsStackView)
+        if !isInTopBar {
+            rightStackView.addArrangedSubview(extensionIconsStackView)
+        }
         rightStackView.addArrangedSubview(readerButton)
         rightStackView.addArrangedSubview(memoryMenuButton)
         rightStackView.addArrangedSubview(autoplayAllowedButton)
         rightStackView.addArrangedSubview(autoplayRulesButton)
         rightStackView.addArrangedSubview(copyURLButton)
-        rightStackView.addArrangedSubview(extensionMenuHostingView)
-        extensionMenuHostingView.snp.makeConstraints { make in
-            make.width.height.equalTo(24)
+        if !isInTopBar {
+            rightStackView.addArrangedSubview(extensionMenuHostingView)
+            extensionMenuHostingView.snp.makeConstraints { make in
+                make.width.height.equalTo(24)
+            }
         }
         containerView.addSubview(rightStackView)
     }
     
     private func setupLayout() {
         containerView.snp.makeConstraints { make in
-            make.leading.trailing.equalToSuperview().inset(WebContentConstant.edgesSpacing)
+            make.leading.trailing.equalToSuperview().inset(isInTopBar ? 0 : WebContentConstant.edgesSpacing)
             make.top.bottom.equalToSuperview()
         }
 
