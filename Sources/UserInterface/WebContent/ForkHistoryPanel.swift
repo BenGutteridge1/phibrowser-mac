@@ -638,6 +638,10 @@ final class ForkHistoryPanelController: NSObject {
             .padding(EdgeInsets(top: Self.shadowMargin, leading: Self.shadowMargin,
                                 bottom: Self.shadowMargin, trailing: Self.edgeInset))
         let hosting = ThemedHostingView(rootView: root, themeSource: state.themeContext)
+        // The panel is its own window, not the browser window, so on joining
+        // it the hosting view would resolve the global theme and drop the
+        // Space's: pin the Space's theme to this subtree.
+        hosting.subtreeThemeSource = state.themeContext
         hosting.wantsLayer = true
         hosting.layer?.backgroundColor = NSColor.clear.cgColor
         self.hosting = hosting
