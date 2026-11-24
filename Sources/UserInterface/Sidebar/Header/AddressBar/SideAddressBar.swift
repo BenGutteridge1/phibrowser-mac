@@ -728,6 +728,19 @@ class SideAddressBar: NSView {
         super.mouseDown(with: event)
         (sessionBrowserState?.windowController ?? unsafeBrowserWindowController)?.openLocationBar(containerView)
     }
+
+    /// In the top bar the field sits in titlebar space; a press on it opens
+    /// the Omnibox and never moves or zooms the window (see
+    /// `TopBarAddressField.hitTest`). The sidebar keeps AppKit's default.
+    override var mouseDownCanMoveWindow: Bool {
+        isInTopBar ? false : super.mouseDownCanMoveWindow
+    }
+
+    /// AppKit only honours the `false` above from a view that responds to
+    /// mouse events.
+    override var acceptsFirstResponder: Bool {
+        isInTopBar ? true : super.acceptsFirstResponder
+    }
     
     private func setupContainerView() {
         containerView = HoverableView()

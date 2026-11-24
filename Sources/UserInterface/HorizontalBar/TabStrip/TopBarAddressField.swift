@@ -65,4 +65,18 @@ final class TopBarAddressField: NSView, TitlebarAwareHitTestable {
     /// The field takes its clicks inside titlebar space: it is a control,
     /// not a window drag handle.
     func shouldConsumeHitTest(at point: NSPoint) -> Bool { true }
+
+    /// Presses on the field's text, icon and background go to the address
+    /// bar, which declines to move the window; its buttons keep their own.
+    /// AppKit asks the view it hit-tests whether a press in titlebar space
+    /// moves the window, and a double press on one that says yes zooms it.
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let hit = super.hitTest(point) else { return nil }
+        var view: NSView? = hit
+        while let candidate = view, candidate !== self {
+            if candidate is NSControl || candidate is HoverableButtonNSView { return hit }
+            view = candidate.superview
+        }
+        return addressBar
+    }
 }

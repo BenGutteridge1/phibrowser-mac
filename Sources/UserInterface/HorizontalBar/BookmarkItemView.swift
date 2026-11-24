@@ -516,6 +516,21 @@ class BookmarkItemView: NSView {
         isHovered = false
     }
 
+    // MARK: - Window drag
+
+    /// The pill takes every click inside it: its favicon, title and folder
+    /// icon are decoration. In the top bar the pill sits in titlebar space,
+    /// where AppKit asks the view it hit-tests whether a press there moves
+    /// the window, and a double press on a view that says yes zooms it
+    /// (`TabItemView` precedent). AppKit only honours a `false` from a view
+    /// that responds to mouse events, which takes `acceptsFirstResponder`.
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        super.hitTest(point) == nil ? nil : self
+    }
+
+    override var mouseDownCanMoveWindow: Bool { false }
+    override var acceptsFirstResponder: Bool { true }
+
     override func mouseDown(with event: NSEvent) {
         mouseDownPoint = convert(event.locationInWindow, from: nil)
         isDragging = false

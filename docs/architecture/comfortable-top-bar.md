@@ -28,6 +28,16 @@ leading edge and the tabs after it move along (`TabStripLayoutInput
 pointer while it grows. ⌘L opens the Omnibox centred, as ⌘T does; a click on
 the field opens it over the field.
 
+The bar lives in titlebar space. Its empty stretches fall through to the
+titlebar, so they move the window and zoom it on a double click. Its controls
+don't: AppKit asks the view it hit-tests whether a press there may move the
+window, and a double press on one that says yes zooms it. So the Space pins
+and folder groups, the pinned tiles' plates and the address field (its text
+goes to `SideAddressBar`) claim every press inside them and answer
+`mouseDownCanMoveWindow = false` with `acceptsFirstResponder = true`, without
+which AppKit ignores the answer (`TabItemView` precedent). The SwiftUI button
+hosts answer `false` too.
+
 The row starts 10pt after the window's lights. In full screen the lights live
 in the system's titlebar window, shown over the bar on demand, so the row
 starts at the window's edge.

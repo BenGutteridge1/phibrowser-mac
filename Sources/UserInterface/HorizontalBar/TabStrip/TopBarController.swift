@@ -41,6 +41,10 @@ private final class SafeAreaIgnoringHostingView: ThemedHostingView, TitlebarAwar
         onIntrinsicSizeChange?()
     }
 
+    /// Buttons in titlebar space: a double press on them, or between them,
+    /// never zooms the window.
+    override var mouseDownCanMoveWindow: Bool { false }
+
     override func hitTest(_ point: NSPoint) -> NSView? {
         let hit = super.hitTest(point)
         if ContextMenuEvent.isControlClick(NSApp.currentEvent), hit != nil {
@@ -81,6 +85,8 @@ private final class SafeAreaIgnoringThemedHostingView: ThemedHostingView, Titleb
         }
         return hit
     }
+
+    override var mouseDownCanMoveWindow: Bool { false }
 
     /// A click on a Space switches to it, so left clicks are the strip's,
     /// not a window drag.

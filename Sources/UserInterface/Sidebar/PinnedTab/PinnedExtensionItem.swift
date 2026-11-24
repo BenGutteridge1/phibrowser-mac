@@ -11,17 +11,15 @@ final class PinnedExtensionContextView: HoverableView {
     var handlesControlClick = false
     private var consumesControlClick = false
 
+    /// The tile takes every press inside it: its icon and badge are
+    /// decoration, and in the Comfortable top bar a press on a view that
+    /// may move the window would let a double press zoom it.
     override func hitTest(_ point: NSPoint) -> NSView? {
-        let defaultHitTarget = super.hitTest(point)
-        guard handlesControlClick,
-              ContextMenuEvent.isMouseDown(NSApp.currentEvent),
-              !isHidden,
-              alphaValue > 0,
-              defaultHitTarget != nil else {
-            return defaultHitTarget
-        }
-        return self
+        super.hitTest(point) == nil ? nil : self
     }
+
+    override var mouseDownCanMoveWindow: Bool { false }
+    override var acceptsFirstResponder: Bool { true }
 
     override func mouseDown(with event: NSEvent) {
         guard handlesControlClick,

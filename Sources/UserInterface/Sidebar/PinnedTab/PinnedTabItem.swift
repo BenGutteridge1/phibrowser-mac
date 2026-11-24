@@ -143,6 +143,22 @@ private final class PinnedPeekBadgeView: NSView {
     }
 }
 
+/// A pinned tile's plate: it takes every press inside it (its favicon and
+/// badges are decoration) and never moves the window. In the Comfortable top
+/// bar the tiles sit in titlebar space, where AppKit asks the view it
+/// hit-tests whether a press moves the window, and a double press on a view
+/// that says yes zooms it (`TabItemView` precedent). AppKit only honours a
+/// `false` from a view that responds to mouse events, which takes
+/// `acceptsFirstResponder`.
+final class PinnedTilePlateView: HoverableView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        super.hitTest(point) == nil ? nil : self
+    }
+
+    override var mouseDownCanMoveWindow: Bool { false }
+    override var acceptsFirstResponder: Bool { true }
+}
+
 /// Root view of a pinned cell. The peek badge straddles the cell's top-right
 /// corner and so hangs outside these bounds, where AppKit's hit testing
 /// stops — extend it to the overhanging subviews so the whole plate stays
@@ -166,7 +182,7 @@ class PinnedTabItem: NSCollectionViewItem, NSMenuDelegate {
     private static let faviconSize: CGFloat = 18
     private static let faviconCornerRadius: CGFloat = 4
     private var iconImageView: TabFaviconImageView!
-    private var backgroundView: HoverableView!
+    private var backgroundView: PinnedTilePlateView!
     private var openIndicatorHost: TabDecorativeHostingView!
     private var peekBadge: PinnedPeekBadgeView!
     private var discardedOutlineHost: TabDecorativeHostingView!
@@ -227,7 +243,7 @@ class PinnedTabItem: NSCollectionViewItem, NSMenuDelegate {
         view.layer?.masksToBounds = false
 
         // Interactive background view.
-        backgroundView = HoverableView()
+        backgroundView = PinnedTilePlateView()
         backgroundView.wantsLayer = true
         backgroundView.layer?.cornerCurve = .continuous
         backgroundView.layer?.cornerRadius = 8

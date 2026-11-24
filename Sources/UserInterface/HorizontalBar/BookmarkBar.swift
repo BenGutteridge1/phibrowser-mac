@@ -758,6 +758,17 @@ final class BookmarkFolderGroupView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// The wash between and around the pills belongs to the group, not the
+    /// window: a press there doesn't move the window, and a quick double
+    /// press while the folder opens or shuts doesn't zoom it.
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let hit = super.hitTest(point) else { return nil }
+        return hit is BookmarkItemView ? hit : self
+    }
+
+    override var mouseDownCanMoveWindow: Bool { false }
+    override var acceptsFirstResponder: Bool { true }
+
     func width(showingTitles: Bool) -> CGFloat {
         let widths = items.map { $0.width(showingTitle: showingTitles) }
         return Self.inset * 2 + widths.reduce(0, +) + spacing * CGFloat(max(0, widths.count - 1))

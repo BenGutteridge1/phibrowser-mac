@@ -56,7 +56,7 @@ class PinnedSplitItem: NSCollectionViewItem, NSMenuDelegate {
     private var slots: [PaneSlot] = []
     private var activeSlots: ArraySlice<PaneSlot> { slots.prefix(panes.count) }
     private var panes: [Tab] = []
-    private var backgroundView: HoverableView!
+    private var backgroundView: PinnedTilePlateView!
     private var openIndicatorHost: TabDecorativeHostingView!
     private var statusBadgeHost: TabDecorativeHostingView!
     private var cancellables = Set<AnyCancellable>()
@@ -104,7 +104,7 @@ class PinnedSplitItem: NSCollectionViewItem, NSMenuDelegate {
         view.wantsLayer = true
         view.layer?.masksToBounds = false
 
-        backgroundView = HoverableView()
+        backgroundView = PinnedTilePlateView()
         backgroundView.wantsLayer = true
         backgroundView.layer?.cornerCurve = .continuous
         backgroundView.layer?.cornerRadius = 8

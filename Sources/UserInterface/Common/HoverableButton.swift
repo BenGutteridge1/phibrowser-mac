@@ -289,6 +289,10 @@ final class HoverableHostingView: NSHostingView<AnyView> {
     override var safeAreaInsets: NSEdgeInsets {
         NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
     }
+
+    /// A button: a press on it never moves the window, and in titlebar
+    /// space a double press never zooms it.
+    override var mouseDownCanMoveWindow: Bool { false }
     
     override var safeAreaRect: NSRect {
         bounds
