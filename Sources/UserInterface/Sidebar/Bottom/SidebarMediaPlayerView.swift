@@ -282,9 +282,8 @@ struct SidebarMediaPlayerView: View {
     @Environment(\.phiTheme) private var theme
     @Environment(\.phiAppearance) private var appearance
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// The source tab's hover preview from the site icon.
-    @State private var iconPreview = TabPreviewRegistration()
-    @State private var iconPreviewAnchor: NSView?
+    /// Clicks on the site icon, which dismiss its tab preview.
+    @State private var iconClicks = 0
     @FocusState private var compactFocused: Bool
     @FocusState private var playPauseFocused: Bool
     @State private var keyboardExpanded = false
@@ -313,9 +312,11 @@ struct SidebarMediaPlayerView: View {
         }
     }
 
-    /// Room at the top bar player's trailing edge for the card stacked
-    /// behind it while other media plays.
+    /// How far the card stacked behind the top bar player, while other media
+    /// plays, sits to the right of it and above it: the player behind, pulled
+    /// north-east. The player keeps that room beside and above its card.
     static let topBarStackPeek: CGFloat = 5
+    static let topBarStackRaise: CGFloat = 3
 
     /// The Comfortable top bar's player: the compact transport row alone, at
     /// the bar's size. It never expands. Other media playing stacks a card
@@ -356,25 +357,31 @@ struct SidebarMediaPlayerView: View {
                     .strokeBorder(ThemedColor.border.swiftUIColor(theme: theme, appearance: appearance)))
                 .background {
                     if controller.backgroundSourceCount > 1 {
-                        // A player the same size, just behind and to the
-                        // side: only its edge and corners show, so the front
-                        // card's translucent material doesn't double up.
-                        GeometryReader { geometry in
-                            RoundedRectangle(cornerRadius: 8).fill(.regularMaterial)
-                                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(secondary.opacity(0.3)))
-                                .offset(x: Self.topBarStackPeek)
-                                .mask(Rectangle().padding(.leading, max(0, geometry.size.width - 8)))
-                        }
-                        .opacity(0.65)
-                        .allowsHitTesting(false)
-                        .accessibilityHidden(true)
-                        .accessibilityIdentifier("sidebarMedia.stack")
-                        .transition(.opacity)
+                        // A player the same size, behind and pulled up and to
+                        // the right: only what shows past the front card is
+                        // drawn, so the front card's translucent material
+                        // doesn't double up over it.
+                        RoundedRectangle(cornerRadius: 8).fill(.regularMaterial)
+                            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(secondary.opacity(0.3)))
+                            .mask {
+                                Rectangle()
+                                    .overlay(RoundedRectangle(cornerRadius: 8)
+                                        .offset(x: -Self.topBarStackPeek, y: Self.topBarStackRaise)
+                                        .blendMode(.destinationOut))
+                                    .compositingGroup()
+                            }
+                            .offset(x: Self.topBarStackPeek, y: -Self.topBarStackRaise)
+                            .opacity(0.65)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                            .accessibilityIdentifier("sidebarMedia.stack")
+                            .transition(.opacity)
                     }
                 }
                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.2),
                            value: controller.backgroundSourceCount > 1)
                 .padding(.trailing, Self.topBarStackPeek)
+                .padding(.top, Self.topBarStackRaise)
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("sidebarMedia.card")
                 .allowsHitTesting(controller.activeSurface == surface)
@@ -545,17 +552,6 @@ struct SidebarMediaPlayerView: View {
             }
     }
 
-    /// Shows the source tab's hover preview (title, address and snapshot,
-    /// Settings › Tab previews) from the site icon: below it in the top bar,
-    /// beside it in the sidebar.
-    private func iconPreviewHoverChanged(_ hovering: Bool, item: SidebarMediaController.Item) {
-        if hovering, let anchor = iconPreviewAnchor, let source = controller.previewSource(for: item) {
-            iconPreview.configure(anchorView: anchor, target: .tab(source.tab), browserState: source.state,
-                                  placement: surface.kind == .topBar ? .belowAttached : .rightTopAttached)
-        }
-        iconPreview.setHovering(hovering)
-    }
-
     /// Keep the transport in one view at the card's bottom so the buttons do
     /// not move or change identity when pointer hover reveals the details.
     private func transportRow(_ item: SidebarMediaController.Item) -> some View {
@@ -563,7 +559,7 @@ struct SidebarMediaPlayerView: View {
         let showsTrackControls = !isTopBar || self.showsTrackControls
         return HStack(spacing: 4) {
             Button(action: {
-                iconPreview.cancelForInteraction()
+                iconClicks += 1
                 SidebarMediaAnalytics.capture("show_tab")
                 controller.showTab(for: item, from: surface)
             }) {
@@ -574,11 +570,10 @@ struct SidebarMediaPlayerView: View {
             .focused($compactFocused)
             // The source tab's own hover preview, as its tab shows it; a
             // click still goes to the tab.
-            .background(MediaIconPreviewAnchor { view in
-                if iconPreviewAnchor !== view { iconPreviewAnchor = view }
-            })
-            .onHover { hovering in iconPreviewHoverChanged(hovering, item: item) }
-            .onDisappear { iconPreview.invalidate() }
+            .background(MediaIconPreviewAnchor(
+                source: controller.previewSource(for: item),
+                placement: surface.kind == .topBar ? .belowAttached : .rightTopAttached,
+                clicks: iconClicks))
             .accessibilityLabel(openTabLabel)
             .accessibilityIdentifier("sidebarMedia.sourceTab")
             .onChange(of: compactFocused) { _, focused in
@@ -630,7 +625,7 @@ struct SidebarMediaPlayerView: View {
             }
         }
         .padding(.horizontal, isTopBar ? 3 : 8)
-        .frame(height: isTopBar ? 28 : 32)
+        .frame(height: isTopBar ? TopBarController.miniPlayerHeight : 32)
         .contentShape(Rectangle())
         .simultaneousGesture(cardDragGesture(item))
     }
@@ -1046,20 +1041,79 @@ struct SidebarMediaPlayerView: View {
     }
 }
 
-/// An invisible view over the mini player's site icon that the tab preview
-/// anchors to. It takes no clicks.
+/// The source tab's hover preview (title, address and snapshot, Settings ›
+/// Tab previews) from the mini player's site icon: below it in the top bar,
+/// beside it in the sidebar. An invisible AppKit view over the icon tracks
+/// the pointer itself, as the tabs' own views do, and takes no clicks.
 private struct MediaIconPreviewAnchor: NSViewRepresentable {
-    let onResolve: (NSView) -> Void
+    let source: (tab: Tab, state: BrowserState)?
+    let placement: CustomTooltipPlacement
+    /// Bumped by each click on the icon, which dismisses the preview.
+    let clicks: Int
 
-    func makeNSView(context: Context) -> NSView {
-        let view = PassthroughView()
-        DispatchQueue.main.async { onResolve(view) }
-        return view
+    func makeNSView(context: Context) -> MediaIconPreviewAnchorView {
+        MediaIconPreviewAnchorView()
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    func updateNSView(_ view: MediaIconPreviewAnchorView, context: Context) {
+        view.update(source: source, placement: placement, clicks: clicks)
+    }
 
-    private final class PassthroughView: NSView {
-        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    static func dismantleNSView(_ view: MediaIconPreviewAnchorView, coordinator: Void) {
+        view.invalidate()
+    }
+}
+
+@MainActor
+private final class MediaIconPreviewAnchorView: NSView {
+    private let registration = TabPreviewRegistration()
+    private var trackingArea: NSTrackingArea?
+    private var clicks = 0
+    private var isHovering = false
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    func update(source: (tab: Tab, state: BrowserState)?, placement: CustomTooltipPlacement, clicks: Int) {
+        if clicks != self.clicks {
+            self.clicks = clicks
+            registration.cancelForInteraction()
+        }
+        guard let source else {
+            registration.invalidate()
+            return
+        }
+        registration.configure(anchorView: self, target: .tab(source.tab),
+                               browserState: source.state, placement: placement)
+        if isHovering { registration.setHovering(true) }
+    }
+
+    func invalidate() {
+        isHovering = false
+        registration.invalidate()
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea { removeTrackingArea(trackingArea) }
+        let area = NSTrackingArea(rect: .zero,
+                                  options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+                                  owner: self, userInfo: nil)
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        isHovering = true
+        registration.setHovering(true)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        isHovering = false
+        registration.setHovering(false)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil { invalidate() }
     }
 }

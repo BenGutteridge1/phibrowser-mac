@@ -614,9 +614,15 @@ final class TopBarController: NSViewController {
     // MARK: - Mini player
 
     /// The card's width, and room for the card stacked behind it while
-    /// other media plays (`SidebarMediaPlayerView.topBarStackPeek`).
-    private static let miniPlayerFullWidth: CGFloat = 138 + SidebarMediaPlayerView.topBarStackPeek
-    private static let miniPlayerCompactWidth: CGFloat = 62 + SidebarMediaPlayerView.topBarStackPeek
+    /// other media plays (`SidebarMediaPlayerView.topBarStackPeek`). The card
+    /// fits its transport row: full, the site icon, previous, play, next and
+    /// volume (146pt with its padding and spacing); compact, the site icon
+    /// and play (70pt). A narrower card clips its last control.
+    private static let miniPlayerFullWidth: CGFloat = 150 + SidebarMediaPlayerView.topBarStackPeek
+    private static let miniPlayerCompactWidth: CGFloat = 72 + SidebarMediaPlayerView.topBarStackPeek
+    /// The card's height: the 28pt play button with a point of the card
+    /// above and below it.
+    static let miniPlayerHeight: CGFloat = 30
 
     private func mountMiniPlayer() {
         guard isViewLoaded, let mediaController else { return }
@@ -642,7 +648,9 @@ final class TopBarController: NSViewController {
             host.translatesAutoresizingMaskIntoConstraints = false
             let width = host.widthAnchor.constraint(equalToConstant: Self.miniPlayerFullWidth)
             miniPlayerWidthConstraint = width
-            NSLayoutConstraint.activate([width, host.heightAnchor.constraint(equalToConstant: 28)])
+            // The card, and the stacked card's room above it.
+            NSLayoutConstraint.activate([width, host.heightAnchor.constraint(
+                equalToConstant: Self.miniPlayerHeight + SidebarMediaPlayerView.topBarStackRaise)])
             host.isHidden = true
             miniPlayerHost = host
             if let trailingHost, let index = stackView.arrangedSubviews.firstIndex(of: trailingHost) {
