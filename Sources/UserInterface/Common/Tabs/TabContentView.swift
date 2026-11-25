@@ -6,6 +6,7 @@
 import SwiftUI
 import Combine
 import Lottie
+import CoreImage
 
 // MARK: - Atomic Components
 
@@ -56,6 +57,18 @@ enum TabFaviconPresentation {
 
     static let reclaimedOpacity: CGFloat = 0.3
 
+    /// Fork: an unloaded tab's favicon is also faded and drained of colour,
+    /// so it reads as asleep at a glance and not only by its smaller size.
+    static let unloadedFaviconOpacity: CGFloat = 0.5
+
+    static func isAsleep(
+        isDiscarded: Bool,
+        isUnloaded: Bool,
+        dimmingEnabled: Bool = PhiPreferences.GeneralSettings.showUnloadedTabIndicators.loadValue()
+    ) -> Bool {
+        showsDashedOutline(isDiscarded: isDiscarded, isUnloaded: isUnloaded, dimmingEnabled: dimmingEnabled)
+    }
+
     static var dimmingEnabledPublisher: AnyPublisher<Bool, Never> {
         PhiPreferences.GeneralSettings.showUnloadedTabIndicators.sharedValuePublisher
     }
@@ -78,6 +91,7 @@ final class TabFaviconImageView: NSView {
     private let imageView = NSImageView()
     private let cornerRadius: CGFloat
     private var imageScale: CGFloat = 1
+    private var isAsleep = false
     private var scaleSubscription: AnyCancellable?
 
     var image: NSImage? {
@@ -93,10 +107,10 @@ final class TabFaviconImageView: NSView {
         imageView.layer?.cornerCurve = .continuous
         imageView.layer?.masksToBounds = true
         addSubview(imageView)
-        imageScale = TabFaviconPresentation.scale(
+        setAsleep(TabFaviconPresentation.isAsleep(
             isDiscarded: model.isDiscarded,
             isUnloaded: model.isUnloaded
-        )
+        ))
 
         scaleSubscription = Publishers.CombineLatest3(
             model.$isDiscarded,
@@ -104,7 +118,7 @@ final class TabFaviconImageView: NSView {
             TabFaviconPresentation.dimmingEnabledPublisher
         )
         .map { isDiscarded, isUnloaded, dimmingEnabled in
-            TabFaviconPresentation.scale(
+            TabFaviconPresentation.isAsleep(
                 isDiscarded: isDiscarded,
                 isUnloaded: isUnloaded,
                 dimmingEnabled: dimmingEnabled
@@ -112,10 +126,21 @@ final class TabFaviconImageView: NSView {
         }
         .removeDuplicates()
         .receive(on: DispatchQueue.main)
-        .sink { [weak self] scale in
-            self?.imageScale = scale
-            self?.needsLayout = true
+        .sink { [weak self] asleep in
+            self?.setAsleep(asleep)
         }
+    }
+
+    /// Smaller (upstream), plus faded and greyscale (fork) while unloaded.
+    private func setAsleep(_ asleep: Bool) {
+        isAsleep = asleep
+        imageScale = asleep ? 0.8 : 1
+        imageView.alphaValue = asleep ? TabFaviconPresentation.unloadedFaviconOpacity : 1
+        imageView.layerUsesCoreImageFilters = true
+        imageView.contentFilters = asleep
+            ? [CIFilter(name: "CIColorControls", parameters: [kCIInputSaturationKey: 0]) ?? CIFilter()]
+            : []
+        needsLayout = true
     }
 
     required init?(coder: NSCoder) {
@@ -286,8 +311,8 @@ struct TabDiscardedFaviconOutline: View {
     private var strokeColor: NSColor {
         appearance.isLight
             ? BookmarkFolderIcon.strokeColor(theme: theme, appearance: appearance)
-                .withAlphaComponent(0.13)
-            : NSColor.white.withAlphaComponent(0.06)
+                .withAlphaComponent(0.45)
+            : NSColor.white.withAlphaComponent(0.4)
     }
 
     var body: some View {
@@ -513,6 +538,14 @@ struct UnifiedTabFaviconView: View {
         _statusModel = ObservedObject(wrappedValue: viewModel.status)
     }
 
+    private var isAsleep: Bool {
+        TabFaviconPresentation.isAsleep(
+            isDiscarded: statusModel.isDiscarded,
+            isUnloaded: statusModel.isUnloaded,
+            dimmingEnabled: showUnloadedTabIndicators
+        )
+    }
+
     var body: some View {
         Group {
             if let icon = viewModel.pinnedIcon,
@@ -538,6 +571,8 @@ struct UnifiedTabFaviconView: View {
             isUnloaded: statusModel.isUnloaded,
             dimmingEnabled: showUnloadedTabIndicators
         ))
+        .saturation(isAsleep ? 0 : 1)
+        .opacity(isAsleep ? TabFaviconPresentation.unloadedFaviconOpacity : 1)
         .overlay {
             TabDiscardedFaviconOutline(
                 model: viewModel.status,
