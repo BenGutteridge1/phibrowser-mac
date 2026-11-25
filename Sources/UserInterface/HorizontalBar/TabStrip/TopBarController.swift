@@ -613,8 +613,10 @@ final class TopBarController: NSViewController {
 
     // MARK: - Mini player
 
-    private static let miniPlayerFullWidth: CGFloat = 138
-    private static let miniPlayerCompactWidth: CGFloat = 62
+    /// The card's width, and room for the card stacked behind it while
+    /// other media plays (`SidebarMediaPlayerView.topBarStackPeek`).
+    private static let miniPlayerFullWidth: CGFloat = 138 + SidebarMediaPlayerView.topBarStackPeek
+    private static let miniPlayerCompactWidth: CGFloat = 62 + SidebarMediaPlayerView.topBarStackPeek
 
     private func mountMiniPlayer() {
         guard isViewLoaded, let mediaController else { return }

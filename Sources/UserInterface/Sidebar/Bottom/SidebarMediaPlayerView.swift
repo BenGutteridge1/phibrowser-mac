@@ -310,19 +310,62 @@ struct SidebarMediaPlayerView: View {
         }
     }
 
+    /// Room at the top bar player's trailing edge for the card stacked
+    /// behind it while other media plays.
+    static let topBarStackPeek: CGFloat = 4
+
     /// The Comfortable top bar's player: the compact transport row alone, at
-    /// the bar's size. It never expands.
+    /// the bar's size. It never expands. Other media playing stacks a card
+    /// behind it that peeks out at its trailing edge (the sidebar's peeks
+    /// above, which the bar has no room for), and switching between them,
+    /// by a two-finger swipe or a drag across the card as in the sidebar,
+    /// slides the cards sideways on the sidebar card's own transition.
     @ViewBuilder
     private var topBarBody: some View {
         if let item = controller.item, controller.isEnabled,
            !controller.isRevalidating,
            !controller.isSourceVisible, !controller.isDismissed {
-            // The sidebar card's own surface: its material and border, at
-            // the bar's corner radius.
-            transportRow(item)
+            GeometryReader { geometry in
+                ZStack {
+                    transportRow(item)
+                        .id(item.tabId)
+                        .transition(reduceMotion ? .opacity : .asymmetric(
+                            insertion: .modifier(
+                                active: SidebarMediaCardTransition(controller: controller, isInsertion: true,
+                                                                   progress: 1, width: geometry.size.width),
+                                identity: SidebarMediaCardTransition(controller: controller, isInsertion: true,
+                                                                     progress: 0, width: geometry.size.width)),
+                            removal: .modifier(
+                                active: SidebarMediaCardTransition(controller: controller, isInsertion: false,
+                                                                   progress: 1, width: geometry.size.width),
+                                identity: SidebarMediaCardTransition(controller: controller, isInsertion: false,
+                                                                     progress: 0, width: geometry.size.width))))
+                }
+                .clipped()
+                .animation(.easeInOut(duration: reduceMotion ? 0.12 : 0.22),
+                           value: controller.cycleAnimationGeneration)
+            }
+                // The sidebar card's own surface: its material and border, at
+                // the bar's corner radius.
                 .background(RoundedRectangle(cornerRadius: 8).fill(.regularMaterial))
                 .overlay(RoundedRectangle(cornerRadius: 8)
                     .stroke(ThemedColor.border.swiftUIColor(theme: theme, appearance: appearance)))
+                .background {
+                    if controller.backgroundSourceCount > 1 {
+                        RoundedRectangle(cornerRadius: 7).fill(.regularMaterial)
+                            .overlay(RoundedRectangle(cornerRadius: 7).stroke(secondary.opacity(0.3)))
+                            .padding(.vertical, 4)
+                            .offset(x: Self.topBarStackPeek)
+                            .opacity(0.65)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                            .accessibilityIdentifier("sidebarMedia.stack")
+                            .transition(.opacity)
+                    }
+                }
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.2),
+                           value: controller.backgroundSourceCount > 1)
+                .padding(.trailing, Self.topBarStackPeek)
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("sidebarMedia.card")
                 .allowsHitTesting(controller.activeSurface == surface)
