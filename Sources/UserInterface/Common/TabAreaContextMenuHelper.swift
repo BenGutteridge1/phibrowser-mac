@@ -228,7 +228,24 @@ final class TabAreaContextMenuHelper: NSObject {
         entries.append((.sidebarHeaderShowsSidebarToggle, browserState?.layoutMode == .comfortable
             ? NSLocalizedString("common.tabAreaContextMenu.topButtons.hideTopBar", value: "Hide Top Bar", comment: "Tab area context menu - Top Buttons submenu item, in the Comfortable layout, that shows or hides the top bar's button that hides the top bar")
             : NSLocalizedString("common.tabAreaContextMenu.topButtons.sidebarToggle", value: "Toggle Sidebar", comment: "Tab area context menu - Top Buttons submenu item that shows or hides the sidebar header's button that shows or hides the sidebar")))
-        return buildToggleSubmenu(entries)
+        let submenu = buildToggleSubmenu(entries)
+        if browserState?.layoutMode == .comfortable {
+            // Fork: the top bar hides itself while a video plays (off by default).
+            submenu.addItem(.separator())
+            let item = NSMenuItem(
+                title: NSLocalizedString("common.tabAreaContextMenu.topButtons.hideDuringVideo", value: "Hide Top Bar During Videos", comment: "Tab area context menu - Top Buttons submenu item, in the Comfortable layout, that turns on hiding the top bar while a video plays in the current tab"),
+                action: #selector(toggleTopBarHidingDuringVideo),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.state = ForkSettings.hidesTopBarDuringVideo ? .on : .off
+            submenu.addItem(item)
+        }
+        return submenu
+    }
+
+    @objc private func toggleTopBarHidingDuringVideo() {
+        ForkSettings.hidesTopBarDuringVideo.toggle()
     }
 
     private func buildButtonsSubmenu() -> NSMenu {

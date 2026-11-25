@@ -350,7 +350,12 @@ class WebContentContainerViewController: NSViewController {
 
     /// The window's media controller, which the top bar's mini player uses.
     var mediaController: SidebarMediaController? {
-        didSet { topBarController?.mediaController = mediaController }
+        didSet {
+            guard mediaController !== oldValue else { return }
+            oldValue?.setObservesPlayback(false, for: self)
+            topBarController?.mediaController = mediaController
+            bindTopBarVideoHiding()
+        }
     }
     var tabStripView: TabStrip? { topBarController?.tabStrip }
     /// See `TopBarController.bindSpacesPickerToSession`.
@@ -649,6 +654,7 @@ class WebContentContainerViewController: NSViewController {
         
         // Observe configuration changes
         setupConfigObserver()
+        bindTopBarVideoHiding()
 
         // Setup status URL view
         setupStatusURLView()
@@ -2043,6 +2049,87 @@ class WebContentContainerViewController: NSViewController {
         extensionSidePanelFrameBackdrop?.layer?.cornerRadius = contentLayout.containerCornerRadius
         remakeContentLayout()
         contentContainer.needsLayout = true
+    }
+
+    // MARK: - Top bar during video
+
+    private var videoHidingCancellables = Set<AnyCancellable>()
+    /// The hide this Space last asked of its window: nil until it is on
+    /// screen, so the first answer there replaces whatever the Space before
+    /// it left.
+    private var appliedVideoHide: Bool?
+    private var videoHideWork: DispatchWorkItem?
+
+    /// Settings › General: the top bar slides away while a video plays with
+    /// sound in the focused tab (`SidebarMediaController.videoSources`, read
+    /// from the tab's native MediaSession, embedded players included) and
+    /// back once it stops or another tab is focused. ⌘S still shows or
+    /// hides it meanwhile (`TopBarHiddenState`).
+    private func bindTopBarVideoHiding() {
+        videoHidingCancellables.removeAll()
+        guard isViewLoaded, let browserState else { return }
+        let setting = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .receive(on: DispatchQueue.main)
+            .map { _ in ForkSettings.hidesTopBarDuringVideo && PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional }
+            .removeDuplicates()
+            .map { _ in () }
+        let focus = browserState.$focusingTab
+            .removeDuplicates { $0 === $1 }
+            .map { _ in () }
+        let playback = (mediaController?.$videoSources.removeDuplicates().map { _ in () }.eraseToAnyPublisher())
+            ?? Empty().eraseToAnyPublisher()
+        setting.merge(with: focus, playback)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.updateTopBarVideoHiding() }
+            .store(in: &videoHidingCancellables)
+        updateTopBarVideoHiding()
+    }
+
+    private func updateTopBarVideoHiding() {
+        let enabled = ForkSettings.hidesTopBarDuringVideo
+            && PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional
+            && browserState?.isKioskWindow != true
+        mediaController?.setObservesPlayback(enabled, for: self)
+        guard view.window != nil, browserState?.windowController?.isPresentedOrLegacy == true else {
+            videoHideWork?.cancel()
+            videoHideWork = nil
+            appliedVideoHide = nil
+            return
+        }
+        let playing = enabled && (browserState?.focusingTab.map { mediaController?.isPlayingVideo($0) == true } ?? false)
+        guard playing != appliedVideoHide else {
+            videoHideWork?.cancel()
+            videoHideWork = nil
+            return
+        }
+        let apply = { [weak self] in
+            guard let self else { return }
+            self.videoHideWork = nil
+            self.appliedVideoHide = playing
+            self.browserState?.windowController?.mainSplitViewController.setVideoHidesTopBar(playing)
+        }
+        videoHideWork?.cancel()
+        // On screen for the first time: settle at once. Otherwise give a
+        // video a second before the bar goes, and a pause half a second
+        // before it comes back, so short plays and quick pauses don't bounce
+        // the bar.
+        guard appliedVideoHide != nil else {
+            apply()
+            return
+        }
+        let work = DispatchWorkItem(block: apply)
+        videoHideWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + (playing ? 1.0 : 0.5), execute: work)
+    }
+
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        updateTopBarVideoHiding()
+    }
+
+    override func viewDidDisappear() {
+        super.viewDidDisappear()
+        updateTopBarVideoHiding()
     }
 
     /// ⌘S: the bar slides up out of the window, or back down into it, on

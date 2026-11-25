@@ -243,18 +243,26 @@ final class ShellSplitViewController: NSViewController {
 
     // MARK: - Top bar
 
-    /// Comfortable: whether the window's top bar is hidden (⌘S). Window
-    /// state, like the sidebar's collapse: it holds across Space switches.
-    @Published private(set) var isTopBarHidden = ForkSettings.topBarHidden
+    /// Comfortable: whether the window's top bar is hidden. Window state,
+    /// like the sidebar's collapse: it holds across Space switches. See
+    /// `TopBarHiddenState` for how ⌘S and a playing video combine.
+    @Published private var topBarHiddenState = TopBarHiddenState(userHidden: ForkSettings.topBarHidden)
+
+    var isTopBarHidden: Bool { topBarHiddenState.isHidden }
 
     var topBarHiddenPublisher: AnyPublisher<Bool, Never> {
-        $isTopBarHidden.removeDuplicates().eraseToAnyPublisher()
+        $topBarHiddenState.map(\.isHidden).removeDuplicates().eraseToAnyPublisher()
     }
 
+    /// ⌘S.
     func setTopBarHidden(_ hidden: Bool) {
-        guard isTopBarHidden != hidden else { return }
-        isTopBarHidden = hidden
-        ForkSettings.topBarHidden = hidden
+        if topBarHiddenState.setHidden(hidden) { ForkSettings.topBarHidden = hidden }
+    }
+
+    /// A video started or stopped in the focused tab (Settings › General,
+    /// `ForkSettings.hidesTopBarDuringVideo`).
+    func setVideoHidesTopBar(_ playing: Bool) {
+        topBarHiddenState.setVideoPlaying(playing)
     }
 
     var sidebarWidth: CGFloat {

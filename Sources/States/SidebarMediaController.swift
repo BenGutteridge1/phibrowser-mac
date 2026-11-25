@@ -91,7 +91,45 @@ final class SidebarMediaController: ObservableObject {
     private var pipRetainedSources: [SourceKey: SourceIdentity] = [:]
     private var spaceExitBuffers: [SourceKey: (identity: SourceIdentity, task: Task<Void, Never>)] = [:]
     private var silentRetainedSources: [SourceKey: SourceIdentity] = [:]
-    private var candidates: [SourceKey: Item] = [:]
+    private var candidates: [SourceKey: Item] = [:] {
+        didSet {
+            let playing = Set(candidates.filter { Self.isWatchedVideo($0.value.playback) }.keys)
+            if playing != videoSources { videoSources = playing }
+        }
+    }
+
+    // MARK: - Video playback (the top bar's auto-hide)
+
+    /// Tabs playing a video with sound in the page: what
+    /// `ForkSettings.hidesTopBarDuringVideo` hides the top bar for. Read from
+    /// each tab's native MediaSession, which this controller is the one
+    /// observer of, and which covers every player in the page, embedded
+    /// frames included.
+    @Published private(set) var videoSources: Set<SourceKey> = []
+
+    /// A playing video someone is watching: video (only video can go
+    /// picture-in-picture), in the page rather than in picture-in-picture,
+    /// and with sound, which leaves out the muted or silent background
+    /// videos many pages loop.
+    private static func isWatchedVideo(_ playback: NativeMediaAdapter.Playback) -> Bool {
+        playback.isPlaying && playback.canEnterPictureInPicture && !playback.isPictureInPicture
+            && !playback.isMuted && !playback.isSourceSilent
+    }
+
+    func isPlayingVideo(_ tab: Tab) -> Bool {
+        sourceKey(for: tab).map(videoSources.contains) ?? false
+    }
+
+    /// Owners that need playback observed even with the mini player off.
+    private var playbackObservers = Set<ObjectIdentifier>()
+
+    /// Keeps the tabs' media observed for `owner` while `needed`, whether or
+    /// not the mini player is on.
+    func setObservesPlayback(_ needed: Bool, for owner: AnyObject) {
+        let id = ObjectIdentifier(owner)
+        let changed = needed ? playbackObservers.insert(id).inserted : playbackObservers.remove(id) != nil
+        if changed { updateActivation() }
+    }
     private var manuallySelectedSourceKey: SourceKey?
     private var previousFocusedSourceKey: SourceKey?
     private var visitsAwaitingPlayback = Set<SourceKey>()
@@ -271,7 +309,7 @@ final class SidebarMediaController: ObservableObject {
             applyPresentationMode(resetDynamic: true)
         }
         if presented == nil { pollTimer?.invalidate(); pollTimer = nil }
-        let observing = isEnabled && !sessions.isEmpty
+        let observing = (isEnabled || !playbackObservers.isEmpty) && !sessions.isEmpty
         guard observing != isActive else {
             if presented != nil && item != nil { startPolling() }
             return

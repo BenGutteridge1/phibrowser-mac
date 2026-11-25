@@ -40,17 +40,18 @@ class MainSplitViewController: NSViewController, BrowserThemeContextProviding {
         return item.viewController.view.frame.width
     }
 
-    /// Comfortable: whether this window's top bar is hidden (⌘S). Hosted
-    /// windows keep it on the shell, standalone ones here.
-    @Published private var standaloneTopBarHidden = ForkSettings.topBarHidden
+    /// Comfortable: whether this window's top bar is hidden (see
+    /// `TopBarHiddenState`). Hosted windows keep it on the shell, standalone
+    /// ones here.
+    @Published private var standaloneTopBarHidden = TopBarHiddenState(userHidden: ForkSettings.topBarHidden)
 
     var isTopBarHidden: Bool {
-        isHosted ? (shellSplit?.isTopBarHidden ?? false) : standaloneTopBarHidden
+        isHosted ? (shellSplit?.isTopBarHidden ?? false) : standaloneTopBarHidden.isHidden
     }
 
     var topBarHiddenPublisher: AnyPublisher<Bool, Never> {
         if isHosted, let shellSplit { return shellSplit.topBarHiddenPublisher }
-        return $standaloneTopBarHidden.removeDuplicates().eraseToAnyPublisher()
+        return $standaloneTopBarHidden.map(\.isHidden).removeDuplicates().eraseToAnyPublisher()
     }
 
     func setTopBarHidden(_ hidden: Bool) {
@@ -58,9 +59,15 @@ class MainSplitViewController: NSViewController, BrowserThemeContextProviding {
             shellSplit?.setTopBarHidden(hidden)
             return
         }
-        guard standaloneTopBarHidden != hidden else { return }
-        standaloneTopBarHidden = hidden
-        ForkSettings.topBarHidden = hidden
+        if standaloneTopBarHidden.setHidden(hidden) { ForkSettings.topBarHidden = hidden }
+    }
+
+    func setVideoHidesTopBar(_ playing: Bool) {
+        if isHosted {
+            shellSplit?.setVideoHidesTopBar(playing)
+            return
+        }
+        standaloneTopBarHidden.setVideoPlaying(playing)
     }
 
     var sidebarCollapsedPublisher: AnyPublisher<Bool, Never> {

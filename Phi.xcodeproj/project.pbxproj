@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		35F86AC5A1862294BCE7C4CC /* TopBarHiddenState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55C39E33CFA599A146ACB37D /* TopBarHiddenState.swift */; };
 		A1F5D9D2ED057B08FED9DE49 /* TopBarRevealController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32EA77EFE0B71A8166B17CE9 /* TopBarRevealController.swift */; };
 		542EDEEAA7BC1B4DBB90F5D8 /* TopBarAddressField.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F2476EE63E08005BCA7498 /* TopBarAddressField.swift */; };
 		FDA0621B7982FD41C48E5D27 /* TopBarWidths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F2EE431899DE75A0FA6CB6 /* TopBarWidths.swift */; };
@@ -898,6 +899,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		55C39E33CFA599A146ACB37D /* TopBarHiddenState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarHiddenState.swift; sourceTree = "<group>"; };
 		32EA77EFE0B71A8166B17CE9 /* TopBarRevealController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarRevealController.swift; sourceTree = "<group>"; };
 		B0F2476EE63E08005BCA7498 /* TopBarAddressField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarAddressField.swift; sourceTree = "<group>"; };
 		65F2EE431899DE75A0FA6CB6 /* TopBarWidths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBarWidths.swift; sourceTree = "<group>"; };
@@ -2456,6 +2458,7 @@
 				8EEBD7682FAB137E008CBD9A /* TabGroupRun.swift */,
 				8E4C94992F10D01500B09A80 /* TabStripLayout.swift */,
 				65F2EE431899DE75A0FA6CB6 /* TopBarWidths.swift */,
+				55C39E33CFA599A146ACB37D /* TopBarHiddenState.swift */,
 				8E9E96A52F0F6E64002D0D21 /* TabStripMetrics.swift */,
 				8E9E96A62F0F6E64002D0D21 /* TabStripState.swift */,
 			);
@@ -4132,6 +4135,7 @@
 				8E9E96AC2F0F6E64002D0D21 /* TabItemView.swift in Sources */,
 				8E4C949A2F10D01500B09A80 /* TabStripLayout.swift in Sources */,
 				FDA0621B7982FD41C48E5D27 /* TopBarWidths.swift in Sources */,
+				35F86AC5A1862294BCE7C4CC /* TopBarHiddenState.swift in Sources */,
 				8E9E96AD2F0F6E64002D0D21 /* TabStripState.swift in Sources */,
 				8E2A91272FB18051003E1F05 /* TabGroupDragContext.swift in Sources */,
 				8E2A91282FB18051003E1F05 /* TabGroupDragController.swift in Sources */,

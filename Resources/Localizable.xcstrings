@@ -4,6 +4,42 @@
     "" : {
 
     },
+    "common.tabAreaContextMenu.topButtons.hideDuringVideo" : {
+      "comment" : "Tab area context menu - Top Buttons submenu item, in the Comfortable layout, that turns on hiding the top bar while a video plays in the current tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Top Bar During Videos"
+          }
+        }
+      }
+    },
+    "settings.general.fork.hideTopBarDuringVideo.description" : {
+      "comment" : "General settings - description under the toggle that hides the top bar while a video plays",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the Comfortable layout, the top bar slides away while a video with sound plays in the current tab, including videos embedded from other sites, and comes back when it stops or you switch tabs. ⌘S brings it back at any time."
+          }
+        }
+      }
+    },
+    "settings.general.fork.hideTopBarDuringVideo.title" : {
+      "comment" : "General settings - toggle that hides the Comfortable layout's top bar while a video plays in the current tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide the top bar during videos"
+          }
+        }
+      }
+    },
     "・" : {
       "shouldTranslate" : false
     },

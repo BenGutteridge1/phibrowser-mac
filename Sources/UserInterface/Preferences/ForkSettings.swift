@@ -98,6 +98,8 @@ enum ForkSettings {
         static let tabSelectionExcludesClosedFolders = "fork.tabSelectionExcludesClosedFolders"
         static let addressBarGlobalShortcutEnabled = "fork.addressBarGlobalShortcutEnabled"
         static let pinnedTabLivePreviewsEnabled = "fork.pinnedTabLivePreviewsEnabled"
+        /// Comfortable: hide the top bar while a video plays in the focused tab.
+        static let hidesTopBarDuringVideo = "fork.hidesTopBarDuringVideo"
         static let gmailCardSource = "fork.gmailCardSource"
         static let thunderbirdAddonSeen = "fork.thunderbirdAddonSeen"
         /// The Thunderbird card shows messages darkened in dark mode.
@@ -225,6 +227,14 @@ enum ForkSettings {
     static var topBarHidden: Bool {
         get { UserDefaults.standard.bool(forKey: Key.topBarHidden) }
         set { UserDefaults.standard.set(newValue, forKey: Key.topBarHidden) }
+    }
+
+    /// Comfortable: the top bar slides away while a video plays, with sound,
+    /// in the focused tab, and back once it stops or another tab is focused.
+    /// Off by default.
+    static var hidesTopBarDuringVideo: Bool {
+        get { UserDefaults.standard.bool(forKey: Key.hidesTopBarDuringVideo) }
+        set { UserDefaults.standard.set(newValue, forKey: Key.hidesTopBarDuringVideo) }
     }
 
     static var spaceSwitcherUsesDots: Bool {

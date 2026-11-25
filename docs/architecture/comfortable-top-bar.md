@@ -105,6 +105,28 @@ tracking notifications: they are neither child windows nor popovers). The
 page never resizes for a reveal.
 The window's lights leave with the bar and come back once it has landed.
 
+## Hiding during videos
+
+Settings › General (and the bar's Top Buttons menu) can hide the bar while a
+video plays in the focused tab (`ForkSettings.hidesTopBarDuringVideo`, off by
+default). `TopBarHiddenState` combines it with ⌘S, which always wins: with no
+video playing, ⌘S sets the user's choice, remembered for new windows; while a
+video plays the bar is hidden, and ⌘S shows or hides it for that video only.
+Once the video stops, or another tab is focused, the bar goes back to the
+user's choice, so a bar shown before the video comes back on its own.
+
+The signal is each tab's native MediaSession, which covers every player in
+the page, embedded frames included. `SidebarMediaController` is that
+session's one observer per tab, so it publishes the tabs playing a watched
+video (`videoSources`) and keeps observing while this setting needs it, even
+with the mini player off. A watched video is playing, is video (it can go
+picture-in-picture), is in the page rather than in picture-in-picture, and has
+sound, which leaves out the muted or silent background videos many pages loop.
+A site that turns picture-in-picture off for its player isn't detected. The
+page container of the Space on screen drives the window's video hide: a second
+after a video starts, half a second after it stops or another tab is
+focused.
+
 ## Page outline
 
 The bar's tabs are pills that never meet the page, so the page card has a

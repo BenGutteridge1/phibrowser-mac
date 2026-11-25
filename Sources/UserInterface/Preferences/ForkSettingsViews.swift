@@ -116,6 +116,21 @@ struct ForkVideoPiPButtonRow: View {
     }
 }
 
+/// Settings → General → Browsing: the Comfortable top bar slides away while
+/// a video plays in the focused tab.
+struct ForkTopBarVideoRow: View {
+    @AppStorage(ForkSettings.Key.hidesTopBarDuringVideo) private var isEnabled = false
+
+    var body: some View {
+        ForkToggleRow(
+            title: NSLocalizedString("settings.general.fork.hideTopBarDuringVideo.title", value: "Hide the top bar during videos",
+                comment: "General settings - toggle that hides the Comfortable layout's top bar while a video plays in the current tab"),
+            description: NSLocalizedString("settings.general.fork.hideTopBarDuringVideo.description", value: "In the Comfortable layout, the top bar slides away while a video with sound plays in the current tab, including videos embedded from other sites, and comes back when it stops or you switch tabs. ⌘S brings it back at any time.",
+                comment: "General settings - description under the toggle that hides the top bar while a video plays"),
+            isOn: $isEnabled)
+    }
+}
+
 /// One labelled switch, in the style of the settings panes' toggle rows.
 struct ForkToggleRow: View {
     let title: String
