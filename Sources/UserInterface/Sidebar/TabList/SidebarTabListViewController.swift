@@ -6010,6 +6010,8 @@ extension SidebarTabListViewController: SideBarOutlineViewDelegate {
             return
         }
         cancelTabPreview(at: row, in: outlineView)
+        // Fork: any click settles a switch still waiting on a double-click.
+        MainActor.assumeIsolated { ForkTabClickDeferral.cancel() }
         if clickCount == 2, let tab = item as? Tab,
            tab.closeOnDoubleClick(modifierFlags: modifierFlags) {
             return
@@ -6039,6 +6041,18 @@ extension SidebarTabListViewController: SideBarOutlineViewDelegate {
         }
         if browserState.multiSelection.isActive {
             browserState.clearMultiSelection()
+        }
+        // Fork: with double-click to close on, switching to another tab waits
+        // for a possible second click, so closing it never switches to it.
+        if clickCount == 1, let tab = item as? Tab,
+           MainActor.assumeIsolated({ ForkTabClickDeferral.shouldDefer(tab, modifierFlags: modifierFlags) }) {
+            MainActor.assumeIsolated {
+                ForkTabClickDeferral.deferSwitch { [weak self, weak tab] in
+                    guard let self, let tab else { return }
+                    self.itemClicked(tab)
+                }
+            }
+            return
         }
         itemClicked(item)
     }

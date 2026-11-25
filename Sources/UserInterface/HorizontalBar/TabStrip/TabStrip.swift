@@ -3101,6 +3101,8 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
         isPinned: Bool,
         modifierFlags: NSEvent.ModifierFlags
     ) {
+        // Fork: the second click drops the switch the first one held back.
+        MainActor.assumeIsolated { ForkTabClickDeferral.cancel() }
         if !isPinned {
             if !tab.closeOnDoubleClick(modifierFlags: modifierFlags) {
                 handleTabClick(tab: tab, isPinned: false, modifierFlags: modifierFlags)
@@ -3163,6 +3165,17 @@ final class TabStrip: NSView, TitlebarAwareHitTestable {
         if browserState.multiSelection.isActive {
             browserState.clearMultiSelection()
         }
+        // Fork: with double-click to close on, switching to another tab waits
+        // for a possible second click (`ForkTabClickDeferral`).
+        if MainActor.assumeIsolated({ ForkTabClickDeferral.shouldDefer(tab, modifierFlags: modifierFlags) }) {
+            MainActor.assumeIsolated {
+                ForkTabClickDeferral.deferSwitch { [weak self, weak tab] in
+                    self?.handleTabSelection(tab: tab)
+                }
+            }
+            return
+        }
+        MainActor.assumeIsolated { ForkTabClickDeferral.cancel() }
         handleTabSelection(tab: tab)
     }
 

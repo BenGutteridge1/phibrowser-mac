@@ -1003,6 +1003,8 @@ class SidebarSplitCellView: SidebarCellView, TabPreviewInteractionCancelling {
     private func handlePaneDoubleClick(index: Int, event: NSEvent) {
         guard let tab = segments[index].tab else { return }
         cancelTabPreviewForInteraction()
+        // Fork: the second click drops the switch the first one held back.
+        MainActor.assumeIsolated { ForkTabClickDeferral.cancel() }
         if !tab.closeOnDoubleClick(modifierFlags: event.modifierFlags) {
             handlePaneClick(index: index)
         }
@@ -1031,6 +1033,18 @@ class SidebarSplitCellView: SidebarCellView, TabPreviewInteractionCancelling {
         if browserState?.multiSelection.isActive == true {
             browserState?.clearMultiSelection()
         }
+        // Fork: with double-click to close on, switching to another pane's
+        // tab waits for a possible second click (`ForkTabClickDeferral`).
+        if MainActor.assumeIsolated({ ForkTabClickDeferral.shouldDefer(tab, modifierFlags: modifierFlags) }) {
+            MainActor.assumeIsolated {
+                ForkTabClickDeferral.deferSwitch { [weak self, weak tab] in
+                    guard let self, let tab else { return }
+                    tab.performAction(with: self.owner)
+                }
+            }
+            return
+        }
+        MainActor.assumeIsolated { ForkTabClickDeferral.cancel() }
         tab.performAction(with: owner)
     }
 

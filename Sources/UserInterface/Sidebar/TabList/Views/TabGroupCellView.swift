@@ -1195,6 +1195,8 @@ extension TabGroupCellView: GroupTabsTableViewDelegate {
             makeIfNecessary: false
         ) as? TabPreviewInteractionCancelling)?.cancelTabPreviewForInteraction()
         let key = currentMemberOrder[row]
+        // Fork: any click settles a switch still waiting on a double-click.
+        MainActor.assumeIsolated { ForkTabClickDeferral.cancel() }
         if clickCount == 2, let tab = tabsByGuid[key],
            tab.closeOnDoubleClick(modifierFlags: modifierFlags) {
             return
@@ -1228,6 +1230,15 @@ extension TabGroupCellView: GroupTabsTableViewDelegate {
             if state.multiSelection.isActive {
                 state.clearMultiSelection()
             }
+        }
+        // Fork: with double-click to close on, switching to another tab waits
+        // for a possible second click (`ForkTabClickDeferral`).
+        if clickCount == 1, let tab = tabsByGuid[key],
+           MainActor.assumeIsolated({ ForkTabClickDeferral.shouldDefer(tab, modifierFlags: modifierFlags) }) {
+            MainActor.assumeIsolated {
+                ForkTabClickDeferral.deferSwitch { [weak self] in self?.activateMemberRow(for: key) }
+            }
+            return
         }
         activateMemberRow(for: key)
     }
