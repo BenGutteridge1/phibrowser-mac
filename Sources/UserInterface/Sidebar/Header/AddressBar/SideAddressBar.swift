@@ -174,8 +174,12 @@ class SideAddressBar: NSView {
         return button
     }()
 
+    /// The extensions menu button, which takes its own clicks wherever the
+    /// bar is (the top bar routes other presses to the bar itself).
+    var extensionMenuView: NSView { extensionMenuHostingView }
+
     private lazy var extensionMenuHostingView: NSHostingView<ExtensionPopoverButton> = {
-        let hosting = NSHostingView(rootView: ExtensionPopoverButton(
+        let hosting = ExtensionMenuHostingView(rootView: ExtensionPopoverButton(
             extensionManager: nil,
             browserState: nil
         ))
@@ -827,11 +831,11 @@ class SideAddressBar: NSView {
         rightStackView.addArrangedSubview(autoplayAllowedButton)
         rightStackView.addArrangedSubview(autoplayRulesButton)
         rightStackView.addArrangedSubview(copyURLButton)
-        if !isInTopBar {
-            rightStackView.addArrangedSubview(extensionMenuHostingView)
-            extensionMenuHostingView.snp.makeConstraints { make in
-                make.width.height.equalTo(24)
-            }
+        // The extensions menu (extensions, Autoplay, the site's settings)
+        // in either place; the top bar's pinned extension tiles stay its own.
+        rightStackView.addArrangedSubview(extensionMenuHostingView)
+        extensionMenuHostingView.snp.makeConstraints { make in
+            make.width.height.equalTo(24)
         }
         containerView.addSubview(rightStackView)
     }
@@ -881,6 +885,15 @@ class SideAddressBar: NSView {
         
         return button
     }
+}
+
+/// The extensions menu button's hosting view. In the top bar it sits in
+/// the window's titlebar, where SwiftUI's safe-area insets pushed it down and
+/// to the right; like the bar's other buttons (`HoverableHostingView`), it
+/// takes none, and a press on it never moves the window.
+private final class ExtensionMenuHostingView: NSHostingView<ExtensionPopoverButton> {
+    override var safeAreaInsets: NSEdgeInsets { NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0) }
+    override var mouseDownCanMoveWindow: Bool { false }
 }
 
 struct ExtensionPopoverButton: View {

@@ -11,8 +11,9 @@ import Combine
 ///
 /// It is the vertical sidebar's own address bar (`SideAddressBar`), with the
 /// same buttons and the same settings: Reader, Memory, Autoplay and Copy
-/// Link, which the sidebar's right-click menu turns on and off. Extensions
-/// stay out of it; the top bar shows them as pinned tiles. It shows the
+/// Link, which the sidebar's right-click menu turns on and off, and the
+/// extensions menu. Pinned extensions stay out of it; the top bar shows them
+/// as tiles. It shows the
 /// focused tab, whichever zone that tab is in. A click on it opens the
 /// Omnibox over it; ⌘L opens it centred, as ⌘T does.
 final class TopBarAddressField: NSView, TitlebarAwareHitTestable {
@@ -74,7 +75,8 @@ final class TopBarAddressField: NSView, TitlebarAwareHitTestable {
         guard let hit = super.hitTest(point) else { return nil }
         var view: NSView? = hit
         while let candidate = view, candidate !== self {
-            if candidate is NSControl || candidate is HoverableButtonNSView { return hit }
+            if candidate is NSControl || candidate is HoverableButtonNSView
+                || candidate === addressBar.extensionMenuView { return hit }
             view = candidate.superview
         }
         return addressBar
