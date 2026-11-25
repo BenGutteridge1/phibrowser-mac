@@ -552,6 +552,14 @@ struct SidebarMediaPlayerView: View {
             }
     }
 
+    /// The source tab's title for the icon's tooltip. A tab left paused in
+    /// the background can be unloaded and lose its live title while the
+    /// player still shows it; the media's own title stands in then.
+    private func tabTitle(for item: SidebarMediaController.Item) -> String {
+        let title = controller.previewSource(for: item)?.tab.title ?? ""
+        return title.isEmpty ? item.playback.title : title
+    }
+
     /// Keep the transport in one view at the card's bottom so the buttons do
     /// not move or change identity when pointer hover reveals the details.
     private func transportRow(_ item: SidebarMediaController.Item) -> some View {
@@ -579,8 +587,7 @@ struct SidebarMediaPlayerView: View {
             // stands in for the tab, and the card is small enough that the
             // pointer seldom rests on it long.
             .customTooltip(
-                PhiPreferences.GeneralSettings.showTabPreviews.loadValue()
-                    ? nil : (controller.previewSource(for: item)?.tab.title ?? item.playback.title),
+                PhiPreferences.GeneralSettings.showTabPreviews.loadValue() ? nil : tabTitle(for: item),
                 configuration: CustomTooltipConfiguration(
                     showDelay: 0.15,
                     placement: surface.kind == .topBar ? .below : .right))
