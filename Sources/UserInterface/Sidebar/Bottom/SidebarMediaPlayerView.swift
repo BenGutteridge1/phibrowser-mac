@@ -317,8 +317,12 @@ struct SidebarMediaPlayerView: View {
         if let item = controller.item, controller.isEnabled,
            !controller.isRevalidating,
            !controller.isSourceVisible, !controller.isDismissed {
+            // The sidebar card's own surface: its material and border, at
+            // the bar's corner radius.
             transportRow(item)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color(.sidebarTabHovered)))
+                .background(RoundedRectangle(cornerRadius: 8).fill(.regularMaterial))
+                .overlay(RoundedRectangle(cornerRadius: 8)
+                    .stroke(ThemedColor.border.swiftUIColor(theme: theme, appearance: appearance)))
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("sidebarMedia.card")
                 .allowsHitTesting(controller.activeSurface == surface)
