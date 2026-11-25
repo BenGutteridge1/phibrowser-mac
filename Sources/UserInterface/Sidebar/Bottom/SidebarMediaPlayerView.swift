@@ -568,12 +568,15 @@ struct SidebarMediaPlayerView: View {
             .buttonStyle(SidebarMediaButtonStyle())
             .focusEffectDisabled()
             .focused($compactFocused)
-            // The source tab's own hover preview, as its tab shows it; a
+            // What hovering the source's tab shows: its preview card, or
+            // with Settings › Tab previews off, its title as a tooltip. A
             // click still goes to the tab.
             .background(MediaIconPreviewAnchor(
                 source: controller.previewSource(for: item),
                 placement: surface.kind == .topBar ? .belowAttached : .rightTopAttached,
                 clicks: iconClicks))
+            .help(PhiPreferences.GeneralSettings.showTabPreviews.loadValue()
+                ? "" : (controller.previewSource(for: item)?.tab.title ?? item.playback.title))
             .accessibilityLabel(openTabLabel)
             .accessibilityIdentifier("sidebarMedia.sourceTab")
             .onChange(of: compactFocused) { _, focused in
