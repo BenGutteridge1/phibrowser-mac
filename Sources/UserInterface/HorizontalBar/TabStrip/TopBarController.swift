@@ -875,9 +875,13 @@ final class TopBarController: NSViewController {
         let button = window?.standardWindowButton(.zoomButton)
         observeFrameChanges(zoomButton: button)
         let inset: CGFloat
-        // In full screen the lights live in the system's titlebar window,
-        // shown over the bar on demand, so the row starts at the edge.
-        if let window, let button, !button.isHidden, button.window === window,
+        // The row keeps the lights' room even while they are hidden: they
+        // hide with the bar (⌘S) and come back only once a revealed bar has
+        // landed, and a row that took their room back then would shift
+        // under the pointer. Hidden lights keep their frames. In full screen
+        // they live in the system's titlebar window, shown over the bar on
+        // demand, so the row starts at the edge.
+        if let window, let button, button.window === window,
            !window.styleMask.contains(.fullScreen) {
             let frameInWindow = button.convert(button.bounds, to: nil)
             inset = view.convert(frameInWindow, from: nil).maxX + 10
