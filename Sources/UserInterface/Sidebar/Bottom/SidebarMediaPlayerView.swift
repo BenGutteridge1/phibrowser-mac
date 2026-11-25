@@ -282,6 +282,9 @@ struct SidebarMediaPlayerView: View {
     @Environment(\.phiTheme) private var theme
     @Environment(\.phiAppearance) private var appearance
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The source tab's hover preview from the site icon.
+    @State private var iconPreview = TabPreviewRegistration()
+    @State private var iconPreviewAnchor: NSView?
     @FocusState private var compactFocused: Bool
     @FocusState private var playPauseFocused: Bool
     @State private var keyboardExpanded = false
@@ -312,7 +315,7 @@ struct SidebarMediaPlayerView: View {
 
     /// Room at the top bar player's trailing edge for the card stacked
     /// behind it while other media plays.
-    static let topBarStackPeek: CGFloat = 4
+    static let topBarStackPeek: CGFloat = 5
 
     /// The Comfortable top bar's player: the compact transport row alone, at
     /// the bar's size. It never expands. Other media playing stacks a card
@@ -346,21 +349,27 @@ struct SidebarMediaPlayerView: View {
                            value: controller.cycleAnimationGeneration)
             }
                 // The sidebar card's own surface: its material and border, at
-                // the bar's corner radius.
+                // the bar's corner radius. The border sits inside the card's
+                // edge, which is also the player's, so none of it is clipped.
                 .background(RoundedRectangle(cornerRadius: 8).fill(.regularMaterial))
                 .overlay(RoundedRectangle(cornerRadius: 8)
-                    .stroke(ThemedColor.border.swiftUIColor(theme: theme, appearance: appearance)))
+                    .strokeBorder(ThemedColor.border.swiftUIColor(theme: theme, appearance: appearance)))
                 .background {
                     if controller.backgroundSourceCount > 1 {
-                        RoundedRectangle(cornerRadius: 7).fill(.regularMaterial)
-                            .overlay(RoundedRectangle(cornerRadius: 7).stroke(secondary.opacity(0.3)))
-                            .padding(.vertical, 4)
-                            .offset(x: Self.topBarStackPeek)
-                            .opacity(0.65)
-                            .allowsHitTesting(false)
-                            .accessibilityHidden(true)
-                            .accessibilityIdentifier("sidebarMedia.stack")
-                            .transition(.opacity)
+                        // A player the same size, just behind and to the
+                        // side: only its edge and corners show, so the front
+                        // card's translucent material doesn't double up.
+                        GeometryReader { geometry in
+                            RoundedRectangle(cornerRadius: 8).fill(.regularMaterial)
+                                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(secondary.opacity(0.3)))
+                                .offset(x: Self.topBarStackPeek)
+                                .mask(Rectangle().padding(.leading, max(0, geometry.size.width - 8)))
+                        }
+                        .opacity(0.65)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                        .accessibilityIdentifier("sidebarMedia.stack")
+                        .transition(.opacity)
                     }
                 }
                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.2),
@@ -536,6 +545,17 @@ struct SidebarMediaPlayerView: View {
             }
     }
 
+    /// Shows the source tab's hover preview (title, address and snapshot,
+    /// Settings › Tab previews) from the site icon: below it in the top bar,
+    /// beside it in the sidebar.
+    private func iconPreviewHoverChanged(_ hovering: Bool, item: SidebarMediaController.Item) {
+        if hovering, let anchor = iconPreviewAnchor, let source = controller.previewSource(for: item) {
+            iconPreview.configure(anchorView: anchor, target: .tab(source.tab), browserState: source.state,
+                                  placement: surface.kind == .topBar ? .belowAttached : .rightTopAttached)
+        }
+        iconPreview.setHovering(hovering)
+    }
+
     /// Keep the transport in one view at the card's bottom so the buttons do
     /// not move or change identity when pointer hover reveals the details.
     private func transportRow(_ item: SidebarMediaController.Item) -> some View {
@@ -543,6 +563,7 @@ struct SidebarMediaPlayerView: View {
         let showsTrackControls = !isTopBar || self.showsTrackControls
         return HStack(spacing: 4) {
             Button(action: {
+                iconPreview.cancelForInteraction()
                 SidebarMediaAnalytics.capture("show_tab")
                 controller.showTab(for: item, from: surface)
             }) {
@@ -551,7 +572,13 @@ struct SidebarMediaPlayerView: View {
             .buttonStyle(SidebarMediaButtonStyle())
             .focusEffectDisabled()
             .focused($compactFocused)
-            .help(openTabLabel)
+            // The source tab's own hover preview, as its tab shows it; a
+            // click still goes to the tab.
+            .background(MediaIconPreviewAnchor { view in
+                if iconPreviewAnchor !== view { iconPreviewAnchor = view }
+            })
+            .onHover { hovering in iconPreviewHoverChanged(hovering, item: item) }
+            .onDisappear { iconPreview.invalidate() }
             .accessibilityLabel(openTabLabel)
             .accessibilityIdentifier("sidebarMedia.sourceTab")
             .onChange(of: compactFocused) { _, focused in
@@ -1016,5 +1043,23 @@ struct SidebarMediaPlayerView: View {
         NSLocalizedString("sidebar.media.exitPictureInPicture",
                           value: "Close picture in picture",
                           comment: "Sidebar media player - Return a picture-in-picture video to its page")
+    }
+}
+
+/// An invisible view over the mini player's site icon that the tab preview
+/// anchors to. It takes no clicks.
+private struct MediaIconPreviewAnchor: NSViewRepresentable {
+    let onResolve: (NSView) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = PassthroughView()
+        DispatchQueue.main.async { onResolve(view) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    private final class PassthroughView: NSView {
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
     }
 }

@@ -116,6 +116,13 @@ final class SidebarMediaController: ObservableObject {
             && !playback.isMuted && !playback.isSourceSilent
     }
 
+    /// The tab an item plays in and its Space, for the tab's hover preview.
+    func previewSource(for item: Item) -> (tab: Tab, state: BrowserState)? {
+        guard let tab = observedTabs[item.key]?.tab,
+              let state = sessions[item.key.sessionID]?.state else { return nil }
+        return (tab, state)
+    }
+
     func isPlayingVideo(_ tab: Tab) -> Bool {
         sourceKey(for: tab).map(videoSources.contains) ?? false
     }

@@ -18,7 +18,7 @@ leading edge:
 | Space pins and folders | `BookmarkBar` | Pills with the sidebar's folder icons. A folder, at any depth, opens in place, its bookmarks beside it in one wash (`BookmarkFolderGroupView`): they are built once, laid out at rest behind a clip, and the clip widens on the zone's clock while they fade in, so nothing is rebuilt or flies in. Overflow goes to the More menu |
 | Address field | `TopBarAddressField` | The sidebar's `SideAddressBar` (`isInTopBar`), as wide as the sidebar's (the sidebar width the user set, less its insets): its look and buttons, no extensions. It never publishes where pinned extensions go, though it exists, hidden, in the sidebar layouts |
 | Tabs, groups, splits | `TabStrip` | Pills; no pinned zone (pinned tabs are tiles) |
-| Mini player | `SidebarMediaPlayerView`, `Surface.Kind.topBar` | Compact transport row only. Other media playing stacks a card that peeks out at its trailing edge; a two-finger swipe or a drag across it switches source as in the sidebar, the cards sliding sideways on the sidebar card's transition |
+| Mini player | `SidebarMediaPlayerView`, `Surface.Kind.topBar` | Compact transport row only. Other media playing stacks a same-size card just behind it that peeks out at its trailing edge; a two-finger swipe or a drag across it switches source as in the sidebar, the cards sliding sideways on the sidebar card's transition. Its site icon shows the source tab's hover preview, as the tab does, and a click goes to the tab (sidebar player too) |
 | Bottom-bar buttons | `TopBarTrailingButtons` | Fold into one menu, Organize Tabs included, when short of room |
 
 Tabs always come after the address field; the active tab is a selected pill.
