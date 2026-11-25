@@ -92,9 +92,9 @@ hidden state is window state, on `ShellSplitViewController` (hosted) or
 value (`ForkSettings.topBarHidden`). While hidden, `TopBarRevealController`
 slides the bar down over the page as a glass panel (the sidebar's behind-window
 material and Space fill) when the pointer rests in the band along the
-window's top edge: 120ms at the edge itself (its top 3pt), 350ms lower in the
-band. The band is the page's 8pt margin and 4pt of the page (6pt of the page
-edge to edge), takes no clicks, and does nothing while a mouse button is held,
+window's top edge: 120ms at the edge itself (its top 5pt), 350ms lower in the
+band. The band is the page's 8pt margin and 12pt of the page (12pt of the
+page edge to edge), takes no clicks, and does nothing while a mouse button is held,
 so the page's own controls at the top stay usable. The bar stays while the pointer, the Omnibox,
 a menu, a popover or a hover card is up (menus are followed from the menu
 tracking notifications: they are neither child windows nor popovers). The

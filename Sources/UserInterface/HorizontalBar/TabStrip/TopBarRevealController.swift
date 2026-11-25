@@ -32,11 +32,13 @@ final class TopBarRevealController: NSObject {
     /// own controls at the top doesn't bring the bar over them.
     static let bandRevealDelay: TimeInterval = 0.35
     /// The top edge proper, where the bar comes quickest.
-    static let edgeBand: CGFloat = 3
-    /// The trigger band's height: the page's 8pt margin and 4pt of the page,
-    /// or with the page meeting the edge (edge to edge), 6pt of the page.
-    static let triggerHeight: CGFloat = 12
-    static let edgeToEdgeTriggerHeight: CGFloat = 6
+    static let edgeBand: CGFloat = 5
+    /// The trigger band's height: the page's 8pt margin and 12pt of the
+    /// page, or with the page meeting the edge (edge to edge), 12pt of the
+    /// page. Below `edgeBand` the pointer has to rest `bandRevealDelay`, so
+    /// the page's own controls up there stay usable.
+    static let triggerHeight: CGFloat = 20
+    static let edgeToEdgeTriggerHeight: CGFloat = 12
     /// How long after the pointer leaves the bar goes.
     static let hideDelay: TimeInterval = 0.4
     static let showDuration: TimeInterval = 0.22
