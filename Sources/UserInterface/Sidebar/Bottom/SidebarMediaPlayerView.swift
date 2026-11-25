@@ -575,8 +575,15 @@ struct SidebarMediaPlayerView: View {
                 source: controller.previewSource(for: item),
                 placement: surface.kind == .topBar ? .belowAttached : .rightTopAttached,
                 clicks: iconClicks))
-            .help(PhiPreferences.GeneralSettings.showTabPreviews.loadValue()
-                ? "" : (controller.previewSource(for: item)?.tab.title ?? item.playback.title))
+            // The title shows sooner than a system tooltip would: the icon
+            // stands in for the tab, and the card is small enough that the
+            // pointer seldom rests on it long.
+            .customTooltip(
+                PhiPreferences.GeneralSettings.showTabPreviews.loadValue()
+                    ? nil : (controller.previewSource(for: item)?.tab.title ?? item.playback.title),
+                configuration: CustomTooltipConfiguration(
+                    showDelay: 0.15,
+                    placement: surface.kind == .topBar ? .below : .right))
             .accessibilityLabel(openTabLabel)
             .accessibilityIdentifier("sidebarMedia.sourceTab")
             .onChange(of: compactFocused) { _, focused in
