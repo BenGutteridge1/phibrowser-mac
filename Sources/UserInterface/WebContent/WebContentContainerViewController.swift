@@ -1075,7 +1075,11 @@ class WebContentContainerViewController: NSViewController {
             .prepend(contentLayout)
             .removeDuplicates()
             .dropFirst()
-            .sink { [weak self] _ in self?.updateLayoutForMode() }
+            .sink { [weak self] _ in
+                // A ⌘S slide lays the page out itself when it lands.
+                guard self?.isTopBarDocking != true else { return }
+                self?.updateLayoutForMode()
+            }
             .store(in: &cancellables)
         browserState?.$isInFullScreenMode
             .removeDuplicates()
@@ -2042,15 +2046,19 @@ class WebContentContainerViewController: NSViewController {
     }
 
     /// ⌘S: the bar slides up out of the window, or back down into it, on
-    /// the sidebar toggle's curve (the sidebar's own ⌘S). The page takes or
-    /// gives back the bar's room in one step as the slide starts: a web page
-    /// resized frame by frame doesn't redraw into its new room. The bar
-    /// keeps its glass while it moves, so it never crosses the page bare,
-    /// and the window's lights go as it leaves and come back once it lands.
+    /// the sidebar toggle's curve (the sidebar's own ⌘S), and the page glides
+    /// with it. The page is never resized while it moves: a web page resized
+    /// frame by frame doesn't redraw into its new room. Hiding, it takes its
+    /// taller size first, drawn where it was, and glides up into place;
+    /// showing, it glides down at its old size and gives the bar its room
+    /// once both have landed, its top already where the bar left it. The bar
+    /// keeps its glass while it moves, and the window's lights go as it
+    /// leaves and come back once it lands.
     private func animateTopBarHidden(_ hidden: Bool) {
         guard PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional,
               !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
-              view.window != nil, let bar = topBarController?.view else {
+              view.window != nil, let bar = topBarController?.view,
+              let pageLayer = contentContainer.layer else {
             updateLayoutForMode()
             currentWebContentController?.refreshLayoutForTopBar()
             return
@@ -2058,13 +2066,34 @@ class WebContentContainerViewController: NSViewController {
         let startTop: CGFloat = hidden ? 0
             : (topBarReveal.isRevealed ? TopBarRevealController.panelInset : floatingTopBarTop(revealed: false))
         isTopBarDocking = true
-        updateLayoutForMode()
-        currentWebContentController?.refreshLayoutForTopBar()
-        let endTop: CGFloat = hidden ? floatingTopBarTop(revealed: false) : 0
-        // The page settles at its new size, the bar still where it was.
-        topBarTopConstraint?.update(inset: startTop)
-        view.layoutSubtreeIfNeeded()
-        topBarTopConstraint?.update(inset: endTop)
+        let pageFrameBefore = pageLayer.frame
+
+        if hidden {
+            updateLayoutForMode()
+            currentWebContentController?.refreshLayoutForTopBar()
+            topBarTopConstraint?.update(inset: startTop)
+            view.layoutSubtreeIfNeeded()
+            // Taller now; drawn from where its top was, then glides up.
+            glidePage(pageLayer, from: Self.topEdgeShift(from: pageFrameBefore, to: pageLayer.frame), to: 0, holds: false)
+            topBarTopConstraint?.update(inset: floatingTopBarTop(revealed: false))
+        } else {
+            // Only the bar's constraints change now; the page keeps its size
+            // until the bar has landed.
+            layoutTopBar()
+            topBarTopConstraint?.update(inset: startTop)
+            bar.superview?.layoutSubtreeIfNeeded()
+            var hiddenLayout = contentLayout
+            hiddenLayout.topBarHidden = true
+            let room = WebContentConstant.topBarHeight - hiddenLayout.topEdgeSpacing
+            // Down in the layer's own coordinates: the page's bottom edge
+            // hugs the window's bottom, its top sits under the bar.
+            let frame = pageLayer.frame
+            let superHeight = pageLayer.superlayer?.bounds.height ?? view.bounds.height
+            let yUp = frame.minY < superHeight - frame.maxY
+            glidePage(pageLayer, from: 0, to: yUp ? -room : room, holds: true)
+            topBarTopConstraint?.update(inset: 0)
+        }
+
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = TopBarRevealController.dockDuration
             context.timingFunction = SidebarToggleAnimation.timingFunction
@@ -2073,9 +2102,44 @@ class WebContentContainerViewController: NSViewController {
         }, completionHandler: { [weak self] in
             guard let self else { return }
             self.isTopBarDocking = false
+            if !hidden {
+                // The page takes its new size where the glide left it.
+                CATransaction.begin()
+                CATransaction.setDisableActions(true)
+                self.updateLayoutForMode()
+                self.currentWebContentController?.refreshLayoutForTopBar()
+                self.view.layoutSubtreeIfNeeded()
+                pageLayer.removeAnimation(forKey: Self.pageGlideKey)
+                CATransaction.commit()
+            }
             self.topBarReveal.setGlassShown(self.topBarFloats)
             self.refreshTopBarTrafficLights()
         })
+    }
+
+    private static let pageGlideKey = "topBarPageGlide"
+
+    /// Moves the page vertically on the bar's clock without touching its
+    /// frame: an additive translation, so Peek's own transform still applies.
+    private func glidePage(_ layer: CALayer, from: CGFloat, to: CGFloat, holds: Bool) {
+        let glide = CABasicAnimation(keyPath: "transform.translation.y")
+        glide.isAdditive = true
+        glide.fromValue = from
+        glide.toValue = to
+        glide.duration = TopBarRevealController.dockDuration
+        glide.timingFunction = SidebarToggleAnimation.timingFunction
+        if holds {
+            glide.fillMode = .forwards
+            glide.isRemovedOnCompletion = false
+        }
+        layer.add(glide, forKey: Self.pageGlideKey)
+    }
+
+    /// The translation that draws a layer laid out at `after` with its top
+    /// edge where it was at `before`. The page's bottom edge stays put, which
+    /// tells which edge is the top in the layer's coordinates.
+    private static func topEdgeShift(from before: CGRect, to after: CGRect) -> CGFloat {
+        abs(before.minY - after.minY) < 0.5 ? before.maxY - after.maxY : before.minY - after.minY
     }
 
     /// True while ⌘S slides the bar in or out; it keeps its glass meanwhile.

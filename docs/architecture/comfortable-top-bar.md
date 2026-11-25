@@ -84,9 +84,13 @@ Comfortable that backdrop runs the palette gradient leading → trailing
 ## Hiding (⌘S)
 
 ⌘S (the Toggle Sidebar command) hides the bar instead of the sidebar. The
-page takes or gives back the bar's room in one step, and the bar, on its
-glass, slides out of or into the window on the sidebar toggle's curve: a web
-page resized frame by frame doesn't redraw into its new room. The
+bar, on its glass, slides out of or into the window on the sidebar toggle's
+curve, and the page glides with it without being resized while it moves (a
+web page resized frame by frame doesn't redraw into its new room). Hiding,
+the page takes its taller size first, drawn where it was, and glides up;
+showing, it glides down at its old size and gives the bar its room once both
+have landed. The glide is an additive layer translation, so Peek's transform
+still applies. The
 hidden state is window state, on `ShellSplitViewController` (hosted) or
 `MainSplitViewController` (standalone), and new windows start with the last
 value (`ForkSettings.topBarHidden`). While hidden, `TopBarRevealController`
