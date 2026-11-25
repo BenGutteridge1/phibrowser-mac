@@ -379,7 +379,7 @@ final class TopBarController: NSViewController {
         spacePins.setContentCompressionResistancePriority(NSLayoutConstraint.Priority(650), for: .horizontal)
         spacePins.onPreferredWidthChange = { [weak self] width in
             guard let self else { return }
-            let animates = self.spacePins.isTogglingFolder
+            let animates = self.spacePins.animatesWidthChange
                 && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             guard animates else {
                 self.spacePinsWidth?.constant = width
@@ -387,8 +387,9 @@ final class TopBarController: NSViewController {
                 self.updateFit()
                 return
             }
-            // A folder opening or shutting: the zone widens or narrows on
-            // the folder icon's clock and the tabs after it slide along.
+            // A folder opening or shutting, or a compressed folder growing
+            // under the pointer: the zone widens or narrows on the tabs'
+            // hover clock and everything after it slides along.
             self.updateZoneVisibility()
             NSAnimationContext.runAnimationGroup({ context in
                 context.duration = 0.22
@@ -567,6 +568,7 @@ final class TopBarController: NSViewController {
                 + (addressFieldWidth?.constant ?? Self.addressFieldWidth) + spaceRowWidth,
             pinnedTiles: pinnedTiles.rowContentWidth,
             spacePinsTitled: spacePins.titledWidth,
+            spacePinsFoldersCompressed: spacePins.foldersCompressedWidth,
             spacePinsIconOnly: spacePins.iconOnlyWidth,
             trailingFull: trailingFullWidth,
             trailingFolded: trailingFoldedWidth,
@@ -578,6 +580,7 @@ final class TopBarController: NSViewController {
         guard newFit != fit else { return }
         let playerChanged = newFit.compactPlayer != fit.compactPlayer
         fit = newFit
+        spacePins.foldersShowTitles = newFit.folderTitles
         spacePins.showsTitles = newFit.spacePinTitles
         if trailingState.foldsButtons != newFit.foldsTrailingButtons {
             trailingState.foldsButtons = newFit.foldsTrailingButtons

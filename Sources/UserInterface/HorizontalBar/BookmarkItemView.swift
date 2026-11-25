@@ -509,12 +509,18 @@ class BookmarkItemView: NSView {
         addTrackingArea(trackingArea)
     }
 
+    /// Called as the pointer comes and goes: the bar grows a compressed
+    /// folder under the pointer to its titled width.
+    var onHoverChange: ((Bool) -> Void)?
+
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
+        onHoverChange?(true)
     }
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
+        onHoverChange?(false)
     }
 
     // MARK: - Window drag

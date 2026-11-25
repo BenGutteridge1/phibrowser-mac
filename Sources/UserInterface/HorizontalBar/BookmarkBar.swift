@@ -38,26 +38,100 @@ class BookmarkBar: NSView {
     }
     var onBookmarksChanged: ((Int) -> Void)?
 
-    /// Whether the pills show their titles; the top bar turns them off when
-    /// it is short of room.
+    /// Whether the bookmarks show their titles; the top bar turns them off
+    /// when it is short of room, after the folders'.
     var showsTitles = true {
         didSet {
             guard showsTitles != oldValue else { return }
-            items.forEach { $0.showsTitle = showsTitles }
-            refreshFolderWidths()
-            reportPreferredWidth()
-            needsLayout = true
+            titlesChanged()
         }
     }
 
-    /// The width that shows every pill, reported whenever it changes so the
-    /// top bar can size this zone; past it the rest go into the More menu.
+    /// Whether the folders show their titles. Off, they compress to their
+    /// icons, as the tabs do, and the one under the pointer grows back to its
+    /// titled width, the pills after it moving along (`hoverExpandedFolder`).
+    var foldersShowTitles = true {
+        didSet {
+            guard foldersShowTitles != oldValue else { return }
+            hoverCollapseWork?.cancel()
+            hoverCollapseWork = nil
+            hoverExpandedFolder = nil
+            titlesChanged()
+        }
+    }
+
+    private func titlesChanged() {
+        applyTitles()
+        refreshFolderWidths()
+        reportPreferredWidth()
+        needsLayout = true
+    }
+
+    /// Which pills show their titles now: bookmarks per `showsTitles`,
+    /// folders per `foldersShowTitles` or while grown under the pointer.
+    private func applyTitles() {
+        for item in items {
+            item.showsTitle = item.bookmark.isFolder
+                ? (foldersShowTitles || item === hoverExpandedFolder)
+                : showsTitles
+        }
+    }
+
+    /// The width every pill takes as shown now, the folder under the pointer
+    /// grown: the zone's width, reported whenever it changes. Past it the
+    /// rest go into the More menu.
     private(set) var preferredWidth: CGFloat = 0
     var onPreferredWidthChange: ((CGFloat) -> Void)?
 
-    /// The width with titles and without, for the top bar's width ladder.
-    var titledWidth: CGFloat { contentWidth(showingTitles: true) }
-    var iconOnlyWidth: CGFloat { contentWidth(showingTitles: false) }
+    /// Widths at rest for the top bar's width ladder: every title, folders
+    /// compressed, and no titles.
+    var titledWidth: CGFloat { contentWidth { _ in true } }
+    var foldersCompressedWidth: CGFloat { contentWidth { !$0.bookmark.isFolder } }
+    var iconOnlyWidth: CGFloat { contentWidth { _ in false } }
+
+    /// Titles at rest, without a folder grown under the pointer: what the
+    /// More menu's overflow is decided on, so a hover never moves a pill
+    /// into it.
+    private var restingTitles: (BookmarkItemView) -> Bool {
+        let pins = showsTitles, folders = foldersShowTitles
+        return { $0.bookmark.isFolder ? folders : pins }
+    }
+
+    // MARK: - Folder hover
+
+    /// The compressed folder grown to its titled width under the pointer.
+    private weak var hoverExpandedFolder: BookmarkItemView?
+    private var hoverCollapseWork: DispatchWorkItem?
+
+    /// Grows a compressed folder as the pointer arrives and lets it shrink a
+    /// moment after it leaves, unless the pointer has gone to another
+    /// folder, which then grows in its place in the same step.
+    private func folderHoverChanged(_ item: BookmarkItemView, hovering: Bool) {
+        guard !foldersShowTitles else { return }
+        if hovering {
+            hoverCollapseWork?.cancel()
+            hoverCollapseWork = nil
+            setHoverExpandedFolder(item)
+        } else if hoverExpandedFolder === item {
+            hoverCollapseWork?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                self?.hoverCollapseWork = nil
+                self?.setHoverExpandedFolder(nil)
+            }
+            hoverCollapseWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12, execute: work)
+        }
+    }
+
+    private func setHoverExpandedFolder(_ item: BookmarkItemView?) {
+        guard item !== hoverExpandedFolder else { return }
+        hoverExpandedFolder = item
+        applyTitles()
+        refreshFolderWidths()
+        animatesWidthChange = true
+        reportPreferredWidth()
+        animatesWidthChange = false
+    }
 
     /// Every pill built, folders' bookmarks included.
     private var items: [BookmarkItemView] {
@@ -78,9 +152,9 @@ class BookmarkBar: NSView {
     /// expanded rows.
     private var openFolderGuids: Set<String> = []
 
-    /// True while a folder is opening or shutting: the width reported then
-    /// is one the bar's host animates to.
-    private(set) var isTogglingFolder = false
+    /// True while a folder opens or shuts or grows under the pointer: the
+    /// width reported then is one the bar's host animates to.
+    private(set) var animatesWidthChange = false
 
     // MARK: - Layout Constants
     private let barHeight: CGFloat = 40
@@ -244,13 +318,19 @@ class BookmarkBar: NSView {
     /// Folders' widths follow their bookmarks', innermost first.
     private func refreshFolderWidths() {
         for case let group as BookmarkFolderGroupView in stackView.arrangedSubviews {
-            group.updateWidths(showingTitles: showsTitles)
+            group.updateWidths()
         }
     }
 
     private func makeItem(for bookmark: Bookmark) -> BookmarkItemView {
         let itemView = BookmarkItemView(bookmark: bookmark)
-        itemView.showsTitle = showsTitles
+        itemView.showsTitle = bookmark.isFolder ? foldersShowTitles : showsTitles
+        if bookmark.isFolder {
+            itemView.onHoverChange = { [weak self, weak itemView] hovering in
+                guard let self, let itemView else { return }
+                self.folderHoverChanged(itemView, hovering: hovering)
+            }
+        }
         itemView.onWidthChange = { [weak self] in self?.schedulePreferredWidthReport() }
         itemView.onClick = { [weak self, weak itemView] clickedBookmark in
             guard let self, let itemView else { return }
@@ -259,14 +339,14 @@ class BookmarkBar: NSView {
         return itemView
     }
 
-    private func width(of unit: NSView, showingTitles: Bool) -> CGFloat {
-        if let item = unit as? BookmarkItemView { return item.width(showingTitle: showingTitles) }
-        if let group = unit as? BookmarkFolderGroupView { return group.width(showingTitles: showingTitles) }
+    private func width(of unit: NSView, titled: (BookmarkItemView) -> Bool) -> CGFloat {
+        if let item = unit as? BookmarkItemView { return item.width(showingTitle: titled(item)) }
+        if let group = unit as? BookmarkFolderGroupView { return group.width(titled: titled) }
         return 0
     }
 
-    private func contentWidth(showingTitles: Bool) -> CGFloat {
-        let widths = stackView.arrangedSubviews.map { width(of: $0, showingTitles: showingTitles) }
+    private func contentWidth(titled: (BookmarkItemView) -> Bool) -> CGFloat {
+        let widths = stackView.arrangedSubviews.map { width(of: $0, titled: titled) }
         guard !widths.isEmpty else { return 0 }
         return horizontalPadding * 2 + widths.reduce(0, +) + itemSpacing * CGFloat(widths.count - 1)
     }
@@ -288,7 +368,7 @@ class BookmarkBar: NSView {
     }
 
     private func reportPreferredWidth() {
-        let width = contentWidth(showingTitles: showsTitles)
+        let width = contentWidth { $0.showsTitle }
         guard abs(width - preferredWidth) > 0.5 else { return }
         preferredWidth = width
         onPreferredWidthChange?(width)
@@ -369,7 +449,8 @@ class BookmarkBar: NSView {
 
         let availableWidth = bounds.width
         // The More button only takes room when something overflows.
-        let fitsAll = contentWidth(showingTitles: showsTitles) <= availableWidth + 0.5
+        let resting = restingTitles
+        let fitsAll = contentWidth(titled: resting) <= availableWidth + 0.5
         let moreAreaWidth = fitsAll ? 0 : moreButtonWidth + itemSpacing + horizontalPadding
         let maxDisplayWidth = availableWidth - moreAreaWidth
 
@@ -379,7 +460,7 @@ class BookmarkBar: NSView {
         var hasOverflowed = false
 
         for unit in stackView.arrangedSubviews {
-            let unitWidth = width(of: unit, showingTitles: showsTitles)
+            let unitWidth = width(of: unit, titled: resting)
 
             if currentX + unitWidth > maxDisplayWidth {
                 hasOverflowed = true
@@ -698,9 +779,9 @@ class BookmarkBar: NSView {
         }
 
         let animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        isTogglingFolder = true
+        animatesWidthChange = true
         reportPreferredWidth()
-        isTogglingFolder = false
+        animatesWidthChange = false
         guard animates else {
             group.setContentShown(opening)
             return
@@ -880,28 +961,29 @@ final class BookmarkFolderGroupView: NSView {
         }
     }
 
-    /// Sets the clip to the bookmarks' width while open, and to nothing
-    /// while shut; folders inside it first.
-    func updateWidths(showingTitles: Bool) {
+    /// Sets the clip to the bookmarks' width as shown while open, and to
+    /// nothing while shut; folders inside it first.
+    func updateWidths() {
         for case let group as BookmarkFolderGroupView in units {
-            group.updateWidths(showingTitles: showingTitles)
+            group.updateWidths()
         }
         let pad = isOpen ? Self.inset : 0
         leadingPad.constant = pad
         trailingPad.constant = pad
-        clipWidth.constant = isOpen ? spacing + childrenWidth(showingTitles: showingTitles) : 0
+        clipWidth.constant = isOpen ? spacing + childrenWidth(titled: { $0.showsTitle }) : 0
     }
 
-    func width(showingTitles: Bool) -> CGFloat {
-        let folderWidth = folderItem.width(showingTitle: showingTitles)
+    /// The folder's width with the titles `titled` says show.
+    func width(titled: (BookmarkItemView) -> Bool) -> CGFloat {
+        let folderWidth = folderItem.width(showingTitle: titled(folderItem))
         guard isOpen else { return folderWidth }
-        return folderWidth + 2 * Self.inset + spacing + childrenWidth(showingTitles: showingTitles)
+        return folderWidth + 2 * Self.inset + spacing + childrenWidth(titled: titled)
     }
 
-    private func childrenWidth(showingTitles: Bool) -> CGFloat {
+    private func childrenWidth(titled: (BookmarkItemView) -> Bool) -> CGFloat {
         let widths = units.map { unit -> CGFloat in
-            if let item = unit as? BookmarkItemView { return item.width(showingTitle: showingTitles) }
-            return (unit as? BookmarkFolderGroupView)?.width(showingTitles: showingTitles) ?? 0
+            if let item = unit as? BookmarkItemView { return item.width(showingTitle: titled(item)) }
+            return (unit as? BookmarkFolderGroupView)?.width(titled: titled) ?? 0
         }
         return widths.reduce(0, +) + spacing * CGFloat(max(0, widths.count - 1))
     }

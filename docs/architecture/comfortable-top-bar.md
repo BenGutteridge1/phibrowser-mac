@@ -45,8 +45,12 @@ starts at the window's edge.
 ## Width ladder
 
 `TopBarWidths.solve` is a pure function of the bar's width and the measured
-parts. The tabs absorb every change first; then, in order, Space pins drop
-their titles, the trailing buttons fold, the mini player goes compact. The
+parts. The tabs absorb every change first; then, in order, folders compress
+to their icons (the one under the pointer grows back to its titled width on
+the tabs' hover clock, the pills after it moving along), the Space's
+bookmarks drop their titles, the trailing buttons fold, the mini player goes
+compact. The More menu's overflow is decided on widths at rest, so a folder
+grown under the pointer never moves a pill into it. The
 Space row and the address field keep their widths. Past that the tab strip
 scrolls, keeping the active tab in view. Only a window at its narrowest
 (400pt) makes the address field and the pinned tiles give way, rather than
@@ -80,16 +84,22 @@ Comfortable that backdrop runs the palette gradient leading → trailing
 ## Hiding (⌘S)
 
 ⌘S (the Toggle Sidebar command) hides the bar instead of the sidebar. The
+page takes or gives back the bar's room in one step, and the bar, on its
+glass, slides out of or into the window on the sidebar toggle's curve: a web
+page resized frame by frame doesn't redraw into its new room. The
 hidden state is window state, on `ShellSplitViewController` (hosted) or
 `MainSplitViewController` (standalone), and new windows start with the last
 value (`ForkSettings.topBarHidden`). While hidden, `TopBarRevealController`
 slides the bar down over the page as a glass panel (the sidebar's behind-window
-material and Space fill) when the pointer rests on
-the window's top edge for 120ms, and keeps it while the pointer, the Omnibox,
+material and Space fill) when the pointer rests in the band along the
+window's top edge: 120ms at the edge itself (its top 3pt), 350ms lower in the
+band. The band is the page's 8pt margin and 4pt of the page (6pt of the page
+edge to edge), takes no clicks, and does nothing while a mouse button is held,
+so the page's own controls at the top stay usable. The bar stays while the pointer, the Omnibox,
 a menu, a popover or a hover card is up (menus are followed from the menu
 tracking notifications: they are neither child windows nor popovers). The
 page never resizes for a reveal.
-The window's lights hide and show with the bar.
+The window's lights leave with the bar and come back once it has landed.
 
 ## Page outline
 

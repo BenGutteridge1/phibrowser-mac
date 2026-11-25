@@ -24,12 +24,27 @@ final class TopBarRevealController: NSObject {
     /// The panel's inset from the window's top and side edges.
     static let panelInset: CGFloat = 6
     static let panelCornerRadius: CGFloat = 14
-    /// How long the pointer stays on the edge before the bar comes.
+    /// How long the pointer stays at the window's very top edge
+    /// (`edgeBand`) before the bar comes.
     static let revealDelay: TimeInterval = 0.12
+    /// How long it stays in the rest of the trigger band, which reaches a
+    /// few points into the page: long enough that passing over the page's
+    /// own controls at the top doesn't bring the bar over them.
+    static let bandRevealDelay: TimeInterval = 0.35
+    /// The top edge proper, where the bar comes quickest.
+    static let edgeBand: CGFloat = 3
+    /// The trigger band's height: the page's 8pt margin and 4pt of the page,
+    /// or with the page meeting the edge (edge to edge), 6pt of the page.
+    static let triggerHeight: CGFloat = 12
+    static let edgeToEdgeTriggerHeight: CGFloat = 6
     /// How long after the pointer leaves the bar goes.
     static let hideDelay: TimeInterval = 0.4
     static let showDuration: TimeInterval = 0.22
     static let hideDuration: TimeInterval = 0.18
+    /// ⌘S docking or hiding the bar: a little longer than the sidebar
+    /// toggle's 0.11s, which covers a column's width in one beat; the bar
+    /// also travels its own height out of or into the window.
+    static let dockDuration: TimeInterval = 0.18
 
     /// Called with `true` to show the panel and `false` to put it away,
     /// animated or not. The container moves the bar.
@@ -118,7 +133,7 @@ final class TopBarRevealController: NSObject {
         ])
         container.addSubview(triggerView)
         triggerView.translatesAutoresizingMaskIntoConstraints = false
-        triggerHeight = triggerView.heightAnchor.constraint(equalToConstant: 6)
+        triggerHeight = triggerView.heightAnchor.constraint(equalToConstant: Self.triggerHeight)
         NSLayoutConstraint.activate([
             triggerView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             triggerView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
@@ -135,14 +150,15 @@ final class TopBarRevealController: NSObject {
 
     private var triggerHeight: NSLayoutConstraint?
 
-    /// Turns the reveal on while the bar is hidden. The trigger is a 6pt band
-    /// along the top edge, 4pt when the page meets the edge (edge to edge).
+    /// Turns the reveal on while the bar is hidden. The trigger is a band
+    /// along the top edge (`triggerHeight`), narrower when the page meets
+    /// the edge. It never takes a click.
     func setEnabled(_ enabled: Bool, edgeToEdge: Bool) {
-        triggerHeight?.constant = edgeToEdge ? 4 : 6
+        triggerHeight?.constant = edgeToEdge ? Self.edgeToEdgeTriggerHeight : Self.triggerHeight
         guard enabled != isEnabled else { return }
         isEnabled = enabled
         triggerView.isHidden = !enabled
-        glassView.isHidden = !enabled
+        if enabled { glassView.isHidden = false }
         cancelTimers()
         if !enabled, isRevealed {
             isRevealed = false
@@ -155,13 +171,38 @@ final class TopBarRevealController: NSObject {
         guard isEnabled else { return }
         hideWork?.cancel()
         guard !isRevealed, revealWork == nil else { return }
+        scheduleRevealCheck(after: Self.revealDelay, enteredAt: Date())
+    }
+
+    /// Reveals once the pointer has rested: briefly at the window's very top
+    /// edge, longer lower in the band, and never while a mouse button is held
+    /// (a drag or a text selection running up to the top).
+    private func scheduleRevealCheck(after delay: TimeInterval, enteredAt: Date) {
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
             self.revealWork = nil
+            guard self.isEnabled, !self.isRevealed,
+                  let distance = self.pointerDistanceFromTop,
+                  distance <= self.triggerView.bounds.height else { return }
+            let rested = Date().timeIntervalSince(enteredAt)
+            let needed = distance <= Self.edgeBand ? Self.revealDelay : Self.bandRevealDelay
+            guard NSEvent.pressedMouseButtons == 0, rested >= needed else {
+                self.scheduleRevealCheck(after: max(0.05, needed - rested), enteredAt: enteredAt)
+                return
+            }
             self.setRevealed(true, animated: true)
         }
         revealWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.revealDelay, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    /// The pointer's distance below the window's top edge, while it is in
+    /// the trigger band's columns.
+    private var pointerDistanceFromTop: CGFloat? {
+        guard let window = triggerView.window else { return nil }
+        let point = triggerView.convert(window.mouseLocationOutsideOfEventStream, from: nil)
+        guard point.x >= 0, point.x <= triggerView.bounds.width else { return nil }
+        return triggerView.isFlipped ? point.y : triggerView.bounds.height - point.y
     }
 
     private func pointerLeftEdge() {
@@ -216,6 +257,12 @@ final class TopBarRevealController: NSObject {
             candidate.isVisible && candidate !== window
                 && String(describing: type(of: candidate)).contains("Popover")
         }
+    }
+
+    /// The panel's glass. On while the bar is hidden; the container also
+    /// keeps it on while the bar docks, and takes it off once docked.
+    func setGlassShown(_ shown: Bool) {
+        glassView.isHidden = !shown
     }
 
     private func setRevealed(_ revealed: Bool, animated: Bool) {

@@ -14,9 +14,11 @@ import CoreGraphics
 /// When the tabs would drop under `tabsTitledWidth` each, the rest of the row
 /// folds in this order, each step only once the one before it is spent:
 ///
-/// 1. Space pins drop their titles and keep their favicons.
-/// 2. Memory, Feedback, Chat and the cards bulb fold into one menu.
-/// 3. The mini player keeps its site icon and play/pause.
+/// 1. Folders compress to their icons, as the tabs do; the one under the
+///    pointer grows back to its titled width.
+/// 2. The Space's bookmarks drop their titles and keep their favicons.
+/// 3. Memory, Feedback, Chat and the cards bulb fold into one menu.
+/// 4. The mini player keeps its site icon and play/pause.
 ///
 /// The address field keeps one width, the sidebar's address bar's
 /// (`TopBarController.addressFieldWidth`).
@@ -37,6 +39,8 @@ enum TopBarWidths {
         /// Pinned extension and pinned tab tiles.
         var pinnedTiles: CGFloat
         var spacePinsTitled: CGFloat
+        /// Bookmarks titled, folders compressed.
+        var spacePinsFoldersCompressed: CGFloat
         var spacePinsIconOnly: CGFloat
         var trailingFull: CGFloat
         var trailingFolded: CGFloat
@@ -48,6 +52,7 @@ enum TopBarWidths {
     }
 
     struct Fit: Equatable {
+        var folderTitles = true
         var spacePinTitles = true
         var foldsTrailingButtons = false
         var compactPlayer = false
@@ -58,9 +63,13 @@ enum TopBarWidths {
 
         func tabRoom(_ fit: Fit) -> CGFloat {
             room - parts.fixed - parts.pinnedTiles
-                - (fit.spacePinTitles ? parts.spacePinsTitled : parts.spacePinsIconOnly)
+                - spacePins(fit)
                 - (fit.foldsTrailingButtons ? parts.trailingFolded : parts.trailingFull)
                 - (fit.compactPlayer ? parts.playerCompact : parts.playerFull)
+        }
+        func spacePins(_ fit: Fit) -> CGFloat {
+            if !fit.spacePinTitles { return parts.spacePinsIconOnly }
+            return fit.folderTitles ? parts.spacePinsTitled : parts.spacePinsFoldersCompressed
         }
         /// Every tab gets at least `perTab`.
         func fits(_ fit: Fit, perTab: CGFloat) -> Bool {
@@ -68,6 +77,7 @@ enum TopBarWidths {
         }
 
         let steps: [(inout Fit) -> Void] = [
+            { $0.folderTitles = false },
             { $0.spacePinTitles = false },
             { $0.foldsTrailingButtons = true },
             { $0.compactPlayer = true },

@@ -1044,10 +1044,10 @@ class WebContentContainerViewController: NSViewController {
 
         browserState?.topBarHiddenPublisher
             .dropFirst()
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.updateLayoutForMode()
-                self?.currentWebContentController?.refreshLayoutForTopBar()
+            .sink { [weak self] hidden in
+                self?.animateTopBarHidden(hidden)
             }
             .store(in: &cancellables)
 
@@ -2021,6 +2021,7 @@ class WebContentContainerViewController: NSViewController {
             topBarController?.setActive(false)
             topBarController?.view.isHidden = true
             topBarReveal.setEnabled(false, edgeToEdge: contentLayout.edgeToEdgeEnabled)
+            topBarReveal.setGlassShown(false)
             topBarController?.updateMiniPlayerActivation()
             topBarHeightConstraint?.update(offset: 0)
             topBarTopConstraint?.update(inset: contentLayout.topEdgeSpacing)
@@ -2040,6 +2041,46 @@ class WebContentContainerViewController: NSViewController {
         contentContainer.needsLayout = true
     }
 
+    /// ⌘S: the bar slides up out of the window, or back down into it, on
+    /// the sidebar toggle's curve (the sidebar's own ⌘S). The page takes or
+    /// gives back the bar's room in one step as the slide starts: a web page
+    /// resized frame by frame doesn't redraw into its new room. The bar
+    /// keeps its glass while it moves, so it never crosses the page bare,
+    /// and the window's lights go as it leaves and come back once it lands.
+    private func animateTopBarHidden(_ hidden: Bool) {
+        guard PhiPreferences.GeneralSettings.loadLayoutMode().isTraditional,
+              !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+              view.window != nil, let bar = topBarController?.view else {
+            updateLayoutForMode()
+            currentWebContentController?.refreshLayoutForTopBar()
+            return
+        }
+        let startTop: CGFloat = hidden ? 0
+            : (topBarReveal.isRevealed ? TopBarRevealController.panelInset : floatingTopBarTop(revealed: false))
+        isTopBarDocking = true
+        updateLayoutForMode()
+        currentWebContentController?.refreshLayoutForTopBar()
+        let endTop: CGFloat = hidden ? floatingTopBarTop(revealed: false) : 0
+        // The page settles at its new size, the bar still where it was.
+        topBarTopConstraint?.update(inset: startTop)
+        view.layoutSubtreeIfNeeded()
+        topBarTopConstraint?.update(inset: endTop)
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = TopBarRevealController.dockDuration
+            context.timingFunction = SidebarToggleAnimation.timingFunction
+            context.allowsImplicitAnimation = true
+            bar.superview?.layoutSubtreeIfNeeded()
+        }, completionHandler: { [weak self] in
+            guard let self else { return }
+            self.isTopBarDocking = false
+            self.topBarReveal.setGlassShown(self.topBarFloats)
+            self.refreshTopBarTrafficLights()
+        })
+    }
+
+    /// True while ⌘S slides the bar in or out; it keeps its glass meanwhile.
+    private var isTopBarDocking = false
+
     /// Docked: the bar spans the window's top edge and the lights sit in
     /// it. Hidden: it becomes a panel inset from the edges, above the window
     /// until the top edge reveals it.
@@ -2047,6 +2088,7 @@ class WebContentContainerViewController: NSViewController {
         guard let bar = topBarController?.view else { return }
         let floats = topBarFloats
         topBarReveal.setEnabled(floats, edgeToEdge: contentLayout.edgeToEdgeEnabled)
+        topBarReveal.setGlassShown(floats || isTopBarDocking)
         let inset = TopBarRevealController.panelInset
         let height = WebContentConstant.topBarHeight
         bar.snp.remakeConstraints { make in
@@ -2056,7 +2098,9 @@ class WebContentContainerViewController: NSViewController {
             topBarHeightConstraint = make.height.equalTo(height).constraint
         }
         bar.layer?.cornerRadius = floats ? TopBarRevealController.panelCornerRadius : 0
-        refreshTopBarTrafficLights()
+        // A bar sliding back in gets its lights when it lands
+        // (`animateTopBarHidden`).
+        if !(isTopBarDocking && !floats) { refreshTopBarTrafficLights() }
     }
 
     private func floatingTopBarTop(revealed: Bool) -> CGFloat {
@@ -2069,21 +2113,25 @@ class WebContentContainerViewController: NSViewController {
     private func moveFloatingTopBar(revealed: Bool, animated: Bool) {
         guard topBarFloats else { return }
         topBarTopConstraint?.update(inset: floatingTopBarTop(revealed: revealed))
-        if revealed { refreshTopBarTrafficLights() }
-        guard animated else {
+        // The lights leave with the panel and come back once it has landed,
+        // so they never sit over the page alone.
+        if !revealed { refreshTopBarTrafficLights() }
+        guard animated, let bar = topBarController?.view else {
             view.layoutSubtreeIfNeeded()
-            if !revealed { refreshTopBarTrafficLights() }
+            if revealed { refreshTopBarTrafficLights() }
             return
         }
+        // Only the panel moves: lay out the rest of the window first, so the
+        // animation carries the bar alone and nothing else relays out under it.
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = revealed ? TopBarRevealController.showDuration : TopBarRevealController.hideDuration
             context.timingFunction = revealed
                 ? CAMediaTimingFunction(controlPoints: 0.2, 0.8, 0.2, 1)
                 : CAMediaTimingFunction(name: .easeOut)
             context.allowsImplicitAnimation = true
-            view.layoutSubtreeIfNeeded()
+            bar.superview?.layoutSubtreeIfNeeded()
         }, completionHandler: { [weak self] in
-            if !revealed { self?.refreshTopBarTrafficLights() }
+            if revealed { self?.refreshTopBarTrafficLights() }
         })
     }
 
