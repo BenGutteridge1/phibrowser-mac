@@ -52,6 +52,25 @@ final class AppDevToolsPageSession: @unchecked Sendable {
     private var fragData = Data()
     private var secWebSocketKey = ""
 
+    /// Fork: CDP events (method, params) and the connection ending (closed,
+    /// failed, or the target gone), both delivered on the main queue. Unset,
+    /// events are dropped as before. Kept on `queue`: set with `observe`.
+    private var onEvent: ((String, [String: Any]) -> Void)?
+    private var onClose: (() -> Void)?
+
+    /// Fork: subscribes to the session's events and its end. Call before the
+    /// command that turns events on (`Runtime.addBinding`).
+    func observe(onEvent: @escaping (String, [String: Any]) -> Void, onClose: @escaping () -> Void) {
+        queue.async {
+            guard !self.closed else {
+                DispatchQueue.main.async { onClose() }
+                return
+            }
+            self.onEvent = onEvent
+            self.onClose = onClose
+        }
+    }
+
     private var nextCommandId = 1
     // Single-flight by design: the one caller awaits each command in turn.
     private var pending: (id: Int, cont: CheckedContinuation<[String: Any], Error>)?
@@ -329,6 +348,11 @@ final class AppDevToolsPageSession: @unchecked Sendable {
     private func teardown() {
         guard !closed else { return }
         closed = true
+        if let onClose {
+            self.onClose = nil
+            DispatchQueue.main.async { onClose() }
+        }
+        onEvent = nil
         timeoutItem?.cancel()
         timeoutItem = nil
         if let cont = handshakeCont {
@@ -453,8 +477,15 @@ final class AppDevToolsPageSession: @unchecked Sendable {
 
     private func dispatchMessage(opcode: UInt8, data: Data) {
         guard opcode == 0x1 else { return }         // CDP is JSON text only
-        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let id = obj["id"] as? Int else { return }  // events have no id — drop
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        guard let id = obj["id"] as? Int else {
+            // Events have no id: dropped unless the fork's `onEvent` wants them.
+            if let onEvent, let method = obj["method"] as? String {
+                let params = obj["params"] as? [String: Any] ?? [:]
+                DispatchQueue.main.async { onEvent(method, params) }
+            }
+            return
+        }
         guard let p = pending, p.id == id else { return }
         pending = nil
         timeoutItem?.cancel()

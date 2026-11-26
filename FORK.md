@@ -28,6 +28,8 @@ All on the `phi-plus` branch, on top of Phi 2.18.0:
 - Autoplay control: pages in tabs opened from links, unloaded tabs and background loads start paused,
   with per-site rules (Settings → General → Autoplay, the extensions menu, and the address bar button)
 - Copy Link and Autoplay address bar buttons, toggled from the sidebar's right-click menu
+- Translate selected text: selecting text that isn't English shows an English chip that opens into a
+  DeepL translation card with Copy and Replace (Settings → General → Translate, your own DeepL API key)
 - A Picture in Picture shortcut (⌃⌘P by default)
 - The last session restores after a crash or a forced quit
 - The Dock icon stays the one macOS draws (Chromium's download drawing is removed)

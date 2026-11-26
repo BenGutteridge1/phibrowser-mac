@@ -335,6 +335,8 @@
 		8E0B00022FC0000000000001 /* BrowserState+GroupOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00042FC0000000000001 /* BrowserState+GroupOverview.swift */; };
 		8E0B00052FC0000000000001 /* GroupOverviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00072FC0000000000001 /* GroupOverviewViewController.swift */; };
 		8E0B00062FC0000000000001 /* GroupOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0B00082FC0000000000001 /* GroupOverviewView.swift */; };
+		A68169A5CC2191DA81240AF1 /* ForkSelectionTranslate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11BA07F951D7070E34F6DFE /* ForkSelectionTranslate.swift */; };
+		21DFB2AA2829E131D76AB50C /* ForkSelectionTranslateScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2956F9AE6504FA49F9B616 /* ForkSelectionTranslateScript.swift */; };
 		76B09BEFD5D99BBFF9EC9193 /* ForkVideoPiPButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */; };
 		E8B6B19E4A482443294B4DE1 /* ForkPageScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC09BF91F9BD24694456E2A8 /* ForkPageScripts.swift */; };
 		3776773A3801FCD86F0A2D52 /* ForkAutoplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B4056840A15C8C2DBB33499 /* ForkAutoplay.swift */; };
@@ -738,6 +740,7 @@
 		EAD00000000000000000001C /* URLPatternMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD00000000000000000001B /* URLPatternMatcher.swift */; };
 		EAD000000000000000000024 /* AgentSpaceRouter+Reader.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD000000000000000000023 /* AgentSpaceRouter+Reader.swift */; };
 		EAD000000000000000000026 /* ReaderExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD000000000000000000025 /* ReaderExportService.swift */; };
+		63606184D2ABD354EDA273FD /* ForkDeepLClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E20AD1A5DBB183D05B26F20 /* ForkDeepLClient.swift */; };
 		E9DE16ACB3EBD7566A2122B1 /* ForkTickTickAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6535C265A25ADEBEE962FEE9 /* ForkTickTickAPIClient.swift */; };
 		EAD000000000000000000028 /* ReaderImageInliner.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD000000000000000000027 /* ReaderImageInliner.swift */; };
 		EAD00000000000000000002A /* ReaderStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD000000000000000000029 /* ReaderStyle.swift */; };
@@ -1233,6 +1236,8 @@
 		8E0B00042FC0000000000001 /* BrowserState+GroupOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BrowserState+GroupOverview.swift"; sourceTree = "<group>"; };
 		8E0B00072FC0000000000001 /* GroupOverviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupOverviewViewController.swift; sourceTree = "<group>"; };
 		8E0B00082FC0000000000001 /* GroupOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupOverviewView.swift; sourceTree = "<group>"; };
+		A11BA07F951D7070E34F6DFE /* ForkSelectionTranslate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkSelectionTranslate.swift; sourceTree = "<group>"; };
+		BD2956F9AE6504FA49F9B616 /* ForkSelectionTranslateScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkSelectionTranslateScript.swift; sourceTree = "<group>"; };
 		D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkVideoPiPButton.swift; sourceTree = "<group>"; };
 		FC09BF91F9BD24694456E2A8 /* ForkPageScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkPageScripts.swift; sourceTree = "<group>"; };
 		2B4056840A15C8C2DBB33499 /* ForkAutoplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkAutoplay.swift; sourceTree = "<group>"; };
@@ -1641,6 +1646,7 @@
 		EAD00000000000000000001B /* URLPatternMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLPatternMatcher.swift; sourceTree = "<group>"; };
 		EAD000000000000000000023 /* AgentSpaceRouter+Reader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AgentSpaceRouter+Reader.swift"; sourceTree = "<group>"; };
 		EAD000000000000000000025 /* ReaderExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderExportService.swift; sourceTree = "<group>"; };
+		9E20AD1A5DBB183D05B26F20 /* ForkDeepLClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkDeepLClient.swift; sourceTree = "<group>"; };
 		6535C265A25ADEBEE962FEE9 /* ForkTickTickAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForkTickTickAPIClient.swift; sourceTree = "<group>"; };
 		EAD000000000000000000027 /* ReaderImageInliner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderImageInliner.swift; sourceTree = "<group>"; };
 		EAD000000000000000000029 /* ReaderStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderStyle.swift; sourceTree = "<group>"; };
@@ -1951,6 +1957,7 @@
 				8EB020143020000000000014 /* OblivionDataExportAPI.swift */,
 				8EB01BE23010BCED0043E59D /* OblivionDeletionAPI.swift */,
 				54A1001B2FE000000000001B /* TimeMachinePackageDownloader.swift */,
+				9E20AD1A5DBB183D05B26F20 /* ForkDeepLClient.swift */,
 				6535C265A25ADEBEE962FEE9 /* ForkTickTickAPIClient.swift */,
 				EAD000000000000000000027 /* ReaderImageInliner.swift */,
 				AE00FFFE0000000000000001 /* PhiAgentEndpointResolver.swift */,
@@ -3358,6 +3365,8 @@
 			children = (
 				8EA1FD952FEB74530060DCFF /* RendererCrashViewController.swift */,
 				8E5D8B002FDFFAD30039CBE3 /* WebContentSnapshotter.swift */,
+				A11BA07F951D7070E34F6DFE /* ForkSelectionTranslate.swift */,
+				BD2956F9AE6504FA49F9B616 /* ForkSelectionTranslateScript.swift */,
 				D1E55F373F1F70105211ECC8 /* ForkVideoPiPButton.swift */,
 				FC09BF91F9BD24694456E2A8 /* ForkPageScripts.swift */,
 				2B4056840A15C8C2DBB33499 /* ForkAutoplay.swift */,
@@ -3988,6 +3997,8 @@
 				8E0B00012FC0000000000001 /* GroupOverviewState.swift in Sources */,
 				8E0B00022FC0000000000001 /* BrowserState+GroupOverview.swift in Sources */,
 				8E8008D82FA1A59800EB24C5 /* WebContentGroupInfo.swift in Sources */,
+				A68169A5CC2191DA81240AF1 /* ForkSelectionTranslate.swift in Sources */,
+				21DFB2AA2829E131D76AB50C /* ForkSelectionTranslateScript.swift in Sources */,
 				76B09BEFD5D99BBFF9EC9193 /* ForkVideoPiPButton.swift in Sources */,
 				E8B6B19E4A482443294B4DE1 /* ForkPageScripts.swift in Sources */,
 				3776773A3801FCD86F0A2D52 /* ForkAutoplay.swift in Sources */,
@@ -4349,6 +4360,7 @@
 				8EB020043020000000000004 /* OblivionDataExportAPI.swift in Sources */,
 				8EB01BE33010BCED0043E59D /* OblivionDeletionAPI.swift in Sources */,
 				54A1000B2FE000000000000B /* TimeMachinePackageDownloader.swift in Sources */,
+				63606184D2ABD354EDA273FD /* ForkDeepLClient.swift in Sources */,
 				E9DE16ACB3EBD7566A2122B1 /* ForkTickTickAPIClient.swift in Sources */,
 				EAD000000000000000000028 /* ReaderImageInliner.swift in Sources */,
 				FBD200012FD0000000000003 /* FeedbackV2.swift in Sources */,

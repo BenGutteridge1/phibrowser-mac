@@ -174,8 +174,10 @@ enum ForkAutoplay {
     }
 
     /// Opens Settings → General scrolled to the Autoplay section.
-    static func openSettings() {
-        wantsSettingsScroll = true
+    /// Opens Settings → General at the autoplay section, or another fork
+    /// section with an anchor in the General pane.
+    static func openSettings(anchor: String = settingsAnchor) {
+        wantsSettingsScroll = anchor
         _ = AppController.shared?.showSettings(pane: .general)
         // Already open: it scrolls on this; opening: on appearing.
         NotificationCenter.default.post(name: showSettingsNotification, object: nil)
@@ -183,14 +185,14 @@ enum ForkAutoplay {
 
     static let settingsAnchor = "fork.autoplay.settings"
     static let showSettingsNotification = Notification.Name("ForkAutoplayShowSettings")
-    private static var wantsSettingsScroll = false
+    private static var wantsSettingsScroll: String?
 
     static func scrollToSettingsIfAsked(_ proxy: ScrollViewProxy) {
-        guard wantsSettingsScroll else { return }
-        wantsSettingsScroll = false
+        guard let anchor = wantsSettingsScroll else { return }
+        wantsSettingsScroll = nil
         // After the pane has laid out.
         DispatchQueue.main.async {
-            withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(settingsAnchor, anchor: .top) }
+            withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(anchor, anchor: .top) }
         }
     }
 
@@ -234,7 +236,7 @@ enum ForkAutoplay {
         toggle.state = enabled ? .on : .off
         menu.addItem(toggle)
         menu.addItem(ClosureMenuItem(title: NSLocalizedString("autoplay.menu.settings", value: "Autoplay Settings…",
-            comment: "Autoplay menu - opens the autoplay settings"), action: openSettings))
+            comment: "Autoplay menu - opens the autoplay settings"), action: { openSettings() }))
         return menu
     }
 

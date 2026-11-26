@@ -59,7 +59,13 @@ struct TabSecurityInfo {
 
 class Tab: WebContentRepresentable {
     private(set) var index: Int = 0
-    @Published var isActive: Bool = false
+    @Published var isActive: Bool = false {
+        didSet {
+            // Fork: selection translate attaches to each window's selected tab.
+            guard oldValue != isActive else { return }
+            MainActor.assumeIsolated { ForkSelectionTranslate.tabActivityChanged(self) }
+        }
+    }
     @Published private(set) var faviconUrl: String?
     @Published private(set) var cachedFaviconData: Data?
     @Published private(set) var liveFaviconData: Data?
@@ -423,7 +429,11 @@ class Tab: WebContentRepresentable {
                 guard let self else { return }
                 self.isLoading = loading
                 // Fork: the picture-in-picture button and autoplay control.
-                MainActor.assumeIsolated { ForkPageScripts.loadingChanged(self, isLoading: loading) }
+                MainActor.assumeIsolated {
+                    ForkPageScripts.loadingChanged(self, isLoading: loading)
+                    // Fork: selection translate follows the selected tab's page.
+                    if !loading { ForkSelectionTranslate.tabActivityChanged(self) }
+                }
                 if !loading, self.wantsTransparentChatCanvas {
                     MainActor.assumeIsolated { self.enableTransparentChatCanvas() }
                 }

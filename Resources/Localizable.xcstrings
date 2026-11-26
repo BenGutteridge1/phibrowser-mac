@@ -106798,6 +106798,174 @@
         }
       }
     },
+    "settings.translate.enabled.description" : {
+      "comment" : "Translate settings - description of the master switch",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select text that isn't in English and a button under it translates it with DeepL. The language is recognised on your Mac: only text you translate goes to DeepL."
+          }
+        }
+      }
+    },
+    "settings.translate.enabled.title" : {
+      "comment" : "Translate settings - master switch",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Translate selected text"
+          }
+        }
+      }
+    },
+    "settings.translate.key.checking" : {
+      "comment" : "Translate settings - checking a newly entered DeepL API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Checking the key…"
+          }
+        }
+      }
+    },
+    "settings.translate.key.description" : {
+      "comment" : "Translate settings - description under the DeepL API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A free DeepL API key translates 500,000 characters a month. It's kept on this Mac."
+          }
+        }
+      }
+    },
+    "settings.translate.key.get" : {
+      "comment" : "Translate settings - link to DeepL's API sign-up page",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Get a key"
+          }
+        }
+      }
+    },
+    "settings.translate.key.placeholder" : {
+      "comment" : "Translate settings - placeholder of the DeepL API key field",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Paste your key"
+          }
+        }
+      }
+    },
+    "settings.translate.key.remove" : {
+      "comment" : "Translate settings - removes the saved DeepL API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove"
+          }
+        }
+      }
+    },
+    "settings.translate.key.save" : {
+      "comment" : "Translate settings - saves the DeepL API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "settings.translate.key.title" : {
+      "comment" : "Translate settings - DeepL API key row title",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "DeepL API key"
+          }
+        }
+      }
+    },
+    "settings.translate.key.usage" : {
+      "comment" : "Translate settings - DeepL usage, e.g. 1,234 of 500,000 characters used this month",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ of %@ characters used this month."
+          }
+        }
+      }
+    },
+    "settings.translate.sectionTitle" : {
+      "comment" : "General settings - Translate section title",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Translate"
+          }
+        }
+      }
+    },
+    "settings.translate.variant.american" : {
+      "comment" : "Translate settings - American English option",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "American English"
+          }
+        }
+      }
+    },
+    "settings.translate.variant.british" : {
+      "comment" : "Translate settings - British English option",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "British English"
+          }
+        }
+      }
+    },
+    "settings.translate.variant.title" : {
+      "comment" : "Translate settings - which English to translate into",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Translate into"
+          }
+        }
+      }
+    },
     "sidebar.addressBar.autoplayAllowedTooltip" : {
       "comment" : "Sidebar address bar - Autoplay button tooltip when the site may always autoplay; a click returns it to the autoplay rules",
       "extractionState" : "extracted_with_value",
@@ -136392,6 +136560,78 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按一下標題可查看總覽。按一下箭頭可展開或收合。"
+          }
+        }
+      }
+    },
+    "translate.error.badKey" : {
+      "comment" : "Selection translate - DeepL refused the API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "DeepL didn't accept your API key."
+          }
+        }
+      }
+    },
+    "translate.error.busy" : {
+      "comment" : "Selection translate - DeepL rate limited the request",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "DeepL is busy. Try again in a moment."
+          }
+        }
+      }
+    },
+    "translate.error.failed" : {
+      "comment" : "Selection translate - any other DeepL error",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "DeepL couldn't translate this."
+          }
+        }
+      }
+    },
+    "translate.error.noKey" : {
+      "comment" : "Selection translate - no DeepL API key saved yet",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Add your DeepL API key to translate."
+          }
+        }
+      }
+    },
+    "translate.error.offline" : {
+      "comment" : "Selection translate - network error reaching DeepL",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn't reach DeepL. Check your connection."
+          }
+        }
+      }
+    },
+    "translate.error.quota" : {
+      "comment" : "Selection translate - DeepL monthly character allowance used up",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You've used this month's DeepL allowance."
           }
         }
       }

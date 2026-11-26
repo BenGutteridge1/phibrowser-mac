@@ -55,6 +55,8 @@ struct GeneralSettingView: View {
                 BrowsingSectionView()
                 ForkAutoplaySettingsSection()
                     .id(ForkAutoplay.settingsAnchor)
+                ForkSelectionTranslateSettingsSection()
+                    .id(ForkSelectionTranslate.settingsAnchor)
                 if SaveForLaterService.featureEnabled {
                     SaveForLaterSectionView()
                 }

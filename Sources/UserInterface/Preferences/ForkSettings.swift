@@ -115,6 +115,9 @@ enum ForkSettings {
         /// Sites with their own autoplay rule: host → `AutoplaySiteRule` raw value.
         static let autoplaySiteRules = "fork.autoplay.siteRules"
         static let showsCopyLinkButton = "fork.addressBar.showsCopyLink"
+        static let selectionTranslateEnabled = "fork.translate.enabled"
+        /// DeepL's target: "EN-GB" or "EN-US".
+        static let translateEnglishVariant = "fork.translate.englishVariant"
         static let showsAutoplayButton = "fork.addressBar.showsAutoplay"
         static let tickTickCardSource = "fork.tickTickCardSource"
         /// The list the TickTick card last showed ("today", "next7", "inbox", "project:<id>").
@@ -136,6 +139,15 @@ enum ForkSettings {
     static var thunderbirdAddonSeen: Bool {
         get { UserDefaults.standard.bool(forKey: Key.thunderbirdAddonSeen) }
         set { UserDefaults.standard.set(newValue, forKey: Key.thunderbirdAddonSeen) }
+    }
+
+    /// Selecting text that isn't English offers to translate it with DeepL
+    /// (`ForkSelectionTranslate`). On by default.
+    static var selectionTranslateEnabled: Bool { bool(Key.selectionTranslateEnabled, default: true) }
+
+    /// The English DeepL translates into. British by default.
+    static var translateEnglishVariant: String {
+        UserDefaults.standard.string(forKey: Key.translateEnglishVariant) == "EN-US" ? "EN-US" : "EN-GB"
     }
 
     /// Videos show a picture-in-picture button on hover (`ForkVideoPiPButton`). On by default.
