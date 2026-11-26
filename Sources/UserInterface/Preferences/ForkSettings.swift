@@ -119,6 +119,7 @@ enum ForkSettings {
         /// DeepL's target: "EN-GB" or "EN-US".
         static let translateEnglishVariant = "fork.translate.englishVariant"
         static let showsAutoplayButton = "fork.addressBar.showsAutoplay"
+        static let showsReaderButton = "fork.addressBar.showsReader"
         static let tickTickCardSource = "fork.tickTickCardSource"
         /// The list the TickTick card last showed ("today", "next7", "inbox", "project:<id>").
         static let tickTickCardView = "fork.tickTickCardView"
@@ -182,6 +183,8 @@ enum ForkSettings {
     static var showsCopyLinkButton: Bool { bool(Key.showsCopyLinkButton, default: true) }
     /// The sidebar address bar's Autoplay button. On by default.
     static var showsAutoplayButton: Bool { bool(Key.showsAutoplayButton, default: true) }
+    /// The sidebar address bar's Reader View button. On by default.
+    static var showsReaderButton: Bool { bool(Key.showsReaderButton, default: true) }
 
     /// Chromium's "Press Esc to exit full screen" bubble stays hidden. On by default.
     static var hidesFullscreenExitHint: Bool { bool(Key.hidesFullscreenExitHint, default: true) }

@@ -385,10 +385,13 @@ class SideAddressBar: NSView {
             }
             .store(in: &cancellables)
 
-        // Fork: the Copy Link and Autoplay buttons follow their settings.
+        // Fork: the Copy Link, Autoplay and Reader View buttons follow their settings.
         NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.updateForkButtonVisibility() }
+            .sink { [weak self] _ in
+                self?.updateForkButtonVisibility()
+                self?.updateReaderButtonVisibility()
+            }
             .store(in: &cancellables)
 
         // Placeholder-mode sink: blank text on enter, restore on exit.
@@ -702,7 +705,9 @@ class SideAddressBar: NSView {
         // and the feature cannot disagree about a page. They did once: this
         // bar kept its own "is this a real web page" and went on offering the
         // reader on a PDF after extraction had begun refusing it.
+        // Fork: and the user can turn it off (Address Bar Buttons).
         readerButton.isHidden = isPlaceholder
+            || !ForkSettings.showsReaderButton
             || !(currentTab?.isReaderOfferable ?? false)
     }
 

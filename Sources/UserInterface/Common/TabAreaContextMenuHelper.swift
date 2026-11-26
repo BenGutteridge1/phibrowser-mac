@@ -76,7 +76,7 @@ final class TabAreaContextMenuHelper: NSObject {
             )
             topButtonsItem.submenu = buildTopButtonsSubmenu()
             menu.addItem(topButtonsItem)
-            // Fork: the sidebar address bar's Copy Link and Autoplay buttons.
+            // Fork: the sidebar address bar's Copy Link, Autoplay and Reader View buttons.
             let addressBarItem = NSMenuItem(
                 title: NSLocalizedString("common.tabAreaContextMenu.addressBarButtonsSubmenu", value: "Address Bar Buttons", comment: "Tab area context menu - Submenu to choose which buttons the sidebar address bar shows"),
                 action: nil,
@@ -276,7 +276,9 @@ final class TabAreaContextMenuHelper: NSObject {
             (ForkSettings.Key.showsCopyLinkButton,
              NSLocalizedString("common.tabAreaContextMenu.addressBarButtons.copyLink", value: "Copy Link", comment: "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Copy Link button")),
             (ForkSettings.Key.showsAutoplayButton,
-             NSLocalizedString("common.tabAreaContextMenu.addressBarButtons.autoplay", value: "Autoplay", comment: "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Autoplay button"))
+             NSLocalizedString("common.tabAreaContextMenu.addressBarButtons.autoplay", value: "Autoplay", comment: "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Autoplay button")),
+            (ForkSettings.Key.showsReaderButton,
+             NSLocalizedString("common.tabAreaContextMenu.addressBarButtons.readerView", value: "Reader View", comment: "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Reader View button"))
         ]
         for (key, title) in entries {
             let item = NSMenuItem(title: title, action: #selector(toggleForkButtonVisibility(_:)), keyEquivalent: "")

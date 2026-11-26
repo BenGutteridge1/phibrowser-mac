@@ -4,6 +4,18 @@
     "" : {
 
     },
+    "common.tabAreaContextMenu.addressBarButtons.readerView" : {
+      "comment" : "Tab area context menu - Address Bar Buttons submenu item that shows or hides the Reader View button",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reader View"
+          }
+        }
+      }
+    },
     "common.tabAreaContextMenu.topButtons.hideDuringVideo" : {
       "comment" : "Tab area context menu - Top Buttons submenu item, in the Comfortable layout, that turns on hiding the top bar while a video plays in the current tab",
       "extractionState" : "manual",
